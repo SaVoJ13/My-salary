@@ -260,8 +260,8 @@
         <div class="menu-item">
             <label id="lblMenuTheme">Тема</label>
             <select id="themeSelect" style="width: 100%;" onchange="setTheme(this.value)">
-                <option value="light">Світла</option>
-                <option value="dark">Темна</option>
+                <option value="light" id="optThemeLight">Світла</option>
+                <option value="dark" id="optThemeDark">Темна</option>
             </select>
         </div>
 
@@ -272,8 +272,8 @@
             <label style="width: 100%; font-weight: bold; margin-bottom: 8px; display: block;" id="lblCloudHeader">Хмара (Firebase)</label>
             
             <div id="auth-container">
-                <input type="email" id="email" placeholder="Email" style="width: 100%; margin-bottom: 6px; text-align: left;">
-                <input type="password" id="password" placeholder="Пароль" style="width: 100%; margin-bottom: 8px; text-align: left;">
+                <input type="email" id="email" placeholder="Email" style="width: 100%; margin-bottom: 6px; text-align: left;" onfocus="this.value=''">
+                <input type="password" id="password" placeholder="Пароль" style="width: 100%; margin-bottom: 8px; text-align: left;" onfocus="this.value=''">
                 <button id="btn-login" class="action-btn btn-auth-action">Увійти</button>
                 <button id="btn-register" class="action-btn" style="background: var(--text-main); margin-top: 4px;">Реєстрація</button>
             </div>
@@ -327,7 +327,7 @@
 
     <div class="form-group">
         <label id="lblBase">Загальна ставка (zł)</label>
-        <input type="number" id="baseSalary" value="5950">
+        <input type="number" id="baseSalary" value="5950" onfocus="this.value=''" onblur="if(this.value==='') this.value='0'; calculateSalary();">
     </div>
 
     <div class="form-group">
@@ -343,22 +343,22 @@
 
     <div class="form-group">
         <label id="lblMorning">Ранкові зміни (шт)</label>
-        <input type="number" id="morningShifts" placeholder="-">
+        <input type="number" id="morningShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
 
     <div class="form-group">
         <label id="lblNight">Нічні зміни (шт)</label>
-        <input type="number" id="nightShifts" placeholder="-">
+        <input type="number" id="nightShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
 
     <div class="form-group">
         <label id="lblWeekend">Робочі сб / нд (днів)</label>
-        <input type="number" id="weekendDays" placeholder="-">
+        <input type="number" id="weekendDays" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
 
     <div class="form-group">
         <label id="lblOvertime">Надгодини (днів)</label>
-        <input type="number" id="overtimeDays" placeholder="-">
+        <input type="number" id="overtimeDays" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
 
     <div class="divider"></div>
@@ -400,21 +400,38 @@
             bonus: "Премія", morning: "Ранкові зміни (шт)", night: "Нічні зміни (шт)",
             weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)", under26: "Вік до 26 років",
             ppk: "Участь у PPK", insurance: "Дод. страхування", yes: "Так", no: "Ні",
-            menuLang: "Мова", menuTheme: "Тема", cloudHeader: "Хмарна синхронізація",
-            months: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
+            menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", cloudHeader: "Хмарна синхронізація",
+            themeLight: "Світла", themeDark: "Темна", 
+            btnLogin: "Увійти", btnRegister: "Реєстрація", btnSyncUp: "Зберегти у хмару ☁️", 
+            btnSyncDown: "Завантажити з хмари 📥", btnLogout: "Вийти з акаунта",
+            passPlaceholder: "Пароль",
+            months: [
+                "Січень 2026", "Лютий 2026", "Березень 2026", "Квітень 2026", 
+                "Травень 2026", "Червень 2026", "Липень 2026", "Серпень 2026", 
+                "Вересень 2026", "Жовтень 2026", "Листопад 2026", "Грудень 2026"
+            ]
         },
         pl: {
-            title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka podstawowa (zł)",
+            title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)",
             bonus: "Premia", morning: "Poranne zmiany (szt)", night: "Nocne zmiany (szt)",
-            weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", under26: "Wiek poniżej 26 lat",
-            ppk: "Uczestnictwo w PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
-            menuLang: "Język", menuTheme: "Motyw", cloudHeader: "Synchronizacja w chmurze",
-            months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
+            weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat",
+            ppk: "PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
+            menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw", cloudHeader: "Chmura (Firebase)",
+            themeLight: "Jasny", themeDark: "Ciemny", 
+            btnLogin: "Zaloguj się", btnRegister: "Rejestracja", btnSyncUp: "Zapisz w chmurze ☁️", 
+            btnSyncDown: "Pobierz z chmury 📥", btnLogout: "Wyloguj się",
+            passPlaceholder: "Hasło",
+            months: [
+                "Styczeń 2026", "Luty 2026", "Marzec 2026", "Kwiecień 2026", 
+                "Maj 2026", "Czerwiec 2026", "Lipiec 2026", "Sierpień 2026", 
+                "Wrzesień 2026", "Październik 2026", "Listopad 2026", "Grudzień 2026"
+            ]
         }
     };
 
     let currentLang = 'ua';
-    const monthWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
+    // Робочі дні для Польщі 2026 року
+    const monthWorkDays2026 = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
 
     window.toggleMenu = function() {
         document.getElementById('sideMenu').classList.toggle('open');
@@ -431,6 +448,7 @@
 
     window.setLang = function(lang) {
         currentLang = lang;
+        // Головний екран
         document.getElementById('lblTitle').innerText = dict[lang].title;
         document.getElementById('lblMonth').innerText = dict[lang].month;
         document.getElementById('lblBase').innerText = dict[lang].base;
@@ -442,16 +460,29 @@
         document.getElementById('lblUnder26').innerText = dict[lang].under26;
         document.getElementById('lblPPK').innerText = dict[lang].ppk;
         document.getElementById('lblInsurance').innerText = dict[lang].insurance;
-        document.getElementById('lblMenuLang').innerText = dict[lang].menuLang;
-        document.getElementById('lblMenuTheme').innerText = dict[lang].menuTheme;
-        document.getElementById('lblCloudHeader').innerText = dict[lang].cloudHeader;
         
+        // Опції селектів
         document.getElementById('optU26Yes').innerText = dict[lang].yes;
         document.getElementById('optU26No').innerText = dict[lang].no;
         document.getElementById('optPpkYes').innerText = dict[lang].yes;
         document.getElementById('optPpkNo').innerText = dict[lang].no;
         document.getElementById('optInsYes').innerText = dict[lang].yes;
         document.getElementById('optInsNo').innerText = dict[lang].no;
+
+        // Меню
+        document.getElementById('menuTitle').innerText = dict[lang].menuTitle;
+        document.getElementById('lblMenuLang').innerText = dict[lang].menuLang;
+        document.getElementById('lblMenuTheme').innerText = dict[lang].menuTheme;
+        document.getElementById('optThemeLight').innerText = dict[lang].themeLight;
+        document.getElementById('optThemeDark').innerText = dict[lang].themeDark;
+        document.getElementById('lblCloudHeader').innerText = dict[lang].cloudHeader;
+        
+        document.getElementById('btn-login').innerText = dict[lang].btnLogin;
+        document.getElementById('btn-register').innerText = dict[lang].btnRegister;
+        document.getElementById('btn-sync-up').innerText = dict[lang].btnSyncUp;
+        document.getElementById('btn-sync-down').innerText = dict[lang].btnSyncDown;
+        document.getElementById('btn-logout').innerText = dict[lang].btnLogout;
+        document.getElementById('password').placeholder = dict[lang].passPlaceholder;
 
         initMonths();
         calculateSalary();
@@ -463,18 +494,19 @@
         select.innerHTML = '<option value="" disabled selected>-</option>';
         dict[currentLang].months.forEach((m, idx) => {
             let opt = document.createElement('option');
-            opt.value = idx;
+            // Ключі зберігання формуватимуться як 2026-01, 2026-02 і т.д.
+            opt.value = "2026-" + String(idx + 1).padStart(2, '0');
             opt.text = m;
             select.appendChild(opt);
         });
         if (currentVal) {
             select.value = currentVal;
         } else {
-            select.value = new Date().getMonth();
+            select.value = "2026-01"; // За замовчуванням Січень 2026
         }
     }
 
-    function calculateSalary() {
+    window.calculateSalary = function() {
         const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
         const monthVal = document.getElementById('monthSelect').value;
         
@@ -484,9 +516,11 @@
             return;
         }
 
-        const monthIdx = parseInt(monthVal);
-        const workDays = monthWorkDays[monthIdx];
-        const minSalary = 4806.00;
+        const monthIdx = parseInt(monthVal.split('-')[1]) - 1;
+        const workDays = monthWorkDays2026[monthIdx];
+        
+        // Мінімальна ставка для розрахунку нічних (потрібно буде оновити, якщо уряд змінить на 2026)
+        const minSalary = 4806.00; 
         const nightTariff = Math.round(((minSalary / (workDays * 8)) * 0.20) * 100) / 100;
 
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
@@ -550,13 +584,13 @@
             weekendDays: document.getElementById('weekendDays').value,
             overtimeDays: document.getElementById('overtimeDays').value
         };
-        localStorage.setItem('salary_month_' + month, JSON.stringify(data));
+        localStorage.setItem('salary_' + month, JSON.stringify(data));
     }
 
     function loadLocalData() {
         const month = document.getElementById('monthSelect').value;
         if (month === "") return;
-        const saved = localStorage.getItem('salary_month_' + month);
+        const saved = localStorage.getItem('salary_' + month);
         if (saved) {
             const data = JSON.parse(saved);
             document.getElementById('under26Select').value = data.under26 || "";
@@ -569,17 +603,22 @@
             document.getElementById('weekendDays').value = data.weekendDays || "";
             document.getElementById('overtimeDays').value = data.overtimeDays || "";
         } else {
+            // Очищення полів, якщо даних немає
+            document.getElementById('under26Select').value = "";
+            document.getElementById('ppkSelect').value = "";
+            document.getElementById('insuranceSelect').value = "";
             document.getElementById('morningShifts').value = "";
             document.getElementById('nightShifts').value = "";
             document.getElementById('weekendDays').value = "";
             document.getElementById('overtimeDays').value = "";
             document.getElementById('bonusPctSelect').value = "";
+            document.getElementById('baseSalary').value = "5950";
         }
         calculateSalary();
     }
 
     document.querySelectorAll('input, select').forEach(element => {
-        if(element.id !== 'langSelect' && element.id !== 'themeSelect') {
+        if(element.id !== 'langSelect' && element.id !== 'themeSelect' && element.type !== 'email' && element.type !== 'password') {
             element.addEventListener('input', calculateSalary);
             element.addEventListener('change', calculateSalary);
         }
@@ -604,13 +643,13 @@
     document.getElementById('btn-login').addEventListener('click', async () => {
         try {
             await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
-        } catch (e) { alert("Помилка входу: " + e.message); }
+        } catch (e) { alert((currentLang === 'ua' ? "Помилка входу: " : "Błąd logowania: ") + e.message); }
     });
 
     document.getElementById('btn-register').addEventListener('click', async () => {
         try {
             await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
-            alert("Реєстрація успішна!");
+            alert(currentLang === 'ua' ? "Реєстрація успішна!" : "Rejestracja zakończona sukcesem!");
         } catch (e) { alert("Помилка: " + e.message); }
     });
 
@@ -618,12 +657,10 @@
         await signOut(auth);
     });
 
-    // Оновлена логіка: Збереження у хмару з перевірками
     document.getElementById('btn-sync-up').addEventListener('click', async () => {
         const user = auth.currentUser;
         if (!user) return;
         
-        // Перевірка 1: Чи користувач дійсно хоче розпочати синхронізацію
         const confirmMsg = currentLang === 'ua' ? "Ви точно хочете зберегти ці дані у хмару?" : "Czy na pewno chcesz zapisać te dane w chmurze?";
         if (!confirm(confirmMsg)) return;
 
@@ -631,13 +668,12 @@
         const docRef = doc(db, "users", user.uid, "months", month.toString());
 
         try {
-            // Перевірка 2: Запит до бази на наявність дублювання
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 const overwriteMsg = currentLang === 'ua' 
                     ? "Увага! Дані за цей місяць вже існують у хмарі. Бажаєте їх перезаписати?" 
                     : "Uwaga! Dane za ten miesiąc już istnieją. Czy chcesz je nadpisać?";
-                if (!confirm(overwriteMsg)) return; // Користувач скасував перезапис
+                if (!confirm(overwriteMsg)) return; 
             }
 
             const data = {
@@ -689,7 +725,7 @@
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.getElementById('themeSelect').value = savedTheme;
     setTheme(savedTheme);
-    initMonths();
+    window.setLang('ua');
     loadLocalData();
 </script>
 </body>
