@@ -287,7 +287,7 @@
         </div>
     </div>
 
-    <!-- Головний екран калькулятора (доступний одразу) -->
+    <!-- Головний екран калькулятора -->
     <div class="header-row">
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
         <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП</h2>
@@ -536,7 +536,6 @@
         saveLocalData();
     }
 
-    // Локальне збереження для режиму гостя
     function saveLocalData() {
         const month = document.getElementById('monthSelect').value;
         if (month === "") return;
@@ -588,7 +587,6 @@
 
     document.getElementById('monthSelect').addEventListener('change', loadLocalData);
 
-    // Хмарна синхронізація за бажанням
     const authContainer = document.getElementById('auth-container');
     const syncContainer = document.getElementById('sync-container');
 
@@ -620,31 +618,48 @@
         await signOut(auth);
     });
 
-    // Кнопка: Зберегти у хмару
+    // Оновлена логіка: Збереження у хмару з перевірками
     document.getElementById('btn-sync-up').addEventListener('click', async () => {
         const user = auth.currentUser;
         if (!user) return;
+        
+        // Перевірка 1: Чи користувач дійсно хоче розпочати синхронізацію
+        const confirmMsg = currentLang === 'ua' ? "Ви точно хочете зберегти ці дані у хмару?" : "Czy na pewno chcesz zapisać te dane w chmurze?";
+        if (!confirm(confirmMsg)) return;
+
         const month = document.getElementById('monthSelect').value;
-        const data = {
-            under26: document.getElementById('under26Select').value,
-            ppk: document.getElementById('ppkSelect').value,
-            insurance: document.getElementById('insuranceSelect').value,
-            baseSalary: document.getElementById('baseSalary').value,
-            bonusPct: document.getElementById('bonusPctSelect').value,
-            morningShifts: document.getElementById('morningShifts').value,
-            nightShifts: document.getElementById('nightShifts').value,
-            weekendDays: document.getElementById('weekendDays').value,
-            overtimeDays: document.getElementById('overtimeDays').value,
-            updatedAt: new Date()
-        };
+        const docRef = doc(db, "users", user.uid, "months", month.toString());
+
         try {
-            const docRef = doc(db, "users", user.uid, "months", month.toString());
+            // Перевірка 2: Запит до бази на наявність дублювання
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const overwriteMsg = currentLang === 'ua' 
+                    ? "Увага! Дані за цей місяць вже існують у хмарі. Бажаєте їх перезаписати?" 
+                    : "Uwaga! Dane za ten miesiąc już istnieją. Czy chcesz je nadpisać?";
+                if (!confirm(overwriteMsg)) return; // Користувач скасував перезапис
+            }
+
+            const data = {
+                under26: document.getElementById('under26Select').value,
+                ppk: document.getElementById('ppkSelect').value,
+                insurance: document.getElementById('insuranceSelect').value,
+                baseSalary: document.getElementById('baseSalary').value,
+                bonusPct: document.getElementById('bonusPctSelect').value,
+                morningShifts: document.getElementById('morningShifts').value,
+                nightShifts: document.getElementById('nightShifts').value,
+                weekendDays: document.getElementById('weekendDays').value,
+                overtimeDays: document.getElementById('overtimeDays').value,
+                updatedAt: new Date()
+            };
+            
             await setDoc(docRef, data);
-            alert("Дані успішно відправлені у хмару! ☁️");
-        } catch (e) { alert("Помилка хмари: " + e.message); }
+            alert(currentLang === 'ua' ? "Дані успішно збережені у хмару! ☁️" : "Dane pomyślnie zapisane w chmurze! ☁️");
+        } catch (e) { 
+            alert((currentLang === 'ua' ? "Помилка хмари: " : "Błąd chmury: ") + e.message); 
+        }
     });
 
-    // Кнопка: Завантажити з хмари
     document.getElementById('btn-sync-down').addEventListener('click', async () => {
         const user = auth.currentUser;
         if (!user) return;
@@ -664,14 +679,13 @@
                 document.getElementById('weekendDays').value = data.weekendDays || "";
                 document.getElementById('overtimeDays').value = data.overtimeDays || "";
                 calculateSalary();
-                alert("Дані успішно завантажені з хмари! 📥");
+                alert(currentLang === 'ua' ? "Дані успішно завантажені з хмари! 📥" : "Dane pomyślnie pobrane z chmury! 📥");
             } else {
-                alert("У хмарі немає збережень за цей місяць.");
+                alert(currentLang === 'ua' ? "У хмарі немає збережень за цей місяць." : "W chmurze nie ma danych za ten miesiąc.");
             }
         } catch (e) { alert("Помилка завантаження: " + e.message); }
     });
 
-    // Ініціалізація при старті
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.getElementById('themeSelect').value = savedTheme;
     setTheme(savedTheme);
