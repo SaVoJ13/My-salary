@@ -15,6 +15,16 @@
             --success: #27ae60;
         }
 
+        [data-theme="dark"] {
+            --primary: #ff4d57;
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border-color: #333333;
+            --success: #2ecc71;
+        }
+
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             background-color: var(--bg-color); 
@@ -26,6 +36,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
         }
 
         .calculator { 
@@ -36,6 +47,74 @@
             border-radius: 16px; 
             box-shadow: 0 8px 24px rgba(0,0,0,0.06); 
             box-sizing: border-box;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        /* Меню-гамбургер */
+        .menu-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--text-main);
+            padding: 0;
+            width: auto;
+            margin: 0;
+        }
+
+        .side-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100%;
+            background: var(--panel-bg);
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            border-radius: 16px 0 0 16px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+        }
+
+        .side-menu.open {
+            transform: translateX(0);
+        }
+
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .menu-item {
+            margin-bottom: 20px;
+        }
+
+        .menu-item label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            width: 100%;
+        }
+
+        .close-menu {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-main);
+            width: auto;
+            margin: 0;
+            padding: 0;
         }
 
         .header-row {
@@ -50,27 +129,6 @@
             font-size: 20px; 
             color: var(--text-main); 
             font-weight: 700;
-        }
-
-        .lang-toggle {
-            display: flex;
-            background: #f0f3f7;
-            border-radius: 8px;
-            overflow: hidden;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .lang-btn {
-            padding: 6px 10px;
-            color: var(--text-muted);
-            transition: 0.2s;
-        }
-
-        .lang-btn.active {
-            background: var(--primary);
-            color: #fff;
         }
 
         .form-group { 
@@ -94,7 +152,7 @@
             border-radius: 8px; 
             font-size: 14px; 
             text-align: center; 
-            background: #fafbfc;
+            background: var(--bg-color);
             color: var(--text-main);
             font-weight: 600;
             transition: all 0.2s ease;
@@ -114,13 +172,12 @@
 
         input:focus, select:focus { 
             border-color: var(--primary); 
-            background: #fff;
             outline: none; 
             box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1);
         }
 
         input::placeholder {
-            color: #cbd5e1;
+            color: var(--text-muted);
             font-weight: 400;
         }
 
@@ -142,13 +199,13 @@
         }
 
         .result-box.brutto {
-            background: #f8f9fa;
+            background: var(--bg-color);
             border: 1px solid var(--border-color);
         }
 
         .result-box.netto {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
+            background: rgba(39, 174, 96, 0.08);
+            border: 1px solid var(--success);
         }
 
         .result-title { 
@@ -167,14 +224,11 @@
         .brutto .result-value { color: var(--text-main); }
         .netto .result-value { color: var(--success); }
 
-        /* Стилі для авторизації та кнопок */
         .hidden { display: none !important; }
         .auth-btn { width: 100%; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-login { background: var(--primary); }
         .btn-register { background: var(--text-main); }
         .btn-save { background: var(--success); width: 100%; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; margin-bottom: 20px; }
-        .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #f0f3f7; padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; }
-        .btn-logout { background: var(--text-muted); color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -197,17 +251,46 @@
 
     <!-- Головний екран калькулятора -->
     <div id="app-screen" class="hidden">
-        <div class="user-info">
-            <span id="user-email-display" style="overflow: hidden; text-overflow: ellipsis;"></span>
-            <button id="btn-logout" class="btn-logout">Вийти</button>
+        
+        <!-- Випадаюче бокове меню (гамбургер) -->
+        <div id="sideMenu" class="side-menu">
+            <div class="menu-header">
+                <span id="user-email-display" style="font-size: 12px; font-weight: bold; overflow: hidden; text-overflow: ellipsis;"></span>
+                <button class="close-menu" onclick="toggleMenu()">✕</button>
+            </div>
+
+            <div class="menu-item">
+                <label id="lblMenuProfile">Профіль</label>
+                <select id="profileSelect" style="width: 100%;">
+                    <option value="Volodymyr">Володимир</option>
+                    <option value="Yuliia">Юлія</option>
+                </select>
+            </div>
+
+            <div class="menu-item">
+                <label id="lblMenuLang">Мова</label>
+                <select id="langSelect" style="width: 100%;" onchange="setLang(this.value)">
+                    <option value="ua">Українська</option>
+                    <option value="pl">Polski</option>
+                </select>
+            </div>
+
+            <div class="menu-item">
+                <label id="lblMenuTheme">Тема</label>
+                <select id="themeSelect" style="width: 100%;" onchange="setTheme(this.value)">
+                    <option value="light">Світла</option>
+                    <option value="dark">Темна</option>
+                </select>
+            </div>
+
+            <div style="margin-top: auto;">
+                <button id="btn-logout" class="auth-btn" style="background: var(--text-muted); margin-top: 0;">Вийти</button>
+            </div>
         </div>
 
         <div class="header-row">
-            <h2 id="lblTitle">Калькулятор ЗП</h2>
-            <div class="lang-toggle">
-                <div id="btnUA" class="lang-btn active" onclick="window.setLang('ua')">UA</div>
-                <div id="btnPL" class="lang-btn" onclick="window.setLang('pl')">PL</div>
-            </div>
+            <button class="menu-btn" onclick="toggleMenu()">☰</button>
+            <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП</h2>
         </div>
         
         <div class="form-group">
@@ -300,7 +383,6 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Налаштування Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyAfsfF3nLzqaAJTAfp73715efQhri-SOT8",
         authDomain: "my-salary-9ea25.firebaseapp.com",
@@ -315,13 +397,13 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Словник та оригінальна логіка
     const dict = {
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)",
             bonus: "Премія", morning: "Ранкові зміни (шт)", night: "Нічні зміни (шт)",
             weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)", under26: "Вік до 26 років",
             ppk: "Участь у PPK", insurance: "Дод. страхування", yes: "Так", no: "Ні",
+            menuProfile: "Профіль", menuLang: "Мова", menuTheme: "Тема",
             months: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
         },
         pl: {
@@ -329,38 +411,29 @@
             bonus: "Premia", morning: "Poranne zmiany (szt)", night: "Nocne zmiany (szt)",
             weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", under26: "Wiek poniżej 26 lat",
             ppk: "Uczestnictwo w PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
+            menuProfile: "Profil", menuLang: "Język", menuTheme: "Motyw",
             months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
         }
     };
 
     let currentLang = 'ua';
-    const monthWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20]; // К-сть роб. днів по місяцях
+    const monthWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
 
-    function initMonths() {
-        const select = document.getElementById('monthSelect');
-        const currentVal = select.value; 
-        
-        select.innerHTML = '<option value="" disabled selected>-</option>';
-        dict[currentLang].months.forEach((m, idx) => {
-            let opt = document.createElement('option');
-            opt.value = idx;
-            opt.text = m;
-            select.appendChild(opt);
-        });
-        
-        // Встановлюємо поточний місяць за замовчуванням (Жовтень = індекс 9)
-        if (currentVal) {
-            select.value = currentVal;
+    window.toggleMenu = function() {
+        document.getElementById('sideMenu').classList.toggle('open');
+    }
+
+    window.setTheme = function(theme) {
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
         } else {
-            select.value = new Date().getMonth();
+            document.documentElement.removeAttribute('data-theme');
         }
+        localStorage.setItem('theme', theme);
     }
 
     window.setLang = function(lang) {
         currentLang = lang;
-        document.getElementById('btnUA').className = lang === 'ua' ? 'lang-btn active' : 'lang-btn';
-        document.getElementById('btnPL').className = lang === 'pl' ? 'lang-btn active' : 'lang-btn';
-        
         document.getElementById('lblTitle').innerText = dict[lang].title;
         document.getElementById('lblMonth').innerText = dict[lang].month;
         document.getElementById('lblBase').innerText = dict[lang].base;
@@ -372,6 +445,9 @@
         document.getElementById('lblUnder26').innerText = dict[lang].under26;
         document.getElementById('lblPPK').innerText = dict[lang].ppk;
         document.getElementById('lblInsurance').innerText = dict[lang].insurance;
+        document.getElementById('lblMenuProfile').innerText = dict[lang].menuProfile;
+        document.getElementById('lblMenuLang').innerText = dict[lang].menuLang;
+        document.getElementById('lblMenuTheme').innerText = dict[lang].menuTheme;
         
         document.getElementById('optU26Yes').innerText = dict[lang].yes;
         document.getElementById('optU26No').innerText = dict[lang].no;
@@ -382,6 +458,23 @@
 
         initMonths();
         calculateSalary();
+    }
+
+    function initMonths() {
+        const select = document.getElementById('monthSelect');
+        const currentVal = select.value; 
+        select.innerHTML = '<option value="" disabled selected>-</option>';
+        dict[currentLang].months.forEach((m, idx) => {
+            let opt = document.createElement('option');
+            opt.value = idx;
+            opt.text = m;
+            select.appendChild(opt);
+        });
+        if (currentVal) {
+            select.value = currentVal;
+        } else {
+            select.value = new Date().getMonth();
+        }
     }
 
     function calculateSalary() {
@@ -445,19 +538,21 @@
     }
 
     document.querySelectorAll('input, select').forEach(element => {
-        element.addEventListener('input', calculateSalary);
-        element.addEventListener('change', calculateSalary);
+        if(element.id !== 'profileSelect' && element.id !== 'langSelect' && element.id !== 'themeSelect') {
+            element.addEventListener('input', calculateSalary);
+            element.addEventListener('change', calculateSalary);
+        }
     });
 
-    // Логіка Firebase (Збереження та Завантаження)
-    async function loadDataForMonth() {
+    async function loadData() {
         const user = auth.currentUser;
         if (!user) return;
         const month = document.getElementById('monthSelect').value;
+        const profile = document.getElementById('profileSelect').value;
         if (month === "") return;
 
         try {
-            const docRef = doc(db, "users", user.uid, "months", month.toString());
+            const docRef = doc(db, "users", user.uid, "profiles", profile, "months", month.toString());
             const docSnap = await getDoc(docRef);
             
             if (docSnap.exists()) {
@@ -472,7 +567,6 @@
                 document.getElementById('weekendDays').value = data.weekendDays || "";
                 document.getElementById('overtimeDays').value = data.overtimeDays || "";
             } else {
-                // Скидання полів, якщо даних немає
                 document.getElementById('morningShifts').value = "";
                 document.getElementById('nightShifts').value = "";
                 document.getElementById('weekendDays').value = "";
@@ -485,12 +579,14 @@
         }
     }
 
-    document.getElementById('monthSelect').addEventListener('change', loadDataForMonth);
+    document.getElementById('monthSelect').addEventListener('change', loadData);
+    document.getElementById('profileSelect').addEventListener('change', loadData);
 
     document.getElementById('btn-save').addEventListener('click', async () => {
         const user = auth.currentUser;
         if (!user) return;
         const month = document.getElementById('monthSelect').value;
+        const profile = document.getElementById('profileSelect').value;
         
         if (month === "") {
             alert(currentLang === 'ua' ? "Оберіть місяць!" : "Wybierz miesiąc!");
@@ -511,7 +607,7 @@
         };
 
         try {
-            const docRef = doc(db, "users", user.uid, "months", month.toString());
+            const docRef = doc(db, "users", user.uid, "profiles", profile, "months", month.toString());
             await setDoc(docRef, data);
             alert(currentLang === 'ua' ? "Дані збережено у хмару! ☁️" : "Zapisano w chmurze! ☁️");
         } catch (error) {
@@ -519,7 +615,6 @@
         }
     });
 
-    // Логіка Авторизації
     const authScreen = document.getElementById('auth-screen');
     const appScreen = document.getElementById('app-screen');
     const emailInput = document.getElementById('email');
@@ -530,9 +625,8 @@
             authScreen.classList.add('hidden');
             appScreen.classList.remove('hidden');
             document.getElementById('user-email-display').innerText = user.email;
-            
             initMonths();
-            loadDataForMonth(); // Завантажуємо дані при вході
+            loadData();
         } else {
             authScreen.classList.remove('hidden');
             appScreen.classList.add('hidden');
@@ -552,6 +646,11 @@
     document.getElementById('btn-logout').addEventListener('click', async () => {
         await signOut(auth);
     });
+
+    // Відновлення теми з пам'яті браузера
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.getElementById('themeSelect').value = savedTheme;
+    setTheme(savedTheme);
 
 </script>
 </body>
