@@ -3,247 +3,556 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fiege Salary Calculator</title>
-    <!-- Підключаємо бібліотеки Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAfsfF3nLzqaAJTAfp73715efQhri-SOT8",
-            authDomain: "my-salary-9ea25.firebaseapp.com",
-            projectId: "my-salary-9ea25",
-            storageBucket: "my-salary-9ea25.firebasestorage.app",
-            messagingSenderId: "412323283290",
-            appId: "1:412323283290:web:b4706af670a57776333363",
-            measurementId: "G-9K2FQVSPE1"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        window.auth = auth;
-        window.db = db;
-        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-        window.signOut = signOut;
-        window.onAuthStateChanged = onAuthStateChanged;
-        window.doc = doc;
-        window.setDoc = setDoc;
-        window.getDoc = getDoc;
-    </script>
-
+    <title>ЗП Калькулятор Fiege</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; box-sizing: border-box; }
-        h2 { text-align: center; color: #e3000f; margin-top: 0; margin-bottom: 15px; font-size: 22px; }
-        .input-group { margin-bottom: 12px; }
-        label { display: block; margin-bottom: 4px; font-weight: bold; color: #333; font-size: 14px; }
-        input, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
-        button { width: 100%; background: #e3000f; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 8px; }
-        button:hover { background: #b5000b; }
+        :root {
+            --primary: #e3000f; 
+            --bg-color: #f4f6f9;
+            --panel-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color: #e0e5ec;
+            --success: #27ae60;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 15px; 
+            box-sizing: border-box; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .calculator { 
+            width: 100%;
+            max-width: 420px; 
+            background: var(--panel-bg); 
+            padding: 24px 20px; 
+            border-radius: 16px; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06); 
+            box-sizing: border-box;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        h2 { 
+            margin: 0; 
+            font-size: 20px; 
+            color: var(--text-main); 
+            font-weight: 700;
+        }
+
+        .lang-toggle {
+            display: flex;
+            background: #f0f3f7;
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .lang-btn {
+            padding: 6px 10px;
+            color: var(--text-muted);
+            transition: 0.2s;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .form-group { 
+            margin-bottom: 14px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+
+        label { 
+            font-size: 14px; 
+            font-weight: 500; 
+            color: var(--text-main);
+            width: 60%;
+        }
+
+        input, select { 
+            width: 38%; 
+            padding: 10px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            font-size: 14px; 
+            text-align: center; 
+            background: #fafbfc;
+            color: var(--text-main);
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            appearance: none;
+        }
+
+        select {
+            text-align: center;
+            text-align-last: center;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237f8c8d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px top 50%;
+            background-size: 8px auto;
+            padding-right: 20px;
+        }
+
+        input:focus, select:focus { 
+            border-color: var(--primary); 
+            background: #fff;
+            outline: none; 
+            box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1);
+        }
+
+        input::placeholder {
+            color: #cbd5e1;
+            font-weight: 400;
+        }
+
+        .divider { 
+            border-top: 1px solid var(--border-color); 
+            margin: 20px 0; 
+        }
+        
+        .results-panel { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+        }
+
+        .result-box { 
+            border-radius: 12px; 
+            padding: 16px 12px; 
+            text-align: center; 
+        }
+
+        .result-box.brutto {
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+        }
+
+        .result-box.netto {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .result-title { 
+            font-size: 11px; 
+            color: var(--text-muted); 
+            margin-bottom: 6px; 
+            font-weight: 700; 
+            letter-spacing: 0.5px;
+        }
+
+        .result-value { 
+            font-size: 20px; 
+            font-weight: 800; 
+        }
+        
+        .brutto .result-value { color: var(--text-main); }
+        .netto .result-value { color: var(--success); }
+
+        /* Стилі для авторизації та кнопок */
         .hidden { display: none !important; }
-        .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #f8d7da; padding: 8px 12px; border-radius: 6px; font-size: 14px; }
-        .result-box { background: #e9ecef; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 15px; }
-        .result-box p { margin: 5px 0; }
-        .row { display: flex; gap: 10px; }
-        .row .input-group { flex: 1; }
+        .auth-btn { width: 100%; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-login { background: var(--primary); }
+        .btn-register { background: var(--text-main); }
+        .btn-save { background: var(--success); width: 100%; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; margin-bottom: 20px; }
+        .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #f0f3f7; padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; }
+        .btn-logout { background: var(--text-muted); color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <!-- Екран авторизації -->
-        <div id="auth-screen">
-            <h2>Fiege Login</h2>
-            <div class="input-group">
-                <label>Email:</label>
-                <input type="email" id="email" placeholder="введіть email">
-            </div>
-            <div class="input-group">
-                <label>Пароль:</label>
-                <input type="password" id="password" placeholder="введіть пароль">
-            </div>
-            <button onclick="handleLogin()">Увійти</button>
-            <button onclick="handleRegister()" style="background: #2c3e50;">Зареєструватися</button>
+<div class="calculator">
+    <!-- Екран авторизації -->
+    <div id="auth-screen">
+        <h2 style="text-align: center; margin-bottom: 20px; color: var(--primary);">Fiege Login</h2>
+        <div class="form-group" style="display: block;">
+            <label style="width: 100%; margin-bottom: 5px; display: block;">Email:</label>
+            <input type="email" id="email" placeholder="email@example.com" style="width: 100%; text-align: left;">
+        </div>
+        <div class="form-group" style="display: block;">
+            <label style="width: 100%; margin-bottom: 5px; display: block;">Пароль:</label>
+            <input type="password" id="password" placeholder="мінімум 6 символів" style="width: 100%; text-align: left;">
+        </div>
+        <button id="btn-login" class="auth-btn btn-login">Увійти</button>
+        <button id="btn-register" class="auth-btn btn-register">Зареєструватися</button>
+    </div>
+
+    <!-- Головний екран калькулятора -->
+    <div id="app-screen" class="hidden">
+        <div class="user-info">
+            <span id="user-email-display" style="overflow: hidden; text-overflow: ellipsis;"></span>
+            <button id="btn-logout" class="btn-logout">Вийти</button>
         </div>
 
-        <!-- Головний екран калькулятора -->
-        <div id="app-screen" class="hidden">
-            <div class="user-info">
-                <span id="user-email-display" style="font-weight: bold; overflow: hidden; text-overflow: ellipsis;"></span>
-                <button onclick="handleLogout()" style="width: auto; padding: 4px 8px; margin: 0; background: #6c757d; font-size: 13px;">Вийти</button>
+        <div class="header-row">
+            <h2 id="lblTitle">Калькулятор ЗП</h2>
+            <div class="lang-toggle">
+                <div id="btnUA" class="lang-btn active" onclick="window.setLang('ua')">UA</div>
+                <div id="btnPL" class="lang-btn" onclick="window.setLang('pl')">PL</div>
             </div>
-            <h2>Калькулятор Зарплати</h2>
+        </div>
+        
+        <div class="form-group">
+            <label id="lblMonth">Місяць</label>
+            <select id="monthSelect"></select>
+        </div>
 
-            <div class="input-group">
-                <label>Оберіть місяць:</label>
-                <select id="selected-month" onchange="loadMonthData()">
-                    <option value="2026-10">Жовтень 2026</option>
-                    <option value="2026-11">Листопад 2026</option>
-                    <option value="2026-12">Грудень 2026</option>
-                </select>
+        <div class="form-group">
+            <label id="lblUnder26">Вік до 26 років</label>
+            <select id="under26Select">
+                <option value="" disabled selected>-</option>
+                <option value="yes" id="optU26Yes">Так</option>
+                <option value="no" id="optU26No">Ні</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label id="lblPPK">Участь у PPK</label>
+            <select id="ppkSelect">
+                <option value="" disabled selected>-</option>
+                <option value="yes" id="optPpkYes">Так</option>
+                <option value="no" id="optPpkNo">Ні</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label id="lblInsurance">Додаткове страхування</label>
+            <select id="insuranceSelect">
+                <option value="" disabled selected>-</option>
+                <option value="yes" id="optInsYes">Так</option>
+                <option value="no" id="optInsNo">Ні</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label id="lblBase">Загальна ставка (zł)</label>
+            <input type="number" id="baseSalary" value="5950">
+        </div>
+
+        <div class="form-group">
+            <label id="lblBonus">Премія</label>
+            <select id="bonusPctSelect">
+                <option value="" disabled selected>-</option>
+                <option value="0">0%</option>
+                <option value="5">5%</option>
+                <option value="10">10%</option>
+                <option value="15">15%</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label id="lblMorning">Ранкові зміни (шт)</label>
+            <input type="number" id="morningShifts" placeholder="-">
+        </div>
+
+        <div class="form-group">
+            <label id="lblNight">Нічні зміни (шт)</label>
+            <input type="number" id="nightShifts" placeholder="-">
+        </div>
+
+        <div class="form-group">
+            <label id="lblWeekend">Робочі сб / нд (днів)</label>
+            <input type="number" id="weekendDays" placeholder="-">
+        </div>
+
+        <div class="form-group">
+            <label id="lblOvertime">Надгодини (днів)</label>
+            <input type="number" id="overtimeDays" placeholder="-">
+        </div>
+
+        <button id="btn-save" class="btn-save">Зберегти у хмару ☁️</button>
+
+        <div class="divider"></div>
+
+        <div class="results-panel">
+            <div class="result-box brutto">
+                <div class="result-title">BRUTTO</div>
+                <div class="result-value" id="grossResult">0.00 zł</div>
             </div>
-
-            <div class="row">
-                <div class="input-group">
-                    <label>Години роботи:</label>
-                    <input type="number" id="hours" value="168" oninput="calculate()">
-                </div>
-                <div class="input-group">
-                    <label>Ставка (zł/год):</label>
-                    <input type="number" id="rate" value="28.5" oninput="calculate()">
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="input-group">
-                    <label>Нічні години:</label>
-                    <input type="number" id="night-hours" value="0" oninput="calculate()">
-                </div>
-                <div class="input-group">
-                    <label>Надгодини (50%):</label>
-                    <input type="number" id="overtime" value="0" oninput="calculate()">
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label>Премія (zł):</label>
-                <input type="number" id="bonus" value="0" oninput="calculate()">
-            </div>
-
-            <button onclick="saveData()" style="background: #28a745;">Зберегти у хмару ☁️</button>
-
-            <div class="result-box">
-                <p><b>Базова з/п:</b> <span id="res-base">0.00</span> zł</p>
-                <p><b>Нічні надбавки:</b> <span id="res-night">0.00</span> zł</p>
-                <p><b>За надгодини:</b> <span id="res-overtime">0.00</span> zł</p>
-                <hr style="border: 0; border-top: 1px solid #ccc; margin: 8px 0;">
-                <p style="font-size: 17px; color: #e3000f;"><b>Разом на руки:</b> <span id="res-total">0.00</span> zł</p>
+            <div class="result-box netto">
+                <div class="result-title">NETTO</div>
+                <div class="result-value" id="netResult">0.00 zł</div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // Відстеження входу
-        setTimeout(() => {
-            window.onAuthStateChanged(window.auth, (user) => {
-                if (user) {
-                    document.getElementById('auth-screen').classList.add('hidden');
-                    document.getElementById('app-screen').classList.remove('hidden');
-                    document.getElementById('user-email-display').innerText = user.email;
-                    loadMonthData(); // завантажити дані для поточного місяця
-                } else {
-                    document.getElementById('auth-screen').classList.remove('hidden');
-                    document.getElementById('app-screen').classList.add('hidden');
-                }
-            });
-        }, 1000);
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        async function handleLogin() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                await window.signInWithEmailAndPassword(window.auth, email, password);
-            } catch (error) {
-                alert("Помилка входу: " + error.message);
+    // Налаштування Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyAfsfF3nLzqaAJTAfp73715efQhri-SOT8",
+        authDomain: "my-salary-9ea25.firebaseapp.com",
+        projectId: "my-salary-9ea25",
+        storageBucket: "my-salary-9ea25.firebasestorage.app",
+        messagingSenderId: "412323283290",
+        appId: "1:412323283290:web:b4706af670a57776333363",
+        measurementId: "G-9K2FQVSPE1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Словник та оригінальна логіка
+    const dict = {
+        ua: {
+            title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)",
+            bonus: "Премія", morning: "Ранкові зміни (шт)", night: "Нічні зміни (шт)",
+            weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)", under26: "Вік до 26 років",
+            ppk: "Участь у PPK", insurance: "Дод. страхування", yes: "Так", no: "Ні",
+            months: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
+        },
+        pl: {
+            title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka podstawowa (zł)",
+            bonus: "Premia", morning: "Poranne zmiany (szt)", night: "Nocne zmiany (szt)",
+            weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", under26: "Wiek poniżej 26 lat",
+            ppk: "Uczestnictwo w PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
+            months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
+        }
+    };
+
+    let currentLang = 'ua';
+    const monthWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20]; // К-сть роб. днів по місяцях
+
+    function initMonths() {
+        const select = document.getElementById('monthSelect');
+        const currentVal = select.value; 
+        
+        select.innerHTML = '<option value="" disabled selected>-</option>';
+        dict[currentLang].months.forEach((m, idx) => {
+            let opt = document.createElement('option');
+            opt.value = idx;
+            opt.text = m;
+            select.appendChild(opt);
+        });
+        
+        // Встановлюємо поточний місяць за замовчуванням (Жовтень = індекс 9)
+        if (currentVal) {
+            select.value = currentVal;
+        } else {
+            select.value = new Date().getMonth();
+        }
+    }
+
+    window.setLang = function(lang) {
+        currentLang = lang;
+        document.getElementById('btnUA').className = lang === 'ua' ? 'lang-btn active' : 'lang-btn';
+        document.getElementById('btnPL').className = lang === 'pl' ? 'lang-btn active' : 'lang-btn';
+        
+        document.getElementById('lblTitle').innerText = dict[lang].title;
+        document.getElementById('lblMonth').innerText = dict[lang].month;
+        document.getElementById('lblBase').innerText = dict[lang].base;
+        document.getElementById('lblBonus').innerText = dict[lang].bonus;
+        document.getElementById('lblMorning').innerText = dict[lang].morning;
+        document.getElementById('lblNight').innerText = dict[lang].night;
+        document.getElementById('lblWeekend').innerText = dict[lang].weekend;
+        document.getElementById('lblOvertime').innerText = dict[lang].overtime;
+        document.getElementById('lblUnder26').innerText = dict[lang].under26;
+        document.getElementById('lblPPK').innerText = dict[lang].ppk;
+        document.getElementById('lblInsurance').innerText = dict[lang].insurance;
+        
+        document.getElementById('optU26Yes').innerText = dict[lang].yes;
+        document.getElementById('optU26No').innerText = dict[lang].no;
+        document.getElementById('optPpkYes').innerText = dict[lang].yes;
+        document.getElementById('optPpkNo').innerText = dict[lang].no;
+        document.getElementById('optInsYes').innerText = dict[lang].yes;
+        document.getElementById('optInsNo').innerText = dict[lang].no;
+
+        initMonths();
+        calculateSalary();
+    }
+
+    function calculateSalary() {
+        const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
+        const monthVal = document.getElementById('monthSelect').value;
+        
+        if (baseSalary === 0 || monthVal === "") {
+            document.getElementById('grossResult').innerText = '0.00 zł';
+            document.getElementById('netResult').innerText = '0.00 zł';
+            return;
+        }
+
+        const monthIdx = parseInt(monthVal);
+        const workDays = monthWorkDays[monthIdx];
+        const minSalary = 4806.00;
+        const nightTariff = Math.round(((minSalary / (workDays * 8)) * 0.20) * 100) / 100;
+
+        const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
+        const morningShifts = parseInt(document.getElementById('morningShifts').value) || 0;
+        const nightShifts = parseInt(document.getElementById('nightShifts').value) || 0;
+        const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
+        const overtimeDays = parseFloat(document.getElementById('overtimeDays').value) || 0;
+
+        const isUnder26 = document.getElementById('under26Select').value === 'yes';
+        const ppkActive = document.getElementById('ppkSelect').value === 'yes';
+        const insuranceActive = document.getElementById('insuranceSelect').value === 'yes';
+
+        const bonusAmount = baseSalary * (bonusPct / 100);
+        const morningNightPay = Math.round((morningShifts * (10 / 60) * nightTariff) * 100) / 100;
+        const nightPay = (nightShifts * 8 * nightTariff) + (nightShifts * 30);
+        const totalNightPay = morningNightPay + nightPay;
+
+        const weekendPay = weekendDays * 100;
+        const overtimePay = Math.round(((baseSalary / workDays) * 2 * overtimeDays) * 100) / 100;
+
+        const gross = baseSalary + bonusAmount + totalNightPay + weekendPay + overtimePay;
+
+        const zus = gross * 0.1371; 
+        const healthBase = gross - zus;
+        const nfz = Math.round((healthBase * 0.09) * 100) / 100;
+        const ppkEmployee = ppkActive ? (gross * 0.02) : 0;
+
+        let pit = 0;
+        if (!isUnder26) {
+            const kup = 300.00;
+            const pitBase = Math.round(Math.max(0, healthBase - kup));
+            let nominalPit = (pitBase * 0.12) - 300.00;
+            const benefitExpense = 54.00;
+            pit = Math.round(nominalPit) + benefitExpense;
+            pit = Math.max(0, pit);
+        }
+
+        const insuranceDeduction = insuranceActive ? 36.70 : 0;
+        const benefitDeduction = 30.25;
+        const laundryBonus = 15.00;
+
+        const net = gross - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction + laundryBonus;
+
+        document.getElementById('grossResult').innerText = gross.toFixed(2) + ' zł';
+        document.getElementById('netResult').innerText = net.toFixed(2) + ' zł';
+    }
+
+    document.querySelectorAll('input, select').forEach(element => {
+        element.addEventListener('input', calculateSalary);
+        element.addEventListener('change', calculateSalary);
+    });
+
+    // Логіка Firebase (Збереження та Завантаження)
+    async function loadDataForMonth() {
+        const user = auth.currentUser;
+        if (!user) return;
+        const month = document.getElementById('monthSelect').value;
+        if (month === "") return;
+
+        try {
+            const docRef = doc(db, "users", user.uid, "months", month.toString());
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('under26Select').value = data.under26 || "";
+                document.getElementById('ppkSelect').value = data.ppk || "";
+                document.getElementById('insuranceSelect').value = data.insurance || "";
+                document.getElementById('baseSalary').value = data.baseSalary || "5950";
+                document.getElementById('bonusPctSelect').value = data.bonusPct || "";
+                document.getElementById('morningShifts').value = data.morningShifts || "";
+                document.getElementById('nightShifts').value = data.nightShifts || "";
+                document.getElementById('weekendDays').value = data.weekendDays || "";
+                document.getElementById('overtimeDays').value = data.overtimeDays || "";
+            } else {
+                // Скидання полів, якщо даних немає
+                document.getElementById('morningShifts').value = "";
+                document.getElementById('nightShifts').value = "";
+                document.getElementById('weekendDays').value = "";
+                document.getElementById('overtimeDays').value = "";
+                document.getElementById('bonusPctSelect').value = "";
             }
+            calculateSalary();
+        } catch (error) {
+            console.error("Помилка завантаження:", error);
+        }
+    }
+
+    document.getElementById('monthSelect').addEventListener('change', loadDataForMonth);
+
+    document.getElementById('btn-save').addEventListener('click', async () => {
+        const user = auth.currentUser;
+        if (!user) return;
+        const month = document.getElementById('monthSelect').value;
+        
+        if (month === "") {
+            alert(currentLang === 'ua' ? "Оберіть місяць!" : "Wybierz miesiąc!");
+            return;
         }
 
-        async function handleRegister() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                await window.createUserWithEmailAndPassword(window.auth, email, password);
-                alert("Реєстрація успішна!");
-            } catch (error) {
-                alert("Помилка реєстрації: " + error.message);
-            }
+        const data = {
+            under26: document.getElementById('under26Select').value,
+            ppk: document.getElementById('ppkSelect').value,
+            insurance: document.getElementById('insuranceSelect').value,
+            baseSalary: document.getElementById('baseSalary').value,
+            bonusPct: document.getElementById('bonusPctSelect').value,
+            morningShifts: document.getElementById('morningShifts').value,
+            nightShifts: document.getElementById('nightShifts').value,
+            weekendDays: document.getElementById('weekendDays').value,
+            overtimeDays: document.getElementById('overtimeDays').value,
+            updatedAt: new Date()
+        };
+
+        try {
+            const docRef = doc(db, "users", user.uid, "months", month.toString());
+            await setDoc(docRef, data);
+            alert(currentLang === 'ua' ? "Дані збережено у хмару! ☁️" : "Zapisano w chmurze! ☁️");
+        } catch (error) {
+            alert("Помилка збереження: " + error.message);
         }
+    });
 
-        async function handleLogout() {
-            await window.signOut(window.auth);
+    // Логіка Авторизації
+    const authScreen = document.getElementById('auth-screen');
+    const appScreen = document.getElementById('app-screen');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            authScreen.classList.add('hidden');
+            appScreen.classList.remove('hidden');
+            document.getElementById('user-email-display').innerText = user.email;
+            
+            initMonths();
+            loadDataForMonth(); // Завантажуємо дані при вході
+        } else {
+            authScreen.classList.remove('hidden');
+            appScreen.classList.add('hidden');
         }
+    });
 
-        // Логіка розрахунку
-        function calculate() {
-            const hours = parseFloat(document.getElementById('hours').value) || 0;
-            const rate = parseFloat(document.getElementById('rate').value) || 0;
-            const night = parseFloat(document.getElementById('night-hours').value) || 0;
-            const overtime = parseFloat(document.getElementById('overtime').value) || 0;
-            const bonus = parseFloat(document.getElementById('bonus').value) || 0;
+    document.getElementById('btn-login').addEventListener('click', async () => {
+        try { await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value); } 
+        catch (e) { alert("Помилка входу: " + e.message); }
+    });
 
-            const base = hours * rate;
-            const nightPay = night * (rate * 0.2); // 20% нічних
-            const overtimePay = overtime * (rate * 1.5); // 50% надгодини
-            const total = base + nightPay + overtimePay + bonus;
+    document.getElementById('btn-register').addEventListener('click', async () => {
+        try { await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value); alert("Реєстрація успішна!"); } 
+        catch (e) { alert("Помилка: " + e.message); }
+    });
 
-            document.getElementById('res-base').innerText = base.toFixed(2);
-            document.getElementById('res-night').innerText = nightPay.toFixed(2);
-            document.getElementById('res-overtime').innerText = overtimePay.toFixed(2);
-            document.getElementById('res-total').innerText = total.toFixed(2);
-        }
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+        await signOut(auth);
+    });
 
-        // Збереження у хмару Firestore
-        async function saveData() {
-            const user = window.auth.currentUser;
-            if (!user) return;
-
-            const month = document.getElementById('selected-month').value;
-            const data = {
-                hours: document.getElementById('hours').value,
-                rate: document.getElementById('rate').value,
-                nightHours: document.getElementById('night-hours').value,
-                overtime: document.getElementById('overtime').value,
-                bonus: document.getElementById('bonus').value,
-                updatedAt: new Date()
-            };
-
-            try {
-                // Зберігаємо у колекцію користувача за місяцем
-                const docRef = window.doc(window.db, "users", user.uid, "months", month);
-                await window.setDoc(docRef, data);
-                alert("Дані успішно збережено у хмару! ☁️");
-            } catch (error) {
-                alert("Помилка збереження: " + error.message);
-            }
-        }
-
-        // Завантаження даних з хмари при зміні місяця
-        async function loadMonthData() {
-            const user = window.auth.currentUser;
-            if (!user) return;
-
-            const month = document.getElementById('selected-month').value;
-            try {
-                const docRef = window.doc(window.db, "users", user.uid, "months", month);
-                const docSnap = await window.getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const d = docSnap.data();
-                    document.getElementById('hours').value = d.hours || 168;
-                    document.getElementById('rate').value = d.rate || 28.5;
-                    document.getElementById('night-hours').value = d.nightHours || 0;
-                    document.getElementById('overtime').value = d.overtime || 0;
-                    document.getElementById('bonus').value = d.bonus || 0;
-                } else {
-                    // Якщо даних немає за цей місяць — скидаємо на дефолтні
-                    document.getElementById('hours').value = 168;
-                    document.getElementById('night-hours').value = 0;
-                    document.getElementById('overtime').value = 0;
-                    document.getElementById('bonus').value = 0;
-                }
-                calculate();
-            } catch (error) {
-                console.error("Помилка завантаження:", error);
-            }
-        }
-
-        // Первинний розрахунок при завантаженні
-        window.onload = calculate;
-    </script>
-
+</script>
 </body>
 </html>
