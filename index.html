@@ -67,7 +67,7 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 260px;
+            width: 280px;
             height: 100%;
             background: var(--panel-bg);
             box-shadow: 4px 0 15px rgba(0,0,0,0.1);
@@ -79,6 +79,7 @@
             box-sizing: border-box;
             transition: transform 0.3s ease;
             transform: translateX(-100%);
+            overflow-y: auto;
         }
 
         .side-menu.open {
@@ -89,20 +90,20 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
 
         .menu-item {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .menu-item label {
             display: block;
             font-size: 13px;
             color: var(--text-muted);
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             width: 100%;
         }
 
@@ -225,7 +226,7 @@
         .netto .result-value { color: var(--success); }
 
         .hidden { display: none !important; }
-        .auth-btn { width: 100%; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .auth-btn { width: 100%; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 6px; }
         .btn-login { background: var(--primary); }
         .btn-register { background: var(--text-main); }
         .btn-save { background: var(--success); width: 100%; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; margin-bottom: 20px; }
@@ -234,60 +235,55 @@
 <body>
 
 <div class="calculator">
-    <!-- Екран авторизації -->
-    <div id="auth-screen">
-        <h2 style="text-align: center; margin-bottom: 20px; color: var(--primary);">Fiege Login</h2>
-        <div class="form-group" style="display: block;">
-            <label style="width: 100%; margin-bottom: 5px; display: block;">Email:</label>
-            <input type="email" id="email" placeholder="email@example.com" style="width: 100%; text-align: left;">
+    
+    <!-- Випадаюче бокове меню (гамбургер) -->
+    <div id="sideMenu" class="side-menu">
+        <div class="menu-header">
+            <span style="font-weight: bold; font-size: 15px;" id="lblMenuTitle">Меню</span>
+            <button class="close-menu" onclick="toggleMenu()">✕</button>
         </div>
-        <div class="form-group" style="display: block;">
-            <label style="width: 100%; margin-bottom: 5px; display: block;">Пароль:</label>
-            <input type="password" id="password" placeholder="мінімум 6 символів" style="width: 100%; text-align: left;">
+
+        <!-- Секція мови та теми -->
+        <div class="menu-item">
+            <label id="lblMenuLang">Мова</label>
+            <select id="langSelect" style="width: 100%;" onchange="setLang(this.value)">
+                <option value="ua">Українська</option>
+                <option value="pl">Polski</option>
+            </select>
         </div>
-        <button id="btn-login" class="auth-btn btn-login">Увійти</button>
-        <button id="btn-register" class="auth-btn btn-register">Зареєструватися</button>
+
+        <div class="menu-item">
+            <label id="lblMenuTheme">Тема</label>
+            <select id="themeSelect" style="width: 100%;" onchange="setTheme(this.value)">
+                <option value="light">Світла</option>
+                <option value="dark">Темна</option>
+            </select>
+        </div>
+
+        <div class="divider" style="margin: 15px 0;"></div>
+
+        <!-- Секція хмарного акаунта -->
+        <div id="menu-auth-logged-out">
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;" id="lblCloudInfo">Увійдіть, щоб зберігати дані у хмару:</p>
+            <div style="margin-bottom: 8px;">
+                <input type="email" id="email" placeholder="Email" style="width: 100%; text-align: left; padding: 8px;">
+            </div>
+            <div style="margin-bottom: 8px;">
+                <input type="password" id="password" placeholder="Пароль" style="width: 100%; text-align: left; padding: 8px;">
+            </div>
+            <button id="btn-login" class="auth-btn btn-login">Увійти</button>
+            <button id="btn-register" class="auth-btn btn-register">Реєстрація</button>
+        </div>
+
+        <div id="menu-auth-logged-in" class="hidden">
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">Ви увійшли як:</p>
+            <p id="user-email-display" style="font-size: 13px; font-weight: bold; word-break: break-all; margin-bottom: 15px; color: var(--primary);"></p>
+            <button id="btn-logout" class="auth-btn" style="background: var(--text-muted);">Вийти з акаунта</button>
+        </div>
     </div>
 
-    <!-- Головний екран калькулятора -->
-    <div id="app-screen" class="hidden">
-        
-        <!-- Випадаюче бокове меню (гамбургер) -->
-        <div id="sideMenu" class="side-menu">
-            <div class="menu-header">
-                <span id="user-email-display" style="font-size: 12px; font-weight: bold; overflow: hidden; text-overflow: ellipsis;"></span>
-                <button class="close-menu" onclick="toggleMenu()">✕</button>
-            </div>
-
-            <div class="menu-item">
-                <label id="lblMenuProfile">Профіль</label>
-                <select id="profileSelect" style="width: 100%;">
-                    <option value="Volodymyr">Володимир</option>
-                    <option value="Yuliia">Юлія</option>
-                </select>
-            </div>
-
-            <div class="menu-item">
-                <label id="lblMenuLang">Мова</label>
-                <select id="langSelect" style="width: 100%;" onchange="setLang(this.value)">
-                    <option value="ua">Українська</option>
-                    <option value="pl">Polski</option>
-                </select>
-            </div>
-
-            <div class="menu-item">
-                <label id="lblMenuTheme">Тема</label>
-                <select id="themeSelect" style="width: 100%;" onchange="setTheme(this.value)">
-                    <option value="light">Світла</option>
-                    <option value="dark">Темна</option>
-                </select>
-            </div>
-
-            <div style="margin-top: auto;">
-                <button id="btn-logout" class="auth-btn" style="background: var(--text-muted); margin-top: 0;">Вийти</button>
-            </div>
-        </div>
-
+    <!-- Головний екран калькулятора (доступний одразу) -->
+    <div id="app-screen">
         <div class="header-row">
             <button class="menu-btn" onclick="toggleMenu()">☰</button>
             <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП</h2>
@@ -361,6 +357,7 @@
             <input type="number" id="overtimeDays" placeholder="-">
         </div>
 
+        <!-- Кнопка збереження активна лише якщо користувач увійшов -->
         <button id="btn-save" class="btn-save">Зберегти у хмару ☁️</button>
 
         <div class="divider"></div>
@@ -403,7 +400,7 @@
             bonus: "Премія", morning: "Ранкові зміни (шт)", night: "Нічні зміни (шт)",
             weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)", under26: "Вік до 26 років",
             ppk: "Участь у PPK", insurance: "Дод. страхування", yes: "Так", no: "Ні",
-            menuProfile: "Профіль", menuLang: "Мова", menuTheme: "Тема",
+            menuTitle: "Меню & Хмара", menuLang: "Мова", menuTheme: "Тема", cloudInfo: "Увійдіть для збереження у хмару:",
             months: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
         },
         pl: {
@@ -411,7 +408,7 @@
             bonus: "Premia", morning: "Poranne zmiany (szt)", night: "Nocne zmiany (szt)",
             weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", under26: "Wiek poniżej 26 lat",
             ppk: "Uczestnictwo w PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
-            menuProfile: "Profil", menuLang: "Język", menuTheme: "Motyw",
+            menuTitle: "Menu i Chmura", menuLang: "Język", menuTheme: "Motyw", cloudInfo: "Zaloguj się, aby zapisać w chmurze:",
             months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
         }
     };
@@ -445,9 +442,10 @@
         document.getElementById('lblUnder26').innerText = dict[lang].under26;
         document.getElementById('lblPPK').innerText = dict[lang].ppk;
         document.getElementById('lblInsurance').innerText = dict[lang].insurance;
-        document.getElementById('lblMenuProfile').innerText = dict[lang].menuProfile;
+        document.getElementById('lblMenuTitle').innerText = dict[lang].menuTitle;
         document.getElementById('lblMenuLang').innerText = dict[lang].menuLang;
         document.getElementById('lblMenuTheme').innerText = dict[lang].menuTheme;
+        document.getElementById('lblCloudInfo').innerText = dict[lang].cloudInfo;
         
         document.getElementById('optU26Yes').innerText = dict[lang].yes;
         document.getElementById('optU26No').innerText = dict[lang].no;
@@ -538,7 +536,7 @@
     }
 
     document.querySelectorAll('input, select').forEach(element => {
-        if(element.id !== 'profileSelect' && element.id !== 'langSelect' && element.id !== 'themeSelect') {
+        if(element.id !== 'langSelect' && element.id !== 'themeSelect' && element.id !== 'email' && element.id !== 'password') {
             element.addEventListener('input', calculateSalary);
             element.addEventListener('change', calculateSalary);
         }
@@ -548,11 +546,10 @@
         const user = auth.currentUser;
         if (!user) return;
         const month = document.getElementById('monthSelect').value;
-        const profile = document.getElementById('profileSelect').value;
         if (month === "") return;
 
         try {
-            const docRef = doc(db, "users", user.uid, "profiles", profile, "months", month.toString());
+            const docRef = doc(db, "users", user.uid, "months", month.toString());
             const docSnap = await getDoc(docRef);
             
             if (docSnap.exists()) {
@@ -580,14 +577,16 @@
     }
 
     document.getElementById('monthSelect').addEventListener('change', loadData);
-    document.getElementById('profileSelect').addEventListener('change', loadData);
 
     document.getElementById('btn-save').addEventListener('click', async () => {
         const user = auth.currentUser;
-        if (!user) return;
+        if (!user) {
+            alert(currentLang === 'ua' ? "Будь ласка, увійдіть в акаунт через меню, щоб зберігати дані!" : "Zaloguj się przez menu, aby zapisać dane!");
+            toggleMenu();
+            return;
+        }
+
         const month = document.getElementById('monthSelect').value;
-        const profile = document.getElementById('profileSelect').value;
-        
         if (month === "") {
             alert(currentLang === 'ua' ? "Оберіть місяць!" : "Wybierz miesiąc!");
             return;
@@ -607,7 +606,7 @@
         };
 
         try {
-            const docRef = doc(db, "users", user.uid, "profiles", profile, "months", month.toString());
+            const docRef = doc(db, "users", user.uid, "months", month.toString());
             await setDoc(docRef, data);
             alert(currentLang === 'ua' ? "Дані збережено у хмару! ☁️" : "Zapisano w chmurze! ☁️");
         } catch (error) {
@@ -615,42 +614,51 @@
         }
     });
 
-    const authScreen = document.getElementById('auth-screen');
-    const appScreen = document.getElementById('app-screen');
+    // Керування станом авторизації в меню
+    const loggedOutSection = document.getElementById('menu-auth-logged-out');
+    const loggedInSection = document.getElementById('menu-auth-logged-in');
+    const emailDisplay = document.getElementById('user-email-display');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            authScreen.classList.add('hidden');
-            appScreen.classList.remove('hidden');
-            document.getElementById('user-email-display').innerText = user.email;
-            initMonths();
+            loggedOutSection.classList.add('hidden');
+            loggedInSection.classList.remove('hidden');
+            emailDisplay.innerText = user.email;
             loadData();
         } else {
-            authScreen.classList.remove('hidden');
-            appScreen.classList.add('hidden');
+            loggedOutSection.classList.remove('hidden');
+            loggedInSection.classList.add('hidden');
+            emailDisplay.innerText = "";
         }
     });
 
     document.getElementById('btn-login').addEventListener('click', async () => {
-        try { await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value); } 
-        catch (e) { alert("Помилка входу: " + e.message); }
+        try { 
+            await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+            toggleMenu();
+        } catch (e) { alert("Помилка входу: " + e.message); }
     });
 
     document.getElementById('btn-register').addEventListener('click', async () => {
-        try { await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value); alert("Реєстрація успішна!"); } 
-        catch (e) { alert("Помилка: " + e.message); }
+        try { 
+            await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value); 
+            alert("Реєстрація успішна!"); 
+            toggleMenu();
+        } catch (e) { alert("Помилка: " + e.message); }
     });
 
     document.getElementById('btn-logout').addEventListener('click', async () => {
         await signOut(auth);
     });
 
-    // Відновлення теми з пам'яті браузера
+    // Ініціалізація теми та мови при завантаженні
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.getElementById('themeSelect').value = savedTheme;
     setTheme(savedTheme);
+    initMonths();
+    calculateSalary();
 
 </script>
 </body>
