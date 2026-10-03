@@ -13,6 +13,7 @@
             --text-muted: #7f8c8d;
             --border-color: #e0e5ec;
             --success: #27ae60;
+            --highlight: #fff3cd;
         }
 
         [data-theme="dark"] {
@@ -23,6 +24,7 @@
             --text-muted: #a0a0a0;
             --border-color: #333333;
             --success: #2ecc71;
+            --highlight: #332b00;
         }
 
         body { 
@@ -51,176 +53,62 @@
             transition: background 0.3s;
         }
 
-        .menu-btn {
-            background: none;
-            border: none;
-            font-size: 22px;
-            cursor: pointer;
-            color: var(--text-main);
-            padding: 0;
-            width: auto;
-            margin: 0;
+        .menu-btn, .close-menu {
+            background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-main); padding: 0;
         }
 
         .side-menu {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 280px;
-            height: 100%;
-            background: var(--panel-bg);
-            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-            border-radius: 16px 0 0 16px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            box-sizing: border-box;
-            transition: transform 0.3s ease;
-            transform: translateX(-100%);
-            overflow-y: auto;
+            position: absolute; top: 0; left: 0; width: 280px; height: 100%;
+            background: var(--panel-bg); box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            border-radius: 16px 0 0 16px; z-index: 10; display: flex; flex-direction: column;
+            padding: 20px; box-sizing: border-box; transition: transform 0.3s ease;
+            transform: translateX(-100%); overflow-y: auto;
+        }
+        .side-menu.open { transform: translateX(0); }
+        .menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .menu-item { margin-bottom: 15px; }
+        .menu-item label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; width: 100%; }
+
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        h2 { margin: 0; font-size: 20px; color: var(--text-main); font-weight: 700; }
+
+        .form-group { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
+        
+        .form-group.sub-group {
+            background: var(--highlight);
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin-top: -6px;
+            margin-bottom: 14px;
+            border: 1px dashed var(--text-muted);
         }
 
-        .side-menu.open {
-            transform: translateX(0);
-        }
-
-        .menu-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-
-        .menu-item {
-            margin-bottom: 15px;
-        }
-
-        .menu-item label {
-            display: block;
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-            width: 100%;
-        }
-
-        .close-menu {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-main);
-            width: auto;
-            margin: 0;
-            padding: 0;
-        }
-
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        h2 { 
-            margin: 0; 
-            font-size: 20px; 
-            color: var(--text-main); 
-            font-weight: 700;
-        }
-
-        .form-group { 
-            margin-bottom: 14px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-
-        label { 
-            font-size: 14px; 
-            font-weight: 500; 
-            color: var(--text-main);
-            width: 60%;
-        }
+        label { font-size: 14px; font-weight: 500; color: var(--text-main); width: 60%; }
+        .sub-group label { font-size: 13px; font-weight: 600; }
 
         input, select { 
-            width: 38%; 
-            padding: 10px; 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            font-size: 14px; 
-            text-align: center; 
-            background: var(--bg-color);
-            color: var(--text-main);
-            font-weight: 600;
-            transition: all 0.2s ease;
-            box-sizing: border-box;
-            appearance: none;
+            width: 38%; padding: 10px; border: 1px solid var(--border-color); 
+            border-radius: 8px; font-size: 14px; text-align: center; 
+            background: var(--bg-color); color: var(--text-main);
+            font-weight: 600; box-sizing: border-box; appearance: none;
         }
-
+        
         select {
-            text-align: center;
-            text-align-last: center;
+            text-align-last: center; padding-right: 20px;
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237f8c8d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px top 50%;
-            background-size: 8px auto;
-            padding-right: 20px;
+            background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 8px auto;
         }
+        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1); }
+        input::placeholder { color: var(--text-muted); font-weight: 400; }
 
-        input:focus, select:focus { 
-            border-color: var(--primary); 
-            outline: none; 
-            box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1);
-        }
-
-        input::placeholder {
-            color: var(--text-muted);
-            font-weight: 400;
-        }
-
-        .divider { 
-            border-top: 1px solid var(--border-color); 
-            margin: 20px 0; 
-        }
+        .divider { border-top: 1px solid var(--border-color); margin: 20px 0; }
         
-        .results-panel { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 12px; 
-        }
-
-        .result-box { 
-            border-radius: 12px; 
-            padding: 16px 12px; 
-            text-align: center; 
-        }
-
-        .result-box.brutto {
-            background: var(--bg-color);
-            border: 1px solid var(--border-color);
-        }
-
-        .result-box.netto {
-            background: rgba(39, 174, 96, 0.08);
-            border: 1px solid var(--success);
-        }
-
-        .result-title { 
-            font-size: 11px; 
-            color: var(--text-muted); 
-            margin-bottom: 6px; 
-            font-weight: 700; 
-            letter-spacing: 0.5px;
-        }
-
-        .result-value { 
-            font-size: 20px; 
-            font-weight: 800; 
-        }
-        
+        .results-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .result-box { border-radius: 12px; padding: 16px 12px; text-align: center; }
+        .result-box.brutto { background: var(--bg-color); border: 1px solid var(--border-color); }
+        .result-box.netto { background: rgba(39, 174, 96, 0.08); border: 1px solid var(--success); }
+        .result-title { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 700; letter-spacing: 0.5px; }
+        .result-value { font-size: 20px; font-weight: 800; }
         .brutto .result-value { color: var(--text-main); }
         .netto .result-value { color: var(--success); }
 
@@ -229,20 +117,12 @@
         .btn-sync { background: var(--success); }
         .btn-auth-action { background: var(--primary); }
         .btn-logout { background: var(--text-muted); }
-        
-        .cloud-section {
-            background: rgba(0,0,0,0.03);
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border: 1px solid var(--border-color);
-        }
+        .cloud-section { background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border-color); }
     </style>
 </head>
 <body>
 
 <div class="calculator">
-    <!-- Випадаюче бокове меню -->
     <div id="sideMenu" class="side-menu">
         <div class="menu-header">
             <span id="menuTitle" style="font-size: 15px; font-weight: bold;">Меню</span>
@@ -267,17 +147,14 @@
 
         <div class="divider" style="margin: 10px 0;"></div>
 
-        <!-- Хмарна синхронізація -->
         <div class="cloud-section">
             <label style="width: 100%; font-weight: bold; margin-bottom: 8px; display: block;" id="lblCloudHeader">Хмара (Firebase)</label>
-            
             <div id="auth-container">
                 <input type="email" id="email" placeholder="Email" style="width: 100%; margin-bottom: 6px; text-align: left;" onfocus="this.value=''">
                 <input type="password" id="password" placeholder="Пароль" style="width: 100%; margin-bottom: 8px; text-align: left;" onfocus="this.value=''">
                 <button id="btn-login" class="action-btn btn-auth-action">Увійти</button>
                 <button id="btn-register" class="action-btn" style="background: var(--text-main); margin-top: 4px;">Реєстрація</button>
             </div>
-
             <div id="sync-container" class="hidden">
                 <span id="user-email-display" style="font-size: 11px; display: block; margin-bottom: 8px; word-break: break-all; font-weight: bold;"></span>
                 <button id="btn-sync-up" class="action-btn btn-sync">Зберегти у хмару ☁️</button>
@@ -287,7 +164,6 @@
         </div>
     </div>
 
-    <!-- Головний екран калькулятора -->
     <div class="header-row">
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
         <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП</h2>
@@ -299,35 +175,33 @@
     </div>
 
     <div class="form-group">
-        <label id="lblUnder26">Вік до 26 років</label>
-        <select id="under26Select">
-            <option value="" disabled selected>-</option>
-            <option value="yes" id="optU26Yes">Так</option>
-            <option value="no" id="optU26No">Ні</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label id="lblPPK">Участь у PPK</label>
-        <select id="ppkSelect">
-            <option value="" disabled selected>-</option>
-            <option value="yes" id="optPpkYes">Так</option>
-            <option value="no" id="optPpkNo">Ні</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label id="lblInsurance">Додаткове страхування</label>
-        <select id="insuranceSelect">
-            <option value="" disabled selected>-</option>
-            <option value="yes" id="optInsYes">Так</option>
-            <option value="no" id="optInsNo">Ні</option>
-        </select>
-    </div>
-
-    <div class="form-group">
         <label id="lblBase">Загальна ставка (zł)</label>
         <input type="number" id="baseSalary" value="5950" onfocus="this.value=''" onblur="if(this.value==='') this.value='0'; calculateSalary();">
+    </div>
+
+    <div class="form-group">
+        <label id="lblScheduleDays">Графікові роб. дні (Група)</label>
+        <input type="number" id="scheduleDays" placeholder="Напр. 22" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+
+    <!-- БЛОК ВІДПУСТКИ -->
+    <div class="form-group">
+        <label id="lblVacationDays">Відпустка (днів)</label>
+        <input type="number" id="vacationDays" placeholder="0" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+    <div class="form-group sub-group hidden" id="urlopBonusGroup">
+        <label id="lblUrlopBonus">Średnia urlopowa (zł) ℹ️</label>
+        <input type="number" id="urlopBonus" placeholder="0.00" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+
+    <!-- БЛОК ЛІКАРНЯНОГО -->
+    <div class="form-group">
+        <label id="lblL4Days">Лікарняний L4 (календарні)</label>
+        <input type="number" id="l4Days" placeholder="0" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+    <div class="form-group sub-group hidden" id="workedDaysGroup">
+        <label id="lblWorkedDays">Скільки днів відпрацьовано?</label>
+        <input type="number" id="workedDays" placeholder="Фактично" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
 
     <div class="form-group">
@@ -363,6 +237,32 @@
 
     <div class="divider"></div>
 
+    <div class="form-group">
+        <label id="lblUnder26">Вік до 26 років</label>
+        <select id="under26Select">
+            <option value="no" id="optU26No" selected>Ні</option>
+            <option value="yes" id="optU26Yes">Так</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label id="lblPPK">Участь у PPK</label>
+        <select id="ppkSelect">
+            <option value="no" id="optPpkNo" selected>Ні</option>
+            <option value="yes" id="optPpkYes">Так</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label id="lblInsurance">Додаткове страхування</label>
+        <select id="insuranceSelect">
+            <option value="yes" id="optInsYes" selected>Так</option>
+            <option value="no" id="optInsNo">Ні</option>
+        </select>
+    </div>
+
+    <div class="divider"></div>
+
     <div class="results-panel">
         <div class="result-box brutto">
             <div class="result-title">BRUTTO</div>
@@ -386,8 +286,7 @@
         projectId: "my-salary-9ea25",
         storageBucket: "my-salary-9ea25.firebasestorage.app",
         messagingSenderId: "412323283290",
-        appId: "1:412323283290:web:b4706af670a57776333363",
-        measurementId: "G-9K2FQVSPE1"
+        appId: "1:412323283290:web:b4706af670a57776333363"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -397,92 +296,64 @@
     const dict = {
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)",
-            bonus: "Премія", morning: "Ранкові зміни (шт)", night: "Нічні зміни (шт)",
-            weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)", under26: "Вік до 26 років",
-            ppk: "Участь у PPK", insurance: "Дод. страхування", yes: "Так", no: "Ні",
+            scheduleDays: "Графікові роб. дні (Група)", vacationDays: "Відпустка (днів)",
+            urlopBonus: "Доплата за відпустку (zł) ℹ️", l4Days: "Лікарняний L4 (календарні)",
+            workedDays: "Скільки днів відпрацьовано?", bonus: "Премія", morning: "Ранкові зміни (шт)", 
+            night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)", 
+            under26: "Вік до 26 років", ppk: "Участь у PPK", insurance: "Дод. страхування", yes: "Так", no: "Ні",
             menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", cloudHeader: "Хмарна синхронізація",
             themeLight: "Світла", themeDark: "Темна", 
-            btnLogin: "Увійти", btnRegister: "Реєстрація", btnSyncUp: "Зберегти у хмару ☁️", 
-            btnSyncDown: "Завантажити з хмари 📥", btnLogout: "Вийти з акаунта",
-            passPlaceholder: "Пароль",
-            months: [
-                "Січень 2026", "Лютий 2026", "Березень 2026", "Квітень 2026", 
-                "Травень 2026", "Червень 2026", "Липень 2026", "Серпень 2026", 
-                "Вересень 2026", "Жовтень 2026", "Листопад 2026", "Грудень 2026"
-            ]
+            months: ["Січень 2026", "Лютий 2026", "Березень 2026", "Квітень 2026", "Травень 2026", "Червень 2026", "Липень 2026", "Серпень 2026", "Вересень 2026", "Жовтень 2026", "Листопад 2026", "Грудень 2026"]
         },
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)",
-            bonus: "Premia", morning: "Poranne zmiany (szt)", night: "Nocne zmiany (szt)",
-            weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat",
-            ppk: "PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
+            scheduleDays: "Dni robocze z grafiku", vacationDays: "Urlop (dni)",
+            urlopBonus: "Średnia urlopowa (zł) ℹ️", l4Days: "L4 (dni kalendarzowe)",
+            workedDays: "Ile dni przepracowano?", bonus: "Premia", morning: "Poranne zmiany (szt)", 
+            night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", 
+            under26: "Wiek < 26 lat", ppk: "PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
             menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw", cloudHeader: "Chmura (Firebase)",
-            themeLight: "Jasny", themeDark: "Ciemny", 
-            btnLogin: "Zaloguj się", btnRegister: "Rejestracja", btnSyncUp: "Zapisz w chmurze ☁️", 
-            btnSyncDown: "Pobierz z chmury 📥", btnLogout: "Wyloguj się",
-            passPlaceholder: "Hasło",
-            months: [
-                "Styczeń 2026", "Luty 2026", "Marzec 2026", "Kwiecień 2026", 
-                "Maj 2026", "Czerwiec 2026", "Lipiec 2026", "Sierpień 2026", 
-                "Wrzesień 2026", "Październik 2026", "Listopad 2026", "Grudzień 2026"
-            ]
+            themeLight: "Jasny", themeDark: "Ciemny",
+            months: ["Styczeń 2026", "Luty 2026", "Marzec 2026", "Kwiecień 2026", "Maj 2026", "Czerwiec 2026", "Lipiec 2026", "Sierpień 2026", "Wrzesień 2026", "Październik 2026", "Listopad 2026", "Grudzień 2026"]
         }
     };
 
     let currentLang = 'ua';
-    // Робочі дні для Польщі 2026 року
-    const monthWorkDays2026 = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
+    // Державні норми робочих днів на 2026 рік (тільки для розрахунку вартості 1 нічної/надгодини)
+    const stateWorkDays2026 = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
 
-    window.toggleMenu = function() {
-        document.getElementById('sideMenu').classList.toggle('open');
-    }
-
+    window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); }
     window.setTheme = function(theme) {
-        if (theme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-            document.documentElement.removeAttribute('data-theme');
-        }
+        document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : '');
         localStorage.setItem('theme', theme);
     }
 
     window.setLang = function(lang) {
         currentLang = lang;
-        // Головний екран
-        document.getElementById('lblTitle').innerText = dict[lang].title;
-        document.getElementById('lblMonth').innerText = dict[lang].month;
-        document.getElementById('lblBase').innerText = dict[lang].base;
-        document.getElementById('lblBonus').innerText = dict[lang].bonus;
-        document.getElementById('lblMorning').innerText = dict[lang].morning;
-        document.getElementById('lblNight').innerText = dict[lang].night;
-        document.getElementById('lblWeekend').innerText = dict[lang].weekend;
-        document.getElementById('lblOvertime').innerText = dict[lang].overtime;
-        document.getElementById('lblUnder26').innerText = dict[lang].under26;
-        document.getElementById('lblPPK').innerText = dict[lang].ppk;
-        document.getElementById('lblInsurance').innerText = dict[lang].insurance;
+        const d = dict[lang];
+        document.getElementById('lblTitle').innerText = d.title;
+        document.getElementById('lblMonth').innerText = d.month;
+        document.getElementById('lblBase').innerText = d.base;
+        document.getElementById('lblScheduleDays').innerText = d.scheduleDays;
+        document.getElementById('lblVacationDays').innerText = d.vacationDays;
+        document.getElementById('lblUrlopBonus').innerText = d.urlopBonus;
+        document.getElementById('lblL4Days').innerText = d.l4Days;
+        document.getElementById('lblWorkedDays').innerText = d.workedDays;
+        document.getElementById('lblBonus').innerText = d.bonus;
+        document.getElementById('lblMorning').innerText = d.morning;
+        document.getElementById('lblNight').innerText = d.night;
+        document.getElementById('lblWeekend').innerText = d.weekend;
+        document.getElementById('lblOvertime').innerText = d.overtime;
+        document.getElementById('lblUnder26').innerText = d.under26;
+        document.getElementById('lblPPK').innerText = d.ppk;
+        document.getElementById('lblInsurance').innerText = d.insurance;
+        document.getElementById('menuTitle').innerText = d.menuTitle;
+        document.getElementById('lblMenuLang').innerText = d.menuLang;
+        document.getElementById('lblMenuTheme').innerText = d.menuTheme;
         
-        // Опції селектів
-        document.getElementById('optU26Yes').innerText = dict[lang].yes;
-        document.getElementById('optU26No').innerText = dict[lang].no;
-        document.getElementById('optPpkYes').innerText = dict[lang].yes;
-        document.getElementById('optPpkNo').innerText = dict[lang].no;
-        document.getElementById('optInsYes').innerText = dict[lang].yes;
-        document.getElementById('optInsNo').innerText = dict[lang].no;
-
-        // Меню
-        document.getElementById('menuTitle').innerText = dict[lang].menuTitle;
-        document.getElementById('lblMenuLang').innerText = dict[lang].menuLang;
-        document.getElementById('lblMenuTheme').innerText = dict[lang].menuTheme;
-        document.getElementById('optThemeLight').innerText = dict[lang].themeLight;
-        document.getElementById('optThemeDark').innerText = dict[lang].themeDark;
-        document.getElementById('lblCloudHeader').innerText = dict[lang].cloudHeader;
-        
-        document.getElementById('btn-login').innerText = dict[lang].btnLogin;
-        document.getElementById('btn-register').innerText = dict[lang].btnRegister;
-        document.getElementById('btn-sync-up').innerText = dict[lang].btnSyncUp;
-        document.getElementById('btn-sync-down').innerText = dict[lang].btnSyncDown;
-        document.getElementById('btn-logout').innerText = dict[lang].btnLogout;
-        document.getElementById('password').placeholder = dict[lang].passPlaceholder;
+        document.getElementById('optU26Yes').innerText = d.yes; document.getElementById('optU26No').innerText = d.no;
+        document.getElementById('optPpkYes').innerText = d.yes; document.getElementById('optPpkNo').innerText = d.no;
+        document.getElementById('optInsYes').innerText = d.yes; document.getElementById('optInsNo').innerText = d.no;
 
         initMonths();
         calculateSalary();
@@ -494,131 +365,150 @@
         select.innerHTML = '<option value="" disabled selected>-</option>';
         dict[currentLang].months.forEach((m, idx) => {
             let opt = document.createElement('option');
-            // Ключі зберігання формуватимуться як 2026-01, 2026-02 і т.д.
             opt.value = "2026-" + String(idx + 1).padStart(2, '0');
             opt.text = m;
             select.appendChild(opt);
         });
-        if (currentVal) {
-            select.value = currentVal;
-        } else {
-            select.value = "2026-01"; // За замовчуванням Січень 2026
-        }
+        select.value = currentVal || "2026-01";
     }
 
     window.calculateSalary = function() {
+        // Управління видимістю нових полів
+        const vacDays = parseInt(document.getElementById('vacationDays').value) || 0;
+        const l4Days = parseInt(document.getElementById('l4Days').value) || 0;
+        
+        document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays === 0);
+        document.getElementById('workedDaysGroup').classList.toggle('hidden', l4Days === 0);
+
         const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
         const monthVal = document.getElementById('monthSelect').value;
+        if (baseSalary === 0 || monthVal === "") return updateUI(0, 0);
+
+        // Державні дані для нічних / надгодин
+        const monthIdx = parseInt(monthVal.split('-')[1]) - 1;
+        const stateDays = stateWorkDays2026[monthIdx];
+        const minSalary = 4806.00; 
+        const nightTariff = Math.round(((minSalary / (stateDays * 8)) * 0.20) * 100) / 100;
+        const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
+
+        // Дані користувача (графік)
+        const schedDays = parseInt(document.getElementById('scheduleDays').value) || stateDays; // Якщо пусто, беремо державні
         
-        if (baseSalary === 0 || monthVal === "") {
-            document.getElementById('grossResult').innerText = '0.00 zł';
-            document.getElementById('netResult').innerText = '0.00 zł';
-            return;
+        // Визначення фактично відпрацьованих днів для премії
+        let actualWorkedDays = schedDays - vacDays;
+        if (l4Days > 0) {
+            actualWorkedDays = parseInt(document.getElementById('workedDays').value) || 0;
+        }
+        actualWorkedDays = Math.max(0, actualWorkedDays); // Захист від мінуса
+
+        // Лікарняний (L4) 80% (віднімаємо 1/30 базової ставки за кожен день)
+        let adjustedBase = baseSalary;
+        let l4Pay = 0;
+        if (l4Days > 0) {
+            adjustedBase = baseSalary - ((baseSalary / 30) * l4Days);
+            // Виплата лікарняних (без 13,71% ZUS) = 86,29% від ставки
+            l4Pay = ((baseSalary * 0.8629) / 30) * 0.80 * l4Days; 
         }
 
-        const monthIdx = parseInt(monthVal.split('-')[1]) - 1;
-        const workDays = monthWorkDays2026[monthIdx];
-        
-        // Мінімальна ставка для розрахунку нічних (потрібно буде оновити, якщо уряд змінить на 2026)
-        const minSalary = 4806.00; 
-        const nightTariff = Math.round(((minSalary / (workDays * 8)) * 0.20) * 100) / 100;
-
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
+        const bonusAmount = (baseSalary * (bonusPct / 100)) / schedDays * actualWorkedDays;
+
         const morningShifts = parseInt(document.getElementById('morningShifts').value) || 0;
         const nightShifts = parseInt(document.getElementById('nightShifts').value) || 0;
         const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
         const overtimeDays = parseFloat(document.getElementById('overtimeDays').value) || 0;
+        const urlopBonus = parseFloat(document.getElementById('urlopBonus').value) || 0;
 
+        const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
+        const weekendPay = weekendDays * 100;
+        const overtimePay = overtimeDays * overtimeTariff;
+
+        // БРУТТО
+        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + weekendPay + overtimePay + urlopBonus;
+
+        // ПОДАТКИ ТА ZUS
         const isUnder26 = document.getElementById('under26Select').value === 'yes';
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
-        const insuranceActive = document.getElementById('insuranceSelect').value === 'yes';
-
-        const bonusAmount = baseSalary * (bonusPct / 100);
-        const morningNightPay = Math.round((morningShifts * (10 / 60) * nightTariff) * 100) / 100;
-        const nightPay = (nightShifts * 8 * nightTariff) + (nightShifts * 30);
-        const totalNightPay = morningNightPay + nightPay;
-
-        const weekendPay = weekendDays * 100;
-        const overtimePay = Math.round(((baseSalary / workDays) * 2 * overtimeDays) * 100) / 100;
-
-        const gross = baseSalary + bonusAmount + totalNightPay + weekendPay + overtimePay;
-
-        const zus = gross * 0.1371; 
-        const healthBase = gross - zus;
+        
+        // ZUS (від соціальних внесків 13,71% звільняється сума лікарняного L4)
+        const zusBase = gross - l4Pay; 
+        const zus = zusBase * 0.1371; 
+        const healthBase = gross - zus; // Медичний 9% береться з усієї суми (вкл. лікарняні)
         const nfz = Math.round((healthBase * 0.09) * 100) / 100;
         const ppkEmployee = ppkActive ? (gross * 0.02) : 0;
 
         let pit = 0;
         if (!isUnder26) {
-            const kup = 300.00;
+            const kup = 300.00; // Koszty uzyskania przychodu
             const pitBase = Math.round(Math.max(0, healthBase - kup));
             let nominalPit = (pitBase * 0.12) - 300.00;
-            const benefitExpense = 54.00;
-            pit = Math.round(nominalPit) + benefitExpense;
-            pit = Math.max(0, pit);
+            pit = Math.max(0, Math.round(nominalPit) + 54.00);
         }
 
-        const insuranceDeduction = insuranceActive ? 36.70 : 0;
-        const benefitDeduction = 30.25;
-        const laundryBonus = 15.00;
+        const insuranceDeduction = document.getElementById('insuranceSelect').value === 'yes' ? 36.70 : 0;
+        const net = gross - zus - nfz - pit - ppkEmployee - insuranceDeduction - 30.25 + 15.00; // -Benefit +Laundry
 
-        const net = gross - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction + laundryBonus;
+        updateUI(gross, net);
+        saveLocalData();
+    }
 
+    function updateUI(gross, net) {
         document.getElementById('grossResult').innerText = gross.toFixed(2) + ' zł';
         document.getElementById('netResult').innerText = net.toFixed(2) + ' zł';
-        
-        saveLocalData();
     }
 
     function saveLocalData() {
         const month = document.getElementById('monthSelect').value;
-        if (month === "") return;
+        if (!month) return;
         const data = {
-            under26: document.getElementById('under26Select').value,
-            ppk: document.getElementById('ppkSelect').value,
-            insurance: document.getElementById('insuranceSelect').value,
             baseSalary: document.getElementById('baseSalary').value,
+            scheduleDays: document.getElementById('scheduleDays').value,
+            vacationDays: document.getElementById('vacationDays').value,
+            urlopBonus: document.getElementById('urlopBonus').value,
+            l4Days: document.getElementById('l4Days').value,
+            workedDays: document.getElementById('workedDays').value,
             bonusPct: document.getElementById('bonusPctSelect').value,
             morningShifts: document.getElementById('morningShifts').value,
             nightShifts: document.getElementById('nightShifts').value,
             weekendDays: document.getElementById('weekendDays').value,
-            overtimeDays: document.getElementById('overtimeDays').value
+            overtimeDays: document.getElementById('overtimeDays').value,
+            under26: document.getElementById('under26Select').value,
+            ppk: document.getElementById('ppkSelect').value,
+            insurance: document.getElementById('insuranceSelect').value
         };
         localStorage.setItem('salary_' + month, JSON.stringify(data));
     }
 
     function loadLocalData() {
         const month = document.getElementById('monthSelect').value;
-        if (month === "") return;
+        if (!month) return;
         const saved = localStorage.getItem('salary_' + month);
         if (saved) {
-            const data = JSON.parse(saved);
-            document.getElementById('under26Select').value = data.under26 || "";
-            document.getElementById('ppkSelect').value = data.ppk || "";
-            document.getElementById('insuranceSelect').value = data.insurance || "";
-            document.getElementById('baseSalary').value = data.baseSalary || "5950";
-            document.getElementById('bonusPctSelect').value = data.bonusPct || "";
-            document.getElementById('morningShifts').value = data.morningShifts || "";
-            document.getElementById('nightShifts').value = data.nightShifts || "";
-            document.getElementById('weekendDays').value = data.weekendDays || "";
-            document.getElementById('overtimeDays').value = data.overtimeDays || "";
+            const d = JSON.parse(saved);
+            document.getElementById('baseSalary').value = d.baseSalary || "5950";
+            document.getElementById('scheduleDays').value = d.scheduleDays || "";
+            document.getElementById('vacationDays').value = d.vacationDays || "";
+            document.getElementById('urlopBonus').value = d.urlopBonus || "";
+            document.getElementById('l4Days').value = d.l4Days || "";
+            document.getElementById('workedDays').value = d.workedDays || "";
+            document.getElementById('bonusPctSelect').value = d.bonusPct || "";
+            document.getElementById('morningShifts').value = d.morningShifts || "";
+            document.getElementById('nightShifts').value = d.nightShifts || "";
+            document.getElementById('weekendDays').value = d.weekendDays || "";
+            document.getElementById('overtimeDays').value = d.overtimeDays || "";
+            document.getElementById('under26Select').value = d.under26 || "no";
+            document.getElementById('ppkSelect').value = d.ppk || "no";
+            document.getElementById('insuranceSelect').value = d.insurance || "yes";
         } else {
-            // Очищення полів, якщо даних немає
-            document.getElementById('under26Select').value = "";
-            document.getElementById('ppkSelect').value = "";
-            document.getElementById('insuranceSelect').value = "";
-            document.getElementById('morningShifts').value = "";
-            document.getElementById('nightShifts').value = "";
-            document.getElementById('weekendDays').value = "";
-            document.getElementById('overtimeDays').value = "";
-            document.getElementById('bonusPctSelect').value = "";
+            document.querySelectorAll('input[type=number]').forEach(el => el.value = '');
             document.getElementById('baseSalary').value = "5950";
+            document.getElementById('bonusPctSelect').value = "";
         }
         calculateSalary();
     }
 
     document.querySelectorAll('input, select').forEach(element => {
-        if(element.id !== 'langSelect' && element.id !== 'themeSelect' && element.type !== 'email' && element.type !== 'password') {
+        if(!['langSelect', 'themeSelect', 'email', 'password'].includes(element.id)) {
             element.addEventListener('input', calculateSalary);
             element.addEventListener('change', calculateSalary);
         }
@@ -626,100 +516,66 @@
 
     document.getElementById('monthSelect').addEventListener('change', loadLocalData);
 
-    const authContainer = document.getElementById('auth-container');
-    const syncContainer = document.getElementById('sync-container');
-
+    // Firebase Auth & Sync
     onAuthStateChanged(auth, (user) => {
-        if (user) {
-            authContainer.classList.add('hidden');
-            syncContainer.classList.remove('hidden');
-            document.getElementById('user-email-display').innerText = "👤 " + user.email;
-        } else {
-            authContainer.classList.remove('hidden');
-            syncContainer.classList.add('hidden');
-        }
+        document.getElementById('auth-container').classList.toggle('hidden', !!user);
+        document.getElementById('sync-container').classList.toggle('hidden', !user);
+        if(user) document.getElementById('user-email-display').innerText = "👤 " + user.email;
     });
 
     document.getElementById('btn-login').addEventListener('click', async () => {
-        try {
-            await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
-        } catch (e) { alert((currentLang === 'ua' ? "Помилка входу: " : "Błąd logowania: ") + e.message); }
+        try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
+        catch (e) { alert("Помилка входу: " + e.message); }
     });
-
-    document.getElementById('btn-register').addEventListener('click', async () => {
-        try {
-            await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
-            alert(currentLang === 'ua' ? "Реєстрація успішна!" : "Rejestracja zakończona sukcesem!");
-        } catch (e) { alert("Помилка: " + e.message); }
-    });
-
-    document.getElementById('btn-logout').addEventListener('click', async () => {
-        await signOut(auth);
-    });
+    document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
     document.getElementById('btn-sync-up').addEventListener('click', async () => {
         const user = auth.currentUser;
         if (!user) return;
-        
-        const confirmMsg = currentLang === 'ua' ? "Ви точно хочете зберегти ці дані у хмару?" : "Czy na pewno chcesz zapisać te dane w chmurze?";
-        if (!confirm(confirmMsg)) return;
-
         const month = document.getElementById('monthSelect').value;
-        const docRef = doc(db, "users", user.uid, "months", month.toString());
-
-        try {
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const overwriteMsg = currentLang === 'ua' 
-                    ? "Увага! Дані за цей місяць вже існують у хмарі. Бажаєте їх перезаписати?" 
-                    : "Uwaga! Dane za ten miesiąc już istnieją. Czy chcesz je nadpisać?";
-                if (!confirm(overwriteMsg)) return; 
-            }
-
-            const data = {
-                under26: document.getElementById('under26Select').value,
-                ppk: document.getElementById('ppkSelect').value,
-                insurance: document.getElementById('insuranceSelect').value,
-                baseSalary: document.getElementById('baseSalary').value,
-                bonusPct: document.getElementById('bonusPctSelect').value,
-                morningShifts: document.getElementById('morningShifts').value,
-                nightShifts: document.getElementById('nightShifts').value,
-                weekendDays: document.getElementById('weekendDays').value,
-                overtimeDays: document.getElementById('overtimeDays').value,
-                updatedAt: new Date()
-            };
-            
-            await setDoc(docRef, data);
-            alert(currentLang === 'ua' ? "Дані успішно збережені у хмару! ☁️" : "Dane pomyślnie zapisane w chmurze! ☁️");
-        } catch (e) { 
-            alert((currentLang === 'ua' ? "Помилка хмари: " : "Błąd chmury: ") + e.message); 
-        }
+        const docRef = doc(db, "users", user.uid, "months", month);
+        
+        const data = {
+            baseSalary: document.getElementById('baseSalary').value,
+            scheduleDays: document.getElementById('scheduleDays').value,
+            vacationDays: document.getElementById('vacationDays').value,
+            urlopBonus: document.getElementById('urlopBonus').value,
+            l4Days: document.getElementById('l4Days').value,
+            workedDays: document.getElementById('workedDays').value,
+            bonusPct: document.getElementById('bonusPctSelect').value,
+            morningShifts: document.getElementById('morningShifts').value,
+            nightShifts: document.getElementById('nightShifts').value,
+            weekendDays: document.getElementById('weekendDays').value,
+            overtimeDays: document.getElementById('overtimeDays').value,
+            updatedAt: new Date()
+        };
+        await setDoc(docRef, data);
+        alert("Дані збережені у хмару! ☁️");
     });
 
     document.getElementById('btn-sync-down').addEventListener('click', async () => {
         const user = auth.currentUser;
         if (!user) return;
         const month = document.getElementById('monthSelect').value;
-        try {
-            const docRef = doc(db, "users", user.uid, "months", month.toString());
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                document.getElementById('under26Select').value = data.under26 || "";
-                document.getElementById('ppkSelect').value = data.ppk || "";
-                document.getElementById('insuranceSelect').value = data.insurance || "";
-                document.getElementById('baseSalary').value = data.baseSalary || "5950";
-                document.getElementById('bonusPctSelect').value = data.bonusPct || "";
-                document.getElementById('morningShifts').value = data.morningShifts || "";
-                document.getElementById('nightShifts').value = data.nightShifts || "";
-                document.getElementById('weekendDays').value = data.weekendDays || "";
-                document.getElementById('overtimeDays').value = data.overtimeDays || "";
-                calculateSalary();
-                alert(currentLang === 'ua' ? "Дані успішно завантажені з хмари! 📥" : "Dane pomyślnie pobrane z chmury! 📥");
-            } else {
-                alert(currentLang === 'ua' ? "У хмарі немає збережень за цей місяць." : "W chmurze nie ma danych za ten miesiąc.");
-            }
-        } catch (e) { alert("Помилка завантаження: " + e.message); }
+        const docSnap = await getDoc(doc(db, "users", user.uid, "months", month));
+        if (docSnap.exists()) {
+            const d = docSnap.data();
+            document.getElementById('baseSalary').value = d.baseSalary || "5950";
+            document.getElementById('scheduleDays').value = d.scheduleDays || "";
+            document.getElementById('vacationDays').value = d.vacationDays || "";
+            document.getElementById('urlopBonus').value = d.urlopBonus || "";
+            document.getElementById('l4Days').value = d.l4Days || "";
+            document.getElementById('workedDays').value = d.workedDays || "";
+            document.getElementById('bonusPctSelect').value = d.bonusPct || "";
+            document.getElementById('morningShifts').value = d.morningShifts || "";
+            document.getElementById('nightShifts').value = d.nightShifts || "";
+            document.getElementById('weekendDays').value = d.weekendDays || "";
+            document.getElementById('overtimeDays').value = d.overtimeDays || "";
+            calculateSalary();
+            alert("Дані завантажені! 📥");
+        } else {
+            alert("У хмарі немає збережень за цей місяць.");
+        }
     });
 
     const savedTheme = localStorage.getItem('theme') || 'light';
