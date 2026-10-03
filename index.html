@@ -10,7 +10,6 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Ваші персональні ключі Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAfsfF3nLzqaAJTAfp73715efQhri-SOT8",
             authDomain: "my-salary-9ea25.firebaseapp.com",
@@ -25,7 +24,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Робимо доступними глобально для інтерфейсу
         window.auth = auth;
         window.db = db;
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
@@ -38,22 +36,26 @@
     </script>
 
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h2 { text-align: center; color: #e3000f; margin-bottom: 20px; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        input { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
-        button { width: 100%; background: #e3000f; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; box-sizing: border-box; }
+        h2 { text-align: center; color: #e3000f; margin-top: 0; margin-bottom: 15px; font-size: 22px; }
+        .input-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; color: #333; font-size: 14px; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+        button { width: 100%; background: #e3000f; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 8px; }
         button:hover { background: #b5000b; }
         .hidden { display: none !important; }
-        .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #f8d7da; padding: 10px; border-radius: 6px; }
+        .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #f8d7da; padding: 8px 12px; border-radius: 6px; font-size: 14px; }
+        .result-box { background: #e9ecef; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 15px; }
+        .result-box p { margin: 5px 0; }
+        .row { display: flex; gap: 10px; }
+        .row .input-group { flex: 1; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <!-- Екран авторизації (Логін / Реєстрація) -->
+        <!-- Екран авторизації -->
         <div id="auth-screen">
             <h2>Fiege Login</h2>
             <div class="input-group">
@@ -65,29 +67,74 @@
                 <input type="password" id="password" placeholder="введіть пароль">
             </div>
             <button onclick="handleLogin()">Увійти</button>
-            <button onclick="handleRegister()" style="background: #2c3e50; margin-top: 5px;">Зареєструватися</button>
+            <button onclick="handleRegister()" style="background: #2c3e50;">Зареєструватися</button>
         </div>
 
-        <!-- Головний екран калькулятора (поки прихований до входу) -->
+        <!-- Головний екран калькулятора -->
         <div id="app-screen" class="hidden">
             <div class="user-info">
-                <span id="user-email-display"></span>
-                <button onclick="handleLogout()" style="width: auto; padding: 5px 10px; margin: 0; background: #6c757d;">Вийти</button>
+                <span id="user-email-display" style="font-weight: bold; overflow: hidden; text-overflow: ellipsis;"></span>
+                <button onclick="handleLogout()" style="width: auto; padding: 4px 8px; margin: 0; background: #6c757d; font-size: 13px;">Вийти</button>
             </div>
             <h2>Калькулятор Зарплати</h2>
-            <p style="text-align: center; color: green;">База Firebase успішно підключена! 🎉</p>
-            <!-- Сюди пізніше повернемо основний інтерфейс калькулятора -->
+
+            <div class="input-group">
+                <label>Оберіть місяць:</label>
+                <select id="selected-month" onchange="loadMonthData()">
+                    <option value="2026-10">Жовтень 2026</option>
+                    <option value="2026-11">Листопад 2026</option>
+                    <option value="2026-12">Грудень 2026</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="input-group">
+                    <label>Години роботи:</label>
+                    <input type="number" id="hours" value="168" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Ставка (zł/год):</label>
+                    <input type="number" id="rate" value="28.5" oninput="calculate()">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="input-group">
+                    <label>Нічні години:</label>
+                    <input type="number" id="night-hours" value="0" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Надгодини (50%):</label>
+                    <input type="number" id="overtime" value="0" oninput="calculate()">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Премія (zł):</label>
+                <input type="number" id="bonus" value="0" oninput="calculate()">
+            </div>
+
+            <button onclick="saveData()" style="background: #28a745;">Зберегти у хмару ☁️</button>
+
+            <div class="result-box">
+                <p><b>Базова з/п:</b> <span id="res-base">0.00</span> zł</p>
+                <p><b>Нічні надбавки:</b> <span id="res-night">0.00</span> zł</p>
+                <p><b>За надгодини:</b> <span id="res-overtime">0.00</span> zł</p>
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 8px 0;">
+                <p style="font-size: 17px; color: #e3000f;"><b>Разом на руки:</b> <span id="res-total">0.00</span> zł</p>
+            </div>
         </div>
     </div>
 
     <script>
-        // Слідкуємо за станом користувача (авторизований чи ні)
+        // Відстеження входу
         setTimeout(() => {
             window.onAuthStateChanged(window.auth, (user) => {
                 if (user) {
                     document.getElementById('auth-screen').classList.add('hidden');
                     document.getElementById('app-screen').classList.remove('hidden');
                     document.getElementById('user-email-display').innerText = user.email;
+                    loadMonthData(); // завантажити дані для поточного місяця
                 } else {
                     document.getElementById('auth-screen').classList.remove('hidden');
                     document.getElementById('app-screen').classList.add('hidden');
@@ -119,6 +166,83 @@
         async function handleLogout() {
             await window.signOut(window.auth);
         }
+
+        // Логіка розрахунку
+        function calculate() {
+            const hours = parseFloat(document.getElementById('hours').value) || 0;
+            const rate = parseFloat(document.getElementById('rate').value) || 0;
+            const night = parseFloat(document.getElementById('night-hours').value) || 0;
+            const overtime = parseFloat(document.getElementById('overtime').value) || 0;
+            const bonus = parseFloat(document.getElementById('bonus').value) || 0;
+
+            const base = hours * rate;
+            const nightPay = night * (rate * 0.2); // 20% нічних
+            const overtimePay = overtime * (rate * 1.5); // 50% надгодини
+            const total = base + nightPay + overtimePay + bonus;
+
+            document.getElementById('res-base').innerText = base.toFixed(2);
+            document.getElementById('res-night').innerText = nightPay.toFixed(2);
+            document.getElementById('res-overtime').innerText = overtimePay.toFixed(2);
+            document.getElementById('res-total').innerText = total.toFixed(2);
+        }
+
+        // Збереження у хмару Firestore
+        async function saveData() {
+            const user = window.auth.currentUser;
+            if (!user) return;
+
+            const month = document.getElementById('selected-month').value;
+            const data = {
+                hours: document.getElementById('hours').value,
+                rate: document.getElementById('rate').value,
+                nightHours: document.getElementById('night-hours').value,
+                overtime: document.getElementById('overtime').value,
+                bonus: document.getElementById('bonus').value,
+                updatedAt: new Date()
+            };
+
+            try {
+                // Зберігаємо у колекцію користувача за місяцем
+                const docRef = window.doc(window.db, "users", user.uid, "months", month);
+                await window.setDoc(docRef, data);
+                alert("Дані успішно збережено у хмару! ☁️");
+            } catch (error) {
+                alert("Помилка збереження: " + error.message);
+            }
+        }
+
+        // Завантаження даних з хмари при зміні місяця
+        async function loadMonthData() {
+            const user = window.auth.currentUser;
+            if (!user) return;
+
+            const month = document.getElementById('selected-month').value;
+            try {
+                const docRef = window.doc(window.db, "users", user.uid, "months", month);
+                const docSnap = await window.getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const d = docSnap.data();
+                    document.getElementById('hours').value = d.hours || 168;
+                    document.getElementById('rate').value = d.rate || 28.5;
+                    document.getElementById('night-hours').value = d.nightHours || 0;
+                    document.getElementById('overtime').value = d.overtime || 0;
+                    document.getElementById('bonus').value = d.bonus || 0;
+                } else {
+                    // Якщо даних немає за цей місяць — скидаємо на дефолтні
+                    document.getElementById('hours').value = 168;
+                    document.getElementById('night-hours').value = 0;
+                    document.getElementById('overtime').value = 0;
+                    document.getElementById('bonus').value = 0;
+                }
+                calculate();
+            } catch (error) {
+                console.error("Помилка завантаження:", error);
+            }
+        }
+
+        // Первинний розрахунок при завантаженні
+        window.onload = calculate;
     </script>
 
 </body>
