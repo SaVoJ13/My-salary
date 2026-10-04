@@ -525,7 +525,8 @@
         }
     });
 
-    ['morningShifts', 'afternoonShifts', 'nightShifts', 'overtimeDays', 'vacationDays', 'l4Days'].forEach(id => {
+        // Авто-рахунок днів за графіком при вводі змін (БЕЗ впливу L4)
+    ['morningShifts', 'afternoonShifts', 'nightShifts', 'overtimeDays', 'vacationDays'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
             el.addEventListener('input', () => {
@@ -535,9 +536,10 @@
                     const n = parseInt(document.getElementById('nightShifts').value) || 0;
                     const over = parseFloat(document.getElementById('overtimeDays').value) || 0;
                     const vac = parseInt(document.getElementById('vacationDays').value) || 0;
-                    const l4 = parseInt(document.getElementById('l4Days').value) || 0;
                     
-                    let autoSched = (m + a + n) - over + vac + l4;
+                    // Формула: Всі зміни - Надгодини + Відпустка. (Лікарняні виключено)
+                    let autoSched = (m + a + n) - over + vac;
+                    
                     if(autoSched > 0) {
                         document.getElementById('scheduleDays').value = autoSched;
                     } else {
