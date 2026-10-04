@@ -518,11 +518,15 @@
         calculateSalary();
     });
 
-    document.getElementById('l4Days').addEventListener('input', function() {
+        document.getElementById('l4Days').addEventListener('input', function() {
         if(isPremium) {
             const l4 = parseInt(this.value) || 0;
             const bonusSelect = document.getElementById('bonusPctSelect');
-            if (l4 === 0) bonusSelect.value = "15";
+            
+            if (l4 === 0) {
+                bonusSelect.value = "15";
+                document.getElementById('l4MissedShifts').value = ""; // Очищаємо, якщо лікарняний прибрали
+            }
             else if (l4 <= 2) bonusSelect.value = "12.5";
             else bonusSelect.value = "10";
             
@@ -530,8 +534,7 @@
         }
     });
 
-        // Авто-рахунок днів за графіком при вводі змін (БЕЗ впливу L4)
-    ['morningShifts', 'afternoonShifts', 'nightShifts', 'overtimeDays', 'vacationDays'].forEach(id => {
+    ['morningShifts', 'afternoonShifts', 'nightShifts', 'overtimeDays', 'vacationDays', 'l4Days', 'l4MissedShifts'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
             el.addEventListener('input', () => {
@@ -541,10 +544,10 @@
                     const n = parseInt(document.getElementById('nightShifts').value) || 0;
                     const over = parseFloat(document.getElementById('overtimeDays').value) || 0;
                     const vac = parseInt(document.getElementById('vacationDays').value) || 0;
+                    const l4Missed = parseInt(document.getElementById('l4MissedShifts').value) || 0; // Беремо пропущені зміни
                     
-                    // Формула: Всі зміни - Надгодини + Відпустка. (Лікарняні виключено)
-                    let autoSched = (m + a + n) - over + vac;
-                    
+                    // Ідеальна формула: Всі зміни - Надгодини + Відпустка + Пропущені через L4
+                    let autoSched = (m + a + n) - over + vac + l4Missed;
                     if(autoSched > 0) {
                         document.getElementById('scheduleDays').value = autoSched;
                     } else {
