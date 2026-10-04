@@ -575,6 +575,9 @@
         const l4Days = isPremium ? (parseInt(document.getElementById('l4Days').value) || 0) : 0;
         
         document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays === 0);
+        document.getElementById('l4MissedGroup').classList.toggle('hidden', l4Days === 0);
+
+        
 
         const morningShifts = parseInt(document.getElementById('morningShifts').value) || 0;
         const afternoonShifts = parseInt(document.getElementById('afternoonShifts').value) || 0;
