@@ -311,10 +311,12 @@
         
         if(user) {
             document.getElementById('user-email-display').innerText = "👤 " + user.email;
+            loadCloudData(); // Завантажуємо місяць при вході
         } else {
             document.getElementById('vacationDays').value = "";
             document.getElementById('l4Days').value = "";
             document.getElementById('urlopBonus').value = "";
+            clearInputs();
         }
         calculateSalary();
     });
@@ -329,11 +331,11 @@
     });
     document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-    // Синхронізація (Збереження без дублікатів)
+    // Синхронізація (Збереження у хмару)
     document.getElementById('btn-sync-up').addEventListener('click', async () => {
         if (!auth.currentUser) return;
         const monthVal = document.getElementById('monthSelect').value;
-        if (!monthVal) { alert("Будь ласка, оберіть місяць перед збереженням!"); return; }
+        if (!monthVal) { alert("Оберіть місяць!"); return; }
 
         const data = { updatedAt: new Date().toISOString() };
         document.querySelectorAll('input, select').forEach(el => {
@@ -342,30 +344,42 @@
 
         try {
             await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
-            localStorage.setItem('salary_' + monthVal, JSON.stringify(data));
             alert("Дані збережені у хмару! ☁️");
         } catch (error) { alert("Помилка збереження: " + error.message); }
     });
 
     // Завантаження з хмари
-    document.getElementById('btn-sync-down').addEventListener('click', async () => {
+    async function loadCloudData() {
         if (!auth.currentUser) return;
         const monthVal = document.getElementById('monthSelect').value;
         if (!monthVal) return;
 
-        const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal));
-        if (snap.exists()) {
-            const d = snap.data();
-            document.querySelectorAll('input, select').forEach(el => {
-                if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id) && d[el.id] !== undefined) el.value = d[el.id];
-            });
-            localStorage.setItem('salary_' + monthVal, JSON.stringify(d));
-            calculateSalary(); 
-            alert("Дані завантажені! 📥");
-        } else {
-            alert("Даних за цей місяць у хмарі немає.");
+        try {
+            const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal));
+            if (snap.exists()) {
+                const d = snap.data();
+                document.querySelectorAll('input, select').forEach(el => {
+                    if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id) && d[el.id] !== undefined) el.value = d[el.id];
+                });
+            } else {
+                clearInputs();
+            }
+            calculateSalary();
+        } catch(e) {
+            console.error("Помилка завантаження з хмари", e);
         }
+    }
+
+    document.getElementById('btn-sync-down').addEventListener('click', async () => {
+        await loadCloudData();
+        alert("Дані завантажені з хмари! 📥");
     });
+
+    function clearInputs() {
+        document.querySelectorAll('input[type=number]').forEach(el => el.value = '');
+        document.getElementById('bonusPctSelect').value = "15";
+        document.getElementById('baseSalary').value = "";
+    }
 
     /* ==========================================
        БЛОК 4: СЛОВНИКИ ТА ЗМІННІ 
@@ -396,7 +410,7 @@
     const stateWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
 
     /* ==========================================
-       БЛОК 5: ЛОГІКА ІНТЕРФЕЙСУ (UI) ТА LOCALSTORAGE
+       БЛОК 5: ЛОГІКА ІНТЕРФЕЙСУ (UI)
        ========================================== */
     window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); }
     window.setTheme = function(theme) { document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : ''); localStorage.setItem('theme', theme); }
@@ -431,80 +445,57 @@
         select.value = currentVal || "2026-01";
     }
 
-    function saveLocalData() {
-        const month = document.getElementById('monthSelect').value;
-        if (!month) return;
-        const data = {};
-        document.querySelectorAll('input, select').forEach(el => {
-            if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id)) data[el.id] = el.value;
-        });
-        localStorage.setItem('salary_' + month, JSON.stringify(data));
-    }
-
-    function loadLocalData() {
-        const month = document.getElementById('monthSelect').value;
-        if (!month) return;
-        const saved = localStorage.getItem('salary_' + month);
-        if (saved) {
-            const d = JSON.parse(saved);
-            document.querySelectorAll('input, select').forEach(el => {
-                if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id) && d[el.id] !== undefined) el.value = d[el.id];
-            });
-        } else {
-            document.querySelectorAll('input[type=number]').forEach(el => el.value = '');
-            document.getElementById('bonusPctSelect').value = "15"; // Дефолт 15%
-            document.getElementById('urlopBonus').value = ""; document.getElementById('baseSalary').value = "";
-        }
-        calculateSalary();
-    }
-
     /* ==========================================
-       БЛОК 6: МАТЕМАТИКА ТА РОЗРАХУНКИ
+       БЛОК 6: МАТЕМАТИКА ТА РОЗРАХУНКИ З ХМАРИ
        ========================================== */
-    function getAutoDailyUrlopBonus(currentYear, monthIdx) {
+    async function getAutoDailyUrlopBonus(currentYear, monthIdx) {
+        if (!auth.currentUser) return 0;
         let totalExtras = 0; let totalWorkedDays = 0;
+        
         for (let i = 1; i <= 3; i++) {
             let pMonth = monthIdx + 1 - i; let pYear = currentYear;
             if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
             const pastMonthStr = pYear + "-" + String(pMonth).padStart(2, '0');
-            const savedStr = localStorage.getItem('salary_' + pastMonthStr);
             
-            if (savedStr) {
-                const data = JSON.parse(savedStr);
-                const pastBase = parseFloat(data.baseSalary) || 5750;
-                const pastPct = parseFloat(data.bonusPctSelect) || 0;
-                
-                const mShifts = parseInt(data.morningShifts) || 0;
-                const aShifts = parseInt(data.afternoonShifts) || 0;
-                const nShifts = parseInt(data.nightShifts) || 0;
-                const wknd = parseInt(data.weekendDays) || 0;
-                const over = parseFloat(data.overtimeDays) || 0;
-                
-                let pActual = mShifts + aShifts + nShifts;
-                if (pActual === 0 && data.scheduleDays) {
-                    pActual = (parseInt(data.scheduleDays) || 0) - (parseInt(data.vacationDays) || 0) - (parseInt(data.l4Days) || 0) + over;
-                }
-                
-                const pastSched = parseInt(data.scheduleDays) || stateWorkDays[pMonth - 1];
-                let baseWorkedForBonus = Math.max(0, pActual - over);
-                const pastBonusVal = (pastBase * (pastPct / 100)) / pastSched * baseWorkedForBonus;
-                
-                const stDays = stateWorkDays[pMonth - 1];
-                const nTariff = ((4806 / (stDays * 8)) * 0.20);
-                
-                const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
-                const pastWknd = wknd * 100;
-                const pastOver = over * ((pastBase / stDays) * 2);
+            const stDays = stateWorkDays[pMonth - 1] || 21;
+            
+            try {
+                const docSnap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastMonthStr));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const pastBase = parseFloat(data.baseSalary) || 5750;
+                    let pastPct = parseFloat(data.bonusPctSelect);
+                    if (isNaN(pastPct)) pastPct = 15;
+                    
+                    const mShifts = parseInt(data.morningShifts) || 0;
+                    const aShifts = parseInt(data.afternoonShifts) || 0;
+                    const nShifts = parseInt(data.nightShifts) || 0;
+                    const wknd = parseInt(data.weekendDays) || 0;
+                    const over = parseFloat(data.overtimeDays) || 0;
+                    
+                    let pActual = mShifts + aShifts + nShifts;
+                    const pastSched = parseInt(data.scheduleDays) || stDays;
+                    let baseWorkedForBonus = Math.max(0, pActual - over);
+                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * baseWorkedForBonus : 0;
+                    
+                    const nTariff = ((4806 / (stDays * 8)) * 0.20);
+                    const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
+                    const pastWknd = wknd * 100;
+                    const pastOver = over * ((pastBase / stDays) * 2);
 
-                totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
-                totalWorkedDays += pActual;
+                    totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
+                    totalWorkedDays += pActual;
+                }
+            } catch (e) {
+                console.error("Помилка зчитування хмари для середньої", e);
             }
         }
+        
         if (totalWorkedDays === 0) return 0;
         return (totalExtras / totalWorkedDays);
     }
 
-    document.getElementById('vacationDays').addEventListener('input', function() {
+    document.getElementById('vacationDays').addEventListener('input', async function() {
         const vacDays = parseInt(this.value) || 0;
         const monthVal = document.getElementById('monthSelect').value;
         if (!monthVal) return;
@@ -513,14 +504,15 @@
         
         if (isPremium && vacDays > 0) {
             if (!urlopInput.value || parseFloat(urlopInput.value) === 0) {
-                const autoDaily = getAutoDailyUrlopBonus(parseInt(year), parseInt(month) - 1);
+                const autoDaily = await getAutoDailyUrlopBonus(parseInt(year), parseInt(month) - 1);
                 if (autoDaily > 0) urlopInput.value = autoDaily.toFixed(2);
             }
-        } else { urlopInput.value = ""; }
+        } else { 
+            urlopInput.value = ""; 
+        }
         calculateSalary();
     });
 
-    // Авто-зміна премії залежно від кількості днів L4
     document.getElementById('l4Days').addEventListener('input', function() {
         if(isPremium) {
             const l4 = parseInt(this.value) || 0;
@@ -528,10 +520,11 @@
             if (l4 === 0) bonusSelect.value = "15";
             else if (l4 <= 2) bonusSelect.value = "12.5";
             else bonusSelect.value = "10";
+            
+            calculateSalary();
         }
     });
 
-    // Авто-рахунок днів за графіком при вводі змін
     ['morningShifts', 'afternoonShifts', 'nightShifts', 'overtimeDays', 'vacationDays', 'l4Days'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
@@ -593,7 +586,7 @@
 
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
         const baseWorkedForBonus = Math.max(0, actualWorkedDays - overtimeDays);
-        const bonusAmount = isPremium ? ((baseSalary * (bonusPct / 100)) / schedDays * baseWorkedForBonus) : (baseSalary * (bonusPct / 100));
+        const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * baseWorkedForBonus) : (baseSalary * (bonusPct / 100));
 
         const nightTariff = Math.round(((4806.00 / (stateDays * 8)) * 0.20) * 100) / 100;
         const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
@@ -615,7 +608,7 @@
 
         const net = gross - zus - nfz - pit - (ppkActive ? gross * 0.02 : 0) - (document.getElementById('insuranceSelect').value === 'yes' ? 36.70 : 0) - 30.25 + 15.00;
 
-        updateUI(gross, net); saveLocalData();
+        updateUI(gross, net);
     }
 
     function updateUI(g, n) {
@@ -629,11 +622,15 @@
             el.addEventListener('input', calculateSalary); el.addEventListener('change', calculateSalary);
         }
     });
-    document.getElementById('monthSelect').addEventListener('change', loadLocalData);
+    
+    // При зміні місяця — автоматично тягнемо дані з хмари
+    document.getElementById('monthSelect').addEventListener('change', async () => {
+        await loadCloudData();
+    });
 
     // Ініціалізація
     setTheme(localStorage.getItem('theme') || 'light');
-    window.setLang('ua'); loadLocalData();
+    window.setLang('ua');
 </script>
 </body>
 </html>
