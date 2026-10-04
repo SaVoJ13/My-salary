@@ -179,16 +179,12 @@
         </div>
     </div>
     
-        <div class="form-group premium-field">
-        <label id="lblL4Days">Лікарняний L4 (календарні)</label>
-        <input type="number" id="l4Days" placeholder="0" onfocus="this.value=''">
-    </div>
-    <!-- НОВЕ ПОЛЕ: З'являється тільки при лікарняному -->
-    <div class="form-group sub-group premium-field hidden" id="l4MissedGroup">
-        <label id="lblL4Missed">Пропущено змін (шт) ℹ️</label>
-        <input type="number" id="l4MissedShifts" placeholder="0" onfocus="this.value=''" style="color:var(--primary);">
+    <div class="form-group">
+        <label id="lblMonth">Місяць</label>
+        <select id="monthSelect"></select>
     </div>
 
+    <!-- ПОЛЯ ЗГІДНО З ВАШИМ ПОРЯДКОМ -->
     <div class="form-group">
         <label id="lblBase">Загальна ставка (zł)</label>
         <input type="number" id="baseSalary" value="5750" onfocus="this.value=''" onblur="if(this.value==='') calculateSalary();">
@@ -242,6 +238,11 @@
     <div class="form-group premium-field">
         <label id="lblL4Days">Лікарняний L4 (календарні)</label>
         <input type="number" id="l4Days" placeholder="0" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+    <!-- НОВЕ ПОЛЕ: З'являється тільки при лікарняному -->
+    <div class="form-group sub-group premium-field hidden" id="l4MissedGroup">
+        <label id="lblL4Missed">Пропущено змін (шт) ℹ️</label>
+        <input type="number" id="l4MissedShifts" placeholder="0" onfocus="this.value=''" style="color:var(--primary);">
     </div>
 
     <div class="divider"></div>
@@ -321,6 +322,7 @@
             document.getElementById('vacationDays').value = "";
             document.getElementById('l4Days').value = "";
             document.getElementById('urlopBonus').value = "";
+            document.getElementById('l4MissedShifts').value = "";
             clearInputs();
         }
         calculateSalary();
@@ -518,7 +520,7 @@
         calculateSalary();
     });
 
-        document.getElementById('l4Days').addEventListener('input', function() {
+    document.getElementById('l4Days').addEventListener('input', function() {
         if(isPremium) {
             const l4 = parseInt(this.value) || 0;
             const bonusSelect = document.getElementById('bonusPctSelect');
@@ -544,7 +546,7 @@
                     const n = parseInt(document.getElementById('nightShifts').value) || 0;
                     const over = parseFloat(document.getElementById('overtimeDays').value) || 0;
                     const vac = parseInt(document.getElementById('vacationDays').value) || 0;
-                    const l4Missed = parseInt(document.getElementById('l4MissedShifts').value) || 0; // Беремо пропущені зміни
+                    const l4Missed = parseInt(document.getElementById('l4MissedShifts').value) || 0; 
                     
                     // Ідеальна формула: Всі зміни - Надгодини + Відпустка + Пропущені через L4
                     let autoSched = (m + a + n) - over + vac + l4Missed;
@@ -576,8 +578,6 @@
         
         document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays === 0);
         document.getElementById('l4MissedGroup').classList.toggle('hidden', l4Days === 0);
-
-        
 
         const morningShifts = parseInt(document.getElementById('morningShifts').value) || 0;
         const afternoonShifts = parseInt(document.getElementById('afternoonShifts').value) || 0;
@@ -631,7 +631,8 @@
 
     // Слухачі подій
     document.querySelectorAll('input, select').forEach(el => {
-        if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays', 'l4Days'].includes(el.id)) {
+        // Ми додаємо перевірку і для нового поля l4MissedShifts
+        if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays', 'l4Days', 'l4MissedShifts'].includes(el.id)) {
             el.addEventListener('input', calculateSalary); el.addEventListener('change', calculateSalary);
         }
     });
