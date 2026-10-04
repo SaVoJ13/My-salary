@@ -7,8 +7,6 @@
     <style>
         /* ==========================================
            БЛОК 1: ДИЗАЙН ТА СТИЛІ (CSS)
-           Тут налаштовуються кольори, відступи, розміри шрифтів 
-           та зовнішній вигляд Преміум-режиму
            ========================================== */
         :root {
             --primary: #e3000f; 
@@ -61,18 +59,31 @@
         .menu-item { margin-bottom: 15px; }
         .menu-item label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; width: 100%; }
 
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; position: relative; }
         h2 { margin: 0; font-size: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px;}
         .premium-badge { background: var(--premium-border); color: #000; font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; display: none; }
 
+        /* Компактний бейдж "Графік" */
+        .schedule-badge {
+            background: var(--premium-bg); border: 1px solid var(--premium-border);
+            border-radius: 8px; padding: 4px 6px; display: none; 
+            flex-direction: column; align-items: center; justify-content: center;
+            min-width: 45px;
+        }
+        .is-logged-in .schedule-badge { display: flex; }
+        .schedule-badge span { font-size: 9px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
+        .schedule-badge input {
+            width: 100%; padding: 0; background: transparent; border: none;
+            font-size: 15px; font-weight: 800; color: var(--primary); text-align: center; box-shadow: none;
+        }
+        .schedule-badge input:focus { box-shadow: none; outline: none; }
+
         .form-group { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
         
-        /* Premium Fields Styling */
         .premium-field { display: none; }
         .is-logged-in .premium-field { display: flex; }
         .is-logged-in .premium-badge { display: inline-block; }
         
-        .premium-highlight { background: var(--premium-bg); padding: 12px 10px; border-radius: 8px; margin-bottom: 14px; border: 1px dashed var(--premium-border); }
         .sub-group { margin-top: -6px; margin-bottom: 14px; padding-left: 15px; border-left: 2px solid var(--premium-border); }
         label { font-size: 14px; font-weight: 500; color: var(--text-main); width: 60%; }
         .sub-group label { font-size: 13px; font-weight: 600; color: var(--primary); }
@@ -130,7 +141,6 @@
                 <option value="pl">Polski</option>
             </select>
         </div>
-
         <div class="menu-item">
             <label id="lblMenuTheme">Тема</label>
             <select id="themeSelect" style="width: 100%;" onchange="setTheme(this.value)">
@@ -161,6 +171,12 @@
     <div class="header-row">
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
         <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП <span class="premium-badge">PRO</span></h2>
+        
+        <!-- КОМПАКТНИЙ ГРАФІК -->
+        <div class="schedule-badge" id="scheduleBadgeContainer">
+            <span id="lblScheduleDays">Графік</span>
+            <input type="number" id="scheduleDays" placeholder="0" onblur="calculateSalary()">
+        </div>
     </div>
     
     <div class="form-group">
@@ -173,49 +189,26 @@
         <input type="number" id="baseSalary" value="5750" onfocus="this.value=''" onblur="if(this.value==='') calculateSalary();">
     </div>
 
-    <!-- PREMIUM БЛОКИ: ГРАФІК, ВІДПУСТКА, ЛІКАРНЯНІ -->
-    <div class="form-group premium-field premium-highlight">
-        <label id="lblScheduleDays">Дні за графіком (авто) ℹ️</label>
-        <input type="number" id="scheduleDays" placeholder="0" onfocus="this.value=''" onblur="calculateSalary()">
-    </div>
-
-    <div class="form-group premium-field">
-        <label id="lblVacationDays">Відпустка (днів)</label>
-        <input type="number" id="vacationDays" placeholder="0" onfocus="this.value=''">
-    </div>
-    <div class="form-group sub-group premium-field hidden" id="urlopBonusGroup">
-        <label id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ️</label>
-        <input type="number" id="urlopBonus" placeholder="0.00" onfocus="this.value=''" style="color:var(--primary);">
-    </div>
-
-    <div class="form-group premium-field">
-        <label id="lblL4Days">Лікарняний L4 (календарні)</label>
-        <input type="number" id="l4Days" placeholder="0" onfocus="this.value=''" onblur="calculateSalary()">
-    </div>
-    <!-- КІНЕЦЬ PREMIUM БЛОКІВ -->
-
     <div class="form-group">
         <label id="lblBonus">Премія</label>
         <select id="bonusPctSelect">
-            <option value="" disabled selected>-</option>
             <option value="0">0%</option>
             <option value="5">5%</option>
             <option value="10">10%</option>
-            <option value="15">15%</option>
+            <option value="12.5">12.5%</option>
+            <option value="15" selected>15%</option>
         </select>
     </div>
 
+    <!-- БЛОК ЗМІН -->
     <div class="form-group">
         <label id="lblMorning">Ранкові зміни (шт)</label>
         <input type="number" id="morningShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
-
-    <!-- НОВЕ ПОЛЕ: ДЕННІ ЗМІНИ -->
     <div class="form-group">
         <label id="lblAfternoon">Денні зміни (шт)</label>
         <input type="number" id="afternoonShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
-
     <div class="form-group">
         <label id="lblNight">Нічні зміни (шт)</label>
         <input type="number" id="nightShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
@@ -231,8 +224,24 @@
         <input type="number" id="overtimeDays" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
 
+    <!-- ВІДПУСТКА ТА ЛІКАРНЯНИЙ (PRO) -->
+    <div class="form-group premium-field">
+        <label id="lblVacationDays">Відпустка (днів)</label>
+        <input type="number" id="vacationDays" placeholder="0" onfocus="this.value=''">
+    </div>
+    <div class="form-group sub-group premium-field hidden" id="urlopBonusGroup">
+        <label id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ️</label>
+        <input type="number" id="urlopBonus" placeholder="0.00" onfocus="this.value=''" style="color:var(--primary);">
+    </div>
+
+    <div class="form-group premium-field">
+        <label id="lblL4Days">Лікарняний L4 (календарні)</label>
+        <input type="number" id="l4Days" placeholder="0" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+
     <div class="divider"></div>
 
+    <!-- ПОДАТКИ -->
     <div class="form-group">
         <label id="lblUnder26">Вік до 26 років</label>
         <select id="under26Select">
@@ -240,7 +249,6 @@
             <option value="yes" id="optU26Yes">Так</option>
         </select>
     </div>
-
     <div class="form-group">
         <label id="lblPPK">Участь у PPK</label>
         <select id="ppkSelect">
@@ -248,7 +256,6 @@
             <option value="yes" id="optPpkYes">Так</option>
         </select>
     </div>
-
     <div class="form-group">
         <label id="lblInsurance">Додаткове страхування</label>
         <select id="insuranceSelect">
@@ -296,7 +303,7 @@
     let isPremium = false;
 
     // Відстеження стану входу
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, (user) => {
         isPremium = !!user;
         document.getElementById('app-body').classList.toggle('is-logged-in', isPremium);
         document.getElementById('auth-container').classList.toggle('hidden', isPremium);
@@ -366,7 +373,7 @@
     const dict = {
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
-            schedDays: "Дні за графіком (авто) ℹ️", vacationDays: "Відпустка (днів)", urlopBonus: "Середня за 1 день відп. (zł) ℹ️", 
+            schedDays: "Графік", vacationDays: "Відпустка (днів)", urlopBonus: "Середня за 1 день відп. (zł) ℹ️", 
             l4Days: "Лікарняний L4 (календарні)", bonus: "Премія", morning: "Ранкові зміни (шт)", 
             afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
             overtime: "Надгодини (днів)", under26: "Вік до 26 років", ppk: "Участь у PPK", 
@@ -376,7 +383,7 @@
         },
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
-            schedDays: "Dni z grafiku (auto) ℹ️", vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa za 1 dzień ℹ️", 
+            schedDays: "Grafik", vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa za 1 dzień ℹ️", 
             l4Days: "L4 (dni kalendarzowe)", bonus: "Premia", morning: "Poranne zmiany (szt)", 
             afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
             overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat", ppk: "PPK", 
@@ -445,7 +452,8 @@
             });
         } else {
             document.querySelectorAll('input[type=number]').forEach(el => el.value = '');
-            document.getElementById('bonusPctSelect').value = ""; document.getElementById('urlopBonus').value = ""; document.getElementById('baseSalary').value = "";
+            document.getElementById('bonusPctSelect').value = "15"; // Дефолт 15%
+            document.getElementById('urlopBonus').value = ""; document.getElementById('baseSalary').value = "";
         }
         calculateSalary();
     }
@@ -473,8 +481,6 @@
                 const over = parseFloat(data.overtimeDays) || 0;
                 
                 let pActual = mShifts + aShifts + nShifts;
-                
-                // Якщо стара історія без денних змін, але є ручні дні графіку
                 if (pActual === 0 && data.scheduleDays) {
                     pActual = (parseInt(data.scheduleDays) || 0) - (parseInt(data.vacationDays) || 0) - (parseInt(data.l4Days) || 0) + over;
                 }
@@ -512,6 +518,17 @@
             }
         } else { urlopInput.value = ""; }
         calculateSalary();
+    });
+
+    // Авто-зміна премії залежно від кількості днів L4
+    document.getElementById('l4Days').addEventListener('input', function() {
+        if(isPremium) {
+            const l4 = parseInt(this.value) || 0;
+            const bonusSelect = document.getElementById('bonusPctSelect');
+            if (l4 === 0) bonusSelect.value = "15";
+            else if (l4 <= 2) bonusSelect.value = "12.5";
+            else bonusSelect.value = "10";
+        }
     });
 
     // Авто-рахунок днів за графіком при вводі змін
@@ -608,7 +625,7 @@
 
     // Слухачі подій
     document.querySelectorAll('input, select').forEach(el => {
-        if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays'].includes(el.id)) {
+        if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays', 'l4Days'].includes(el.id)) {
             el.addEventListener('input', calculateSalary); el.addEventListener('change', calculateSalary);
         }
     });
