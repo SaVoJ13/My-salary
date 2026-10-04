@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ЗП Калькулятор Fiege</title>
     <style>
+        /* ==========================================
+           БЛОК 1: ДИЗАЙН ТА СТИЛІ (CSS)
+           Тут налаштовуються кольори, відступи, розміри шрифтів 
+           та зовнішній вигляд Преміум-режиму
+           ========================================== */
         :root {
             --primary: #e3000f; 
             --bg-color: #f4f6f9;
@@ -108,6 +113,10 @@
 </head>
 <body id="app-body">
 
+<!-- ==========================================
+     БЛОК 2: ІНТЕРФЕЙС ТА HTML ЕЛЕМЕНТИ
+     Поля вводу, кнопки, меню, відображення результату
+     ========================================== -->
 <div class="calculator">
     <div id="sideMenu" class="side-menu">
         <div class="menu-header">
@@ -165,7 +174,6 @@
         <input type="number" id="baseSalary" value="5750" onfocus="this.value=''" onblur="if(this.value==='') calculateSalary();">
     </div>
 
-    <!-- PREMIUM БЛОКИ: ГРУПА, ВІДПУСТКА, ЛІКАРНЯНІ -->
     <div class="premium-highlight premium-field flex-col">
         <div class="form-group" style="width:100%">
             <label id="lblGroup">Робоча група</label>
@@ -187,7 +195,6 @@
         <input type="number" id="vacationDays" placeholder="0" onfocus="this.value=''">
     </div>
     <div class="form-group sub-group premium-field hidden" id="urlopBonusGroup">
-        <!-- ТЕПЕР ЦЕ ВАРТІСТЬ ОДНОГО ДНЯ -->
         <label id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ️</label>
         <input type="number" id="urlopBonus" placeholder="0.00" onfocus="this.value=''" style="color:var(--primary);">
     </div>
@@ -200,7 +207,6 @@
         <label id="lblWorkedDays">Фактично відпрацьовано (днів)</label>
         <input type="number" id="workedDays" placeholder="Введіть" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
-    <!-- КІНЕЦЬ PREMIUM БЛОКІВ -->
 
     <div class="form-group">
         <label id="lblBonus">Премія</label>
@@ -274,6 +280,10 @@
 </div>
 
 <script type="module">
+    /* ==========================================
+       БЛОК 3: НАЛАШТУВАННЯ ТА БАЗА ДАНИХ FIREBASE
+       Ініціалізація хмари, збереження (без дублікатів), авторизація
+       ========================================== */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -290,264 +300,17 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-
-    const dict = {
-        ua: {
-            title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)",
-            group: "Робоча група", schedDays: "Дні за графіком (авто):",
-            vacationDays: "Відпустка (днів)", urlopBonus: "Середня за 1 день відп. (zł) ℹ️", 
-            l4Days: "Лікарняний L4 (календарні)", workedDays: "Фактично відпрацьовано (днів)", 
-            bonus: "Премія", morning: "Ранкові зміни (шт)", night: "Нічні зміни (шт)", 
-            weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)", 
-            under26: "Вік до 26 років", ppk: "Участь у PPK", insurance: "Дод. страхування", yes: "Так", no: "Ні",
-            menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", 
-            months: ["Січень 2026", "Лютий 2026", "Березень 2026", "Квітень 2026", "Травень 2026", "Червень 2026", "Липень 2026", "Серпень 2026", "Вересень 2026", "Жовтень 2026", "Листопад 2026", "Грудень 2026"]
-        },
-        pl: {
-            title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)",
-            group: "Grupa robocza", schedDays: "Dni z grafiku (auto):",
-            vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa za 1 dzień ℹ️", 
-            l4Days: "L4 (dni kalendarzowe)", workedDays: "Przepracowano faktycznie (dni)", 
-            bonus: "Premia", morning: "Poranne zmiany (szt)", night: "Nocne zmiany (szt)", 
-            weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", 
-            under26: "Wiek < 26 lat", ppk: "PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
-            menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
-            months: ["Styczeń 2026", "Luty 2026", "Marzec 2026", "Kwiecień 2026", "Maj 2026", "Czerwiec 2026", "Lipiec 2026", "Sierpień 2026", "Wrzesień 2026", "Październik 2026", "Listopad 2026", "Grudzień 2026"]
-        }
-    };
-
+    
     let currentLang = 'ua';
     let isPremium = false;
 
-    const stateWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
-    const groupMatrix = {
-        A: [17, 18, 21, 22, 22, 24, 20, 21, 21, 23, 20, 21],
-        B: [18, 16, 23, 22, 22, 23, 22, 21, 20, 21, 21, 20],
-        C: [18, 18, 21, 21, 23, 21, 24, 20, 21, 21, 21, 20],
-        D: [18, 18, 22, 23, 20, 22, 23, 18, 23, 22, 23, 18]
-    };
-
-    window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); }
-    window.setTheme = function(theme) { document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : ''); localStorage.setItem('theme', theme); }
-    window.setLang = function(lang) {
-        currentLang = lang; const d = dict[lang];
-        document.getElementById('lblTitle').innerHTML = d.title + ' <span class="premium-badge">PRO</span>';
-        document.getElementById('lblMonth').innerText = d.month;
-        document.getElementById('lblBase').innerText = d.base;
-        document.getElementById('lblGroup').innerText = d.group;
-        document.getElementById('lblScheduleDays').innerText = d.schedDays;
-        document.getElementById('lblVacationDays').innerText = d.vacationDays;
-        document.getElementById('lblUrlopBonus').innerText = d.urlopBonus;
-        document.getElementById('lblL4Days').innerText = d.l4Days;
-        document.getElementById('lblWorkedDays').innerText = d.workedDays;
-        document.getElementById('lblBonus').innerText = d.bonus;
-        document.getElementById('lblMorning').innerText = d.morning;
-        document.getElementById('lblNight').innerText = d.night;
-        document.getElementById('lblWeekend').innerText = d.weekend;
-        document.getElementById('lblOvertime').innerText = d.overtime;
-        document.getElementById('lblUnder26').innerText = d.under26;
-        document.getElementById('lblPPK').innerText = d.ppk;
-        document.getElementById('lblInsurance').innerText = d.insurance;
-        document.getElementById('menuTitle').innerText = d.menuTitle;
-        document.getElementById('lblMenuLang').innerText = d.menuLang;
-        document.getElementById('lblMenuTheme').innerText = d.menuTheme;
-        document.getElementById('optU26Yes').innerText = d.yes; document.getElementById('optU26No').innerText = d.no;
-        document.getElementById('optPpkYes').innerText = d.yes; document.getElementById('optPpkNo').innerText = d.no;
-        document.getElementById('optInsYes').innerText = d.yes; document.getElementById('optInsNo').innerText = d.no;
-        initMonths(); calculateSalary();
-    }
-
-    function initMonths() {
-        const select = document.getElementById('monthSelect');
-        const currentVal = select.value; 
-        select.innerHTML = '<option value="" disabled selected>-</option>';
-        dict[currentLang].months.forEach((m, idx) => {
-            let opt = document.createElement('option');
-            opt.value = "2026-" + String(idx + 1).padStart(2, '0');
-            opt.text = m; select.appendChild(opt);
-        });
-        select.value = currentVal || "2026-01";
-    }
-
-    // Алгоритм рахує середню суму саме за ОДИН день
-    function getAutoDailyUrlopBonus(currentYear, monthIdx) {
-        let totalExtras = 0;
-        let totalWorkedDays = 0;
-        
-        for (let i = 1; i <= 3; i++) {
-            let pMonth = monthIdx + 1 - i;
-            let pYear = currentYear;
-            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
-            const pastMonthStr = pYear + "-" + String(pMonth).padStart(2, '0');
-            const savedStr = localStorage.getItem('salary_' + pastMonthStr);
-            
-            if (savedStr) {
-                const data = JSON.parse(savedStr);
-                const pastBase = parseFloat(data.baseSalary) || 5750;
-                const pastPct = parseFloat(data.bonusPctSelect) || 0;
-                const pastGroup = data.userGroup || 'D';
-                const pastSched = parseInt(data.scheduleDays) || groupMatrix[pastGroup][pMonth - 1] || stateWorkDays[pMonth - 1];
-                const pastVac = parseInt(data.vacationDays) || 0;
-                const pastL4 = parseInt(data.l4Days) || 0;
-                
-                let pActual = pastSched - pastVac;
-                if (pastL4 > 0) pActual = parseInt(data.workedDays) || 0;
-                pActual = Math.max(0, pActual);
-                
-                const pastBonusVal = (pastBase * (pastPct / 100)) / pastSched * pActual;
-                
-                const mShifts = parseInt(data.morningShifts) || 0;
-                const nShifts = parseInt(data.nightShifts) || 0;
-                const wknd = parseInt(data.weekendDays) || 0;
-                const over = parseFloat(data.overtimeDays) || 0;
-
-                const stDays = stateWorkDays[pMonth - 1];
-                const nTariff = ((4806 / (stDays * 8)) * 0.20);
-                const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
-                const pastWknd = wknd * 100;
-                const pastOver = over * ((pastBase / stDays) * 2);
-
-                totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
-                totalWorkedDays += pActual;
-            }
-        }
-        if (totalWorkedDays === 0) return 0;
-        return (totalExtras / totalWorkedDays);
-    }
-
-    // Слухач для авто-заповнення поля денної ставки при введенні кількості днів відпустки
-    document.getElementById('vacationDays').addEventListener('input', function() {
-        const vacDays = parseInt(this.value) || 0;
-        const monthVal = document.getElementById('monthSelect').value;
-        if (!monthVal) return;
-        const [year, month] = monthVal.split('-');
-        
-        const urlopInput = document.getElementById('urlopBonus');
-        if (isPremium && vacDays > 0) {
-            // Заповнюємо авто-тариф, тільки якщо поле пусте або нульове (щоб не перебивати ручний ввід)
-            if (!urlopInput.value || parseFloat(urlopInput.value) === 0) {
-                const autoDaily = getAutoDailyUrlopBonus(parseInt(year), parseInt(month) - 1);
-                if (autoDaily > 0) urlopInput.value = autoDaily.toFixed(2);
-            }
-        } else {
-            urlopInput.value = "";
-        }
-        calculateSalary();
-    });
-
-    window.calculateSalary = function() {
-        const monthVal = document.getElementById('monthSelect').value;
-        if (!monthVal) return updateUI(0, 0);
-        
-        const monthIdx = parseInt(monthVal.split('-')[1]) - 1;
-        const stateDays = stateWorkDays[monthIdx];
-        
-        const autoBase = monthIdx >= 9 ? 5950 : 5750;
-        let baseInput = document.getElementById('baseSalary');
-        if (!baseInput.value) baseInput.value = autoBase;
-        const baseSalary = parseFloat(baseInput.value);
-
-        const group = document.getElementById('userGroup').value;
-        const schedDays = isPremium ? groupMatrix[group][monthIdx] : stateDays;
-        if (isPremium) document.getElementById('scheduleDays').value = schedDays;
-
-        const vacDays = isPremium ? (parseInt(document.getElementById('vacationDays').value) || 0) : 0;
-        const l4Days = isPremium ? (parseInt(document.getElementById('l4Days').value) || 0) : 0;
-        
-        document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays === 0);
-        document.getElementById('workedDaysGroup').classList.toggle('hidden', l4Days === 0);
-
-        // МНОЖИМО ТАРИФ 1 ДНЯ НА КІЛЬКІСТЬ ДНІВ ВІДПУСТКИ!
-        const dailyUrlopBonus = (isPremium && vacDays > 0) ? (parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
-        const totalUrlopBonus = dailyUrlopBonus * vacDays;
-
-        let actualWorkedDays = schedDays - vacDays;
-        if (l4Days > 0) actualWorkedDays = parseInt(document.getElementById('workedDays').value) || 0;
-        actualWorkedDays = Math.max(0, actualWorkedDays);
-
-        let adjustedBase = baseSalary;
-        let l4Pay = 0;
-        if (isPremium && l4Days > 0) {
-            adjustedBase = baseSalary - ((baseSalary / 30) * l4Days);
-            l4Pay = ((baseSalary * 0.8629) / 30) * 0.80 * l4Days; 
-        }
-
-        const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
-        const bonusAmount = isPremium ? ((baseSalary * (bonusPct / 100)) / schedDays * actualWorkedDays) : (baseSalary * (bonusPct / 100));
-
-        const minSalary = 4806.00;
-        const nightTariff = Math.round(((minSalary / (stateDays * 8)) * 0.20) * 100) / 100;
-        const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
-
-        const morningShifts = parseInt(document.getElementById('morningShifts').value) || 0;
-        const nightShifts = parseInt(document.getElementById('nightShifts').value) || 0;
-        const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
-        const overtimeDays = parseFloat(document.getElementById('overtimeDays').value) || 0;
-
-        const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
-        
-        // ДОДАЄМО ЗАГАЛЬНУ ВАРТІСТЬ ВСІХ ДНІВ ВІДПУСТКИ ДО БРУТТО
-        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff) + totalUrlopBonus;
-
-        const isUnder26 = document.getElementById('under26Select').value === 'yes';
-        const ppkActive = document.getElementById('ppkSelect').value === 'yes';
-        
-        const zusBase = gross - l4Pay; 
-        const zus = zusBase * 0.1371; 
-        const healthBase = gross - zus;
-        const nfz = Math.round((healthBase * 0.09) * 100) / 100;
-        
-        let pit = 0;
-        if (!isUnder26) {
-            const pitBase = Math.round(Math.max(0, healthBase - 300.00));
-            pit = Math.max(0, Math.round((pitBase * 0.12) - 300.00) + 54.00);
-        }
-
-        const net = gross - zus - nfz - pit - (ppkActive ? gross * 0.02 : 0) - (document.getElementById('insuranceSelect').value === 'yes' ? 36.70 : 0) - 30.25 + 15.00;
-
-        updateUI(gross, net); saveLocalData();
-    }
-
-    function updateUI(g, n) {
-        document.getElementById('grossResult').innerText = g.toFixed(2) + ' zł';
-        document.getElementById('netResult').innerText = n.toFixed(2) + ' zł';
-    }
-
-    function saveLocalData() {
-        const month = document.getElementById('monthSelect').value;
-        if (!month) return;
-        const data = {};
-        document.querySelectorAll('input, select').forEach(el => {
-            if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id)) data[el.id] = el.value;
-        });
-        localStorage.setItem('salary_' + month, JSON.stringify(data));
-    }
-
-    function loadLocalData() {
-        const month = document.getElementById('monthSelect').value;
-        if (!month) return;
-        const saved = localStorage.getItem('salary_' + month);
-        if (saved) {
-            const d = JSON.parse(saved);
-            document.querySelectorAll('input, select').forEach(el => {
-                if(!['langSelect', 'themeSelect', 'email', 'password', 'userGroup'].includes(el.id) && d[el.id] !== undefined) {
-                    el.value = d[el.id];
-                }
-            });
-        } else {
-            document.querySelectorAll('input[type=number]').forEach(el => el.value = '');
-            document.getElementById('bonusPctSelect').value = "";
-            document.getElementById('urlopBonus').value = "";
-            document.getElementById('baseSalary').value = "";
-        }
-        calculateSalary();
-    }
-
+    // Збереження профілю (Вибір групи)
     window.saveProfile = async function() {
         if (!auth.currentUser) return;
-        await setDoc(doc(db, "users", auth.currentUser.uid, "profile", "settings"), { group: document.getElementById('userGroup').value });
+        await setDoc(doc(db, "users", auth.currentUser.uid, "profile", "settings"), { group: document.getElementById('userGroup').value }, { merge: true });
     }
 
+    // Відстеження стану входу
     onAuthStateChanged(auth, async (user) => {
         isPremium = !!user;
         document.getElementById('app-body').classList.toggle('is-logged-in', isPremium);
@@ -576,28 +339,273 @@
     });
     document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
+    // Синхронізація (Збереження без дублікатів)
     document.getElementById('btn-sync-up').addEventListener('click', async () => {
         if (!auth.currentUser) return;
-        const data = {};
+        const monthVal = document.getElementById('monthSelect').value;
+        if (!monthVal) { alert("Будь ласка, оберіть місяць перед збереженням!"); return; }
+
+        const data = { updatedAt: new Date().toISOString() };
         document.querySelectorAll('input, select').forEach(el => {
             if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id)) data[el.id] = el.value;
         });
-        await setDoc(doc(db, "users", auth.currentUser.uid, "months", document.getElementById('monthSelect').value), data);
-        alert("Дані збережені у хмару! ☁️");
+
+        try {
+            await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
+            localStorage.setItem('salary_' + monthVal, JSON.stringify(data));
+            alert("Дані збережені у хмару! ☁️");
+        } catch (error) { alert("Помилка збереження: " + error.message); }
     });
 
+    // Завантаження з хмари
     document.getElementById('btn-sync-down').addEventListener('click', async () => {
         if (!auth.currentUser) return;
-        const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", document.getElementById('monthSelect').value));
+        const monthVal = document.getElementById('monthSelect').value;
+        if (!monthVal) return;
+
+        const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal));
         if (snap.exists()) {
             const d = snap.data();
             document.querySelectorAll('input, select').forEach(el => {
                 if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id) && d[el.id] !== undefined) el.value = d[el.id];
             });
-            calculateSalary(); alert("Дані завантажені! 📥");
-        } else alert("Даних за цей місяць у хмарі немає.");
+            localStorage.setItem('salary_' + monthVal, JSON.stringify(d));
+            calculateSalary(); 
+            alert("Дані завантажені! 📥");
+        } else {
+            alert("Даних за цей місяць у хмарі немає.");
+        }
     });
 
+    /* ==========================================
+       БЛОК 4: СЛОВНИКИ ТА ЗМІННІ 
+       Переклад, Матриця графіків та Державних днів
+       ========================================== */
+    const dict = {
+        ua: {
+            title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", group: "Робоча група", 
+            schedDays: "Дні за графіком (авто):", vacationDays: "Відпустка (днів)", urlopBonus: "Середня за 1 день відп. (zł) ℹ️", 
+            l4Days: "Лікарняний L4 (календарні)", workedDays: "Фактично відпрацьовано (днів)", 
+            bonus: "Премія", morning: "Ранкові зміни (шт)", night: "Нічні зміни (шт)", 
+            weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)", under26: "Вік до 26 років", 
+            ppk: "Участь у PPK", insurance: "Дод. страхування", yes: "Так", no: "Ні",
+            menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", 
+            months: ["Січень 2026", "Лютий 2026", "Березень 2026", "Квітень 2026", "Травень 2026", "Червень 2026", "Липень 2026", "Серпень 2026", "Вересень 2026", "Жовтень 2026", "Листопад 2026", "Грудень 2026"]
+        },
+        pl: {
+            title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", group: "Grupa robocza", 
+            schedDays: "Dni z grafiku (auto):", vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa za 1 dzień ℹ️️", 
+            l4Days: "L4 (dni kalendarzowe)", workedDays: "Przepracowano faktycznie (dni)", 
+            bonus: "Premia", morning: "Poranne zmiany (szt)", night: "Nocne zmiany (szt)", 
+            weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat", 
+            ppk: "PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
+            menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
+            months: ["Styczeń 2026", "Luty 2026", "Marzec 2026", "Kwiecień 2026", "Maj 2026", "Czerwiec 2026", "Lipiec 2026", "Sierpień 2026", "Wrzesień 2026", "Październik 2026", "Listopad 2026", "Grudzień 2026"]
+        }
+    };
+
+    const stateWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
+    const groupMatrix = {
+        A: [17, 18, 21, 22, 22, 24, 20, 21, 21, 23, 20, 21],
+        B: [18, 16, 23, 22, 22, 23, 22, 21, 20, 21, 21, 20],
+        C: [18, 18, 21, 21, 23, 21, 24, 20, 21, 21, 21, 20],
+        D: [18, 18, 22, 23, 20, 22, 23, 18, 23, 22, 23, 18]
+    };
+
+    /* ==========================================
+       БЛОК 5: ЛОГІКА ІНТЕРФЕЙСУ (UI) ТА LOCALSTORAGE
+       Зміна мови, теми, збереження на пристрої
+       ========================================== */
+    window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); }
+    window.setTheme = function(theme) { document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : ''); localStorage.setItem('theme', theme); }
+    window.setLang = function(lang) {
+        currentLang = lang; const d = dict[lang];
+        document.getElementById('lblTitle').innerHTML = d.title + ' <span class="premium-badge">PRO</span>';
+        document.getElementById('lblMonth').innerText = d.month; document.getElementById('lblBase').innerText = d.base;
+        document.getElementById('lblGroup').innerText = d.group; document.getElementById('lblScheduleDays').innerText = d.schedDays;
+        document.getElementById('lblVacationDays').innerText = d.vacationDays; document.getElementById('lblUrlopBonus').innerText = d.urlopBonus;
+        document.getElementById('lblL4Days').innerText = d.l4Days; document.getElementById('lblWorkedDays').innerText = d.workedDays;
+        document.getElementById('lblBonus').innerText = d.bonus; document.getElementById('lblMorning').innerText = d.morning;
+        document.getElementById('lblNight').innerText = d.night; document.getElementById('lblWeekend').innerText = d.weekend;
+        document.getElementById('lblOvertime').innerText = d.overtime; document.getElementById('lblUnder26').innerText = d.under26;
+        document.getElementById('lblPPK').innerText = d.ppk; document.getElementById('lblInsurance').innerText = d.insurance;
+        document.getElementById('menuTitle').innerText = d.menuTitle; document.getElementById('lblMenuLang').innerText = d.menuLang;
+        document.getElementById('lblMenuTheme').innerText = d.menuTheme; document.getElementById('optU26Yes').innerText = d.yes; 
+        document.getElementById('optU26No').innerText = d.no; document.getElementById('optPpkYes').innerText = d.yes; 
+        document.getElementById('optPpkNo').innerText = d.no; document.getElementById('optInsYes').innerText = d.yes; 
+        document.getElementById('optInsNo').innerText = d.no;
+        initMonths(); calculateSalary();
+    }
+
+    function initMonths() {
+        const select = document.getElementById('monthSelect');
+        const currentVal = select.value; 
+        select.innerHTML = '<option value="" disabled selected>-</option>';
+        dict[currentLang].months.forEach((m, idx) => {
+            let opt = document.createElement('option');
+            opt.value = "2026-" + String(idx + 1).padStart(2, '0');
+            opt.text = m; select.appendChild(opt);
+        });
+        select.value = currentVal || "2026-01";
+    }
+
+    function saveLocalData() {
+        const month = document.getElementById('monthSelect').value;
+        if (!month) return;
+        const data = {};
+        document.querySelectorAll('input, select').forEach(el => {
+            if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id)) data[el.id] = el.value;
+        });
+        localStorage.setItem('salary_' + month, JSON.stringify(data));
+    }
+
+    function loadLocalData() {
+        const month = document.getElementById('monthSelect').value;
+        if (!month) return;
+        const saved = localStorage.getItem('salary_' + month);
+        if (saved) {
+            const d = JSON.parse(saved);
+            document.querySelectorAll('input, select').forEach(el => {
+                if(!['langSelect', 'themeSelect', 'email', 'password', 'userGroup'].includes(el.id) && d[el.id] !== undefined) el.value = d[el.id];
+            });
+        } else {
+            document.querySelectorAll('input[type=number]').forEach(el => el.value = '');
+            document.getElementById('bonusPctSelect').value = ""; document.getElementById('urlopBonus').value = ""; document.getElementById('baseSalary').value = "";
+        }
+        calculateSalary();
+    }
+
+    /* ==========================================
+       БЛОК 6: МАТЕМАТИКА ТА РОЗРАХУНКИ
+       Алгоритм відпускних, лікарняні (L4), Податки та Брутто/Нетто
+       ========================================== */
+    function getAutoDailyUrlopBonus(currentYear, monthIdx) {
+        let totalExtras = 0; let totalWorkedDays = 0;
+        for (let i = 1; i <= 3; i++) {
+            let pMonth = monthIdx + 1 - i; let pYear = currentYear;
+            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
+            const pastMonthStr = pYear + "-" + String(pMonth).padStart(2, '0');
+            const savedStr = localStorage.getItem('salary_' + pastMonthStr);
+            
+            if (savedStr) {
+                const data = JSON.parse(savedStr);
+                const pastBase = parseFloat(data.baseSalary) || 5750;
+                const pastPct = parseFloat(data.bonusPctSelect) || 0;
+                const pastGroup = data.userGroup || 'D';
+                const pastSched = parseInt(data.scheduleDays) || groupMatrix[pastGroup][pMonth - 1] || stateWorkDays[pMonth - 1];
+                const pastVac = parseInt(data.vacationDays) || 0;
+                const pastL4 = parseInt(data.l4Days) || 0;
+                
+                let pActual = pastSched - pastVac;
+                if (pastL4 > 0) pActual = parseInt(data.workedDays) || 0;
+                pActual = Math.max(0, pActual);
+                
+                const pastBonusVal = (pastBase * (pastPct / 100)) / pastSched * pActual;
+                const mShifts = parseInt(data.morningShifts) || 0; const nShifts = parseInt(data.nightShifts) || 0;
+                const wknd = parseInt(data.weekendDays) || 0; const over = parseFloat(data.overtimeDays) || 0;
+                const stDays = stateWorkDays[pMonth - 1];
+                const nTariff = ((4806 / (stDays * 8)) * 0.20);
+                
+                const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
+                const pastWknd = wknd * 100;
+                const pastOver = over * ((pastBase / stDays) * 2);
+
+                totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
+                totalWorkedDays += pActual;
+            }
+        }
+        if (totalWorkedDays === 0) return 0;
+        return (totalExtras / totalWorkedDays);
+    }
+
+    document.getElementById('vacationDays').addEventListener('input', function() {
+        const vacDays = parseInt(this.value) || 0;
+        const monthVal = document.getElementById('monthSelect').value;
+        if (!monthVal) return;
+        const [year, month] = monthVal.split('-');
+        const urlopInput = document.getElementById('urlopBonus');
+        
+        if (isPremium && vacDays > 0) {
+            if (!urlopInput.value || parseFloat(urlopInput.value) === 0) {
+                const autoDaily = getAutoDailyUrlopBonus(parseInt(year), parseInt(month) - 1);
+                if (autoDaily > 0) urlopInput.value = autoDaily.toFixed(2);
+            }
+        } else { urlopInput.value = ""; }
+        calculateSalary();
+    });
+
+    window.calculateSalary = function() {
+        const monthVal = document.getElementById('monthSelect').value;
+        if (!monthVal) return updateUI(0, 0);
+        
+        const monthIdx = parseInt(monthVal.split('-')[1]) - 1;
+        const stateDays = stateWorkDays[monthIdx];
+        
+        const autoBase = monthIdx >= 9 ? 5950 : 5750;
+        let baseInput = document.getElementById('baseSalary');
+        if (!baseInput.value) baseInput.value = autoBase;
+        const baseSalary = parseFloat(baseInput.value);
+
+        const group = document.getElementById('userGroup').value;
+        const schedDays = isPremium ? groupMatrix[group][monthIdx] : stateDays;
+        if (isPremium) document.getElementById('scheduleDays').value = schedDays;
+
+        const vacDays = isPremium ? (parseInt(document.getElementById('vacationDays').value) || 0) : 0;
+        const l4Days = isPremium ? (parseInt(document.getElementById('l4Days').value) || 0) : 0;
+        
+        document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays === 0);
+        document.getElementById('workedDaysGroup').classList.toggle('hidden', l4Days === 0);
+
+        const dailyUrlopBonus = (isPremium && vacDays > 0) ? (parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
+        const totalUrlopBonus = dailyUrlopBonus * vacDays;
+
+        let actualWorkedDays = schedDays - vacDays;
+        if (l4Days > 0) actualWorkedDays = parseInt(document.getElementById('workedDays').value) || 0;
+        actualWorkedDays = Math.max(0, actualWorkedDays);
+
+        let adjustedBase = baseSalary; let l4Pay = 0;
+        if (isPremium && l4Days > 0) {
+            adjustedBase = baseSalary - ((baseSalary / 30) * l4Days);
+            l4Pay = ((baseSalary * 0.8629) / 30) * 0.80 * l4Days; 
+        }
+
+        const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
+        const bonusAmount = isPremium ? ((baseSalary * (bonusPct / 100)) / schedDays * actualWorkedDays) : (baseSalary * (bonusPct / 100));
+
+        const nightTariff = Math.round(((4806.00 / (stateDays * 8)) * 0.20) * 100) / 100;
+        const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
+
+        const morningShifts = parseInt(document.getElementById('morningShifts').value) || 0;
+        const nightShifts = parseInt(document.getElementById('nightShifts').value) || 0;
+        const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
+        const overtimeDays = parseFloat(document.getElementById('overtimeDays').value) || 0;
+
+        const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
+        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff) + totalUrlopBonus;
+
+        const isUnder26 = document.getElementById('under26Select').value === 'yes';
+        const ppkActive = document.getElementById('ppkSelect').value === 'yes';
+        
+        const zusBase = gross - l4Pay; const zus = zusBase * 0.1371; 
+        const healthBase = gross - zus; const nfz = Math.round((healthBase * 0.09) * 100) / 100;
+        
+        let pit = 0;
+        if (!isUnder26) {
+            const pitBase = Math.round(Math.max(0, healthBase - 300.00));
+            pit = Math.max(0, Math.round((pitBase * 0.12) - 300.00) + 54.00);
+        }
+
+        const net = gross - zus - nfz - pit - (ppkActive ? gross * 0.02 : 0) - (document.getElementById('insuranceSelect').value === 'yes' ? 36.70 : 0) - 30.25 + 15.00;
+
+        updateUI(gross, net); saveLocalData();
+    }
+
+    function updateUI(g, n) {
+        document.getElementById('grossResult').innerText = g.toFixed(2) + ' zł';
+        document.getElementById('netResult').innerText = n.toFixed(2) + ' zł';
+    }
+
+    // Слухачі подій
     document.querySelectorAll('input, select').forEach(el => {
         if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays'].includes(el.id)) {
             el.addEventListener('input', calculateSalary); el.addEventListener('change', calculateSalary);
@@ -605,6 +613,7 @@
     });
     document.getElementById('monthSelect').addEventListener('change', loadLocalData);
 
+    // Ініціалізація
     setTheme(localStorage.getItem('theme') || 'light');
     window.setLang('ua'); loadLocalData();
 </script>
