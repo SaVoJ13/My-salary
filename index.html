@@ -187,7 +187,8 @@
         <input type="number" id="vacationDays" placeholder="0" onfocus="this.value=''">
     </div>
     <div class="form-group sub-group premium-field hidden" id="urlopBonusGroup">
-        <label id="lblUrlopBonus">Доплата за відпустку (zł) ℹ️</label>
+        <!-- ТЕПЕР ЦЕ ВАРТІСТЬ ОДНОГО ДНЯ -->
+        <label id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ️</label>
         <input type="number" id="urlopBonus" placeholder="0.00" onfocus="this.value=''" style="color:var(--primary);">
     </div>
 
@@ -294,7 +295,7 @@
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)",
             group: "Робоча група", schedDays: "Дні за графіком (авто):",
-            vacationDays: "Відпустка (днів)", urlopBonus: "Доплата за відпустку (zł) ℹ️", 
+            vacationDays: "Відпустка (днів)", urlopBonus: "Середня за 1 день відп. (zł) ℹ️", 
             l4Days: "Лікарняний L4 (календарні)", workedDays: "Фактично відпрацьовано (днів)", 
             bonus: "Премія", morning: "Ранкові зміни (шт)", night: "Нічні зміни (шт)", 
             weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)", 
@@ -305,7 +306,7 @@
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)",
             group: "Grupa robocza", schedDays: "Dni z grafiku (auto):",
-            vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa (zł) ℹ️", 
+            vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa za 1 dzień ℹ️", 
             l4Days: "L4 (dni kalendarzowe)", workedDays: "Przepracowano faktycznie (dni)", 
             bonus: "Premia", morning: "Poranne zmiany (szt)", night: "Nocne zmiany (szt)", 
             weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", 
@@ -368,8 +369,8 @@
         select.value = currentVal || "2026-01";
     }
 
-    function autoCalculateUrlopBonus(currentYear, monthIdx, vacDays) {
-        if (vacDays <= 0) return 0;
+    // Алгоритм рахує середню суму саме за ОДИН день
+    function getAutoDailyUrlopBonus(currentYear, monthIdx) {
         let totalExtras = 0;
         let totalWorkedDays = 0;
         
@@ -411,21 +412,25 @@
             }
         }
         if (totalWorkedDays === 0) return 0;
-        return (totalExtras / totalWorkedDays) * vacDays;
+        return (totalExtras / totalWorkedDays);
     }
 
-    // Слухач для миттєвого розрахунку відпускних під час вводу днів
+    // Слухач для авто-заповнення поля денної ставки при введенні кількості днів відпустки
     document.getElementById('vacationDays').addEventListener('input', function() {
         const vacDays = parseInt(this.value) || 0;
         const monthVal = document.getElementById('monthSelect').value;
         if (!monthVal) return;
         const [year, month] = monthVal.split('-');
         
+        const urlopInput = document.getElementById('urlopBonus');
         if (isPremium && vacDays > 0) {
-            const autoBonus = autoCalculateUrlopBonus(parseInt(year), parseInt(month) - 1, vacDays);
-            document.getElementById('urlopBonus').value = autoBonus > 0 ? autoBonus.toFixed(2) : "";
+            // Заповнюємо авто-тариф, тільки якщо поле пусте або нульове (щоб не перебивати ручний ввід)
+            if (!urlopInput.value || parseFloat(urlopInput.value) === 0) {
+                const autoDaily = getAutoDailyUrlopBonus(parseInt(year), parseInt(month) - 1);
+                if (autoDaily > 0) urlopInput.value = autoDaily.toFixed(2);
+            }
         } else {
-            document.getElementById('urlopBonus').value = "";
+            urlopInput.value = "";
         }
         calculateSalary();
     });
@@ -452,7 +457,9 @@
         document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays === 0);
         document.getElementById('workedDaysGroup').classList.toggle('hidden', l4Days === 0);
 
-        const urlopBonus = (isPremium && vacDays > 0) ? (parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
+        // МНОЖИМО ТАРИФ 1 ДНЯ НА КІЛЬКІСТЬ ДНІВ ВІДПУСТКИ!
+        const dailyUrlopBonus = (isPremium && vacDays > 0) ? (parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
+        const totalUrlopBonus = dailyUrlopBonus * vacDays;
 
         let actualWorkedDays = schedDays - vacDays;
         if (l4Days > 0) actualWorkedDays = parseInt(document.getElementById('workedDays').value) || 0;
@@ -478,7 +485,9 @@
         const overtimeDays = parseFloat(document.getElementById('overtimeDays').value) || 0;
 
         const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
-        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff) + urlopBonus;
+        
+        // ДОДАЄМО ЗАГАЛЬНУ ВАРТІСТЬ ВСІХ ДНІВ ВІДПУСТКИ ДО БРУТТО
+        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff) + totalUrlopBonus;
 
         const isUnder26 = document.getElementById('under26Select').value === 'yes';
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
