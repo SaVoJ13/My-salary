@@ -1,3 +1,289 @@
+<!DOCTYPE html>
+<html lang="ua">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ЗП Калькулятор Fiege</title>
+    <style>
+        /* ==========================================
+           БЛОК 1: ДИЗАЙН ТА СТИЛІ (CSS)
+           ========================================== */
+        :root {
+            --primary: #e3000f; 
+            --bg-color: #f4f6f9;
+            --panel-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color: #e0e5ec;
+            --success: #27ae60;
+            --premium-bg: #fff9e6;
+            --premium-border: #f1c40f;
+        }
+
+        [data-theme="dark"] {
+            --primary: #ff4d57;
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border-color: #333333;
+            --success: #2ecc71;
+            --premium-bg: #2a2411;
+            --premium-border: #d4ac0d;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; 
+            box-sizing: border-box; display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; transition: background 0.3s, color 0.3s;
+        }
+
+        .calculator { 
+            width: 100%; max-width: 420px; background: var(--panel-bg); padding: 24px 20px; 
+            border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); 
+            box-sizing: border-box; position: relative; transition: background 0.3s;
+        }
+
+        .menu-btn, .close-menu { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-main); padding: 0; }
+        
+        .side-menu {
+            position: absolute; top: 0; left: 0; width: 280px; height: 100%;
+            background: var(--panel-bg); box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            border-radius: 16px 0 0 16px; z-index: 10; display: flex; flex-direction: column;
+            padding: 20px; box-sizing: border-box; transition: transform 0.3s ease;
+            transform: translateX(-100%); overflow-y: auto;
+        }
+        .side-menu.open { transform: translateX(0); }
+        .menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .menu-item { margin-bottom: 15px; }
+        .menu-item label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; width: 100%; }
+
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; position: relative; }
+        h2 { margin: 0; font-size: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px;}
+        .premium-badge { background: var(--premium-border); color: #000; font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; display: none; }
+
+        /* Компактний бейдж "Графік" */
+        .schedule-badge {
+            background: var(--premium-bg); border: 1px solid var(--premium-border);
+            border-radius: 8px; padding: 4px 6px; display: none; 
+            flex-direction: column; align-items: center; justify-content: center;
+            min-width: 45px;
+        }
+        .is-logged-in .schedule-badge { display: flex; }
+        .schedule-badge span { font-size: 9px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
+        .schedule-badge input {
+            width: 100%; padding: 0; background: transparent; border: none;
+            font-size: 15px; font-weight: 800; color: var(--primary); text-align: center; box-shadow: none;
+        }
+        .schedule-badge input:focus { box-shadow: none; outline: none; }
+
+        .form-group { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
+        
+        .premium-field { display: none; }
+        .is-logged-in .premium-field { display: flex; }
+        .is-logged-in .premium-badge { display: inline-block; }
+        
+        .sub-group { margin-top: -6px; margin-bottom: 14px; padding-left: 15px; border-left: 2px solid var(--premium-border); }
+        label { font-size: 14px; font-weight: 500; color: var(--text-main); width: 60%; }
+        .sub-group label { font-size: 13px; font-weight: 600; color: var(--primary); }
+
+        input, select { 
+            width: 38%; padding: 10px; border: 1px solid var(--border-color); 
+            border-radius: 8px; font-size: 14px; text-align: center; 
+            background: var(--bg-color); color: var(--text-main);
+            font-weight: 600; box-sizing: border-box; appearance: none;
+        }
+        
+        select {
+            text-align-last: center; padding-right: 20px;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237f8c8d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 8px auto;
+        }
+        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1); }
+        input::placeholder { color: var(--text-muted); font-weight: 400; }
+
+        .divider { border-top: 1px solid var(--border-color); margin: 20px 0; }
+        
+        .results-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .result-box { border-radius: 12px; padding: 16px 12px; text-align: center; }
+        .result-box.brutto { background: var(--bg-color); border: 1px solid var(--border-color); }
+        .result-box.netto { background: rgba(39, 174, 96, 0.08); border: 1px solid var(--success); }
+        .result-title { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 700; letter-spacing: 0.5px; }
+        .result-value { font-size: 20px; font-weight: 800; }
+        .brutto .result-value { color: var(--text-main); }
+        .netto .result-value { color: var(--success); }
+
+        .hidden { display: none !important; }
+        .action-btn { width: 100%; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 6px; }
+        .btn-sync { background: var(--success); }
+        .btn-auth-action { background: var(--primary); }
+        .btn-logout { background: var(--text-muted); }
+        .cloud-section { background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border-color); }
+    </style>
+</head>
+<body id="app-body">
+
+<!-- ==========================================
+     БЛОК 2: ІНТЕРФЕЙС ТА HTML ЕЛЕМЕНТИ
+     ========================================== -->
+<div class="calculator">
+    <div id="sideMenu" class="side-menu">
+        <div class="menu-header">
+            <span id="menuTitle" style="font-size: 15px; font-weight: bold;">Меню</span>
+            <button class="close-menu" onclick="toggleMenu()">✕</button>
+        </div>
+
+        <div class="menu-item">
+            <label id="lblMenuLang">Мова</label>
+            <select id="langSelect" style="width: 100%;" onchange="setLang(this.value)">
+                <option value="ua">Українська</option>
+                <option value="pl">Polski</option>
+            </select>
+        </div>
+        <div class="menu-item">
+            <label id="lblMenuTheme">Тема</label>
+            <select id="themeSelect" style="width: 100%;" onchange="setTheme(this.value)">
+                <option value="light" id="optThemeLight">Світла</option>
+                <option value="dark" id="optThemeDark">Темна</option>
+            </select>
+        </div>
+
+        <div class="divider" style="margin: 10px 0;"></div>
+
+        <div class="cloud-section">
+            <label style="width: 100%; font-weight: bold; margin-bottom: 8px; display: block;" id="lblCloudHeader">Акаунт & Хмара</label>
+            <div id="auth-container">
+                <input type="email" id="email" placeholder="Email" style="width: 100%; margin-bottom: 6px; text-align: left;" onfocus="this.value=''">
+                <input type="password" id="password" placeholder="Пароль" style="width: 100%; margin-bottom: 8px; text-align: left;" onfocus="this.value=''">
+                <button id="btn-login" class="action-btn btn-auth-action">Увійти (PRO)</button>
+                <button id="btn-register" class="action-btn" style="background: var(--text-main); margin-top: 4px;">Реєстрація</button>
+            </div>
+            <div id="sync-container" class="hidden">
+                <span id="user-email-display" style="font-size: 11px; display: block; margin-bottom: 8px; word-break: break-all; font-weight: bold;"></span>
+                <button id="btn-sync-up" class="action-btn btn-sync">Зберегти місяць ☁️</button>
+                <button id="btn-sync-down" class="action-btn" style="background: #2980b9; margin-top: 4px;">Завантажити місяць 📥</button>
+                <button id="btn-logout" class="action-btn btn-logout" style="margin-top: 8px;">Вийти (Гостьовий режим)</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-row">
+        <button class="menu-btn" onclick="toggleMenu()">☰</button>
+        <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП <span class="premium-badge">PRO</span></h2>
+        
+        <!-- КОМПАКТНИЙ ГРАФІК -->
+        <div class="schedule-badge" id="scheduleBadgeContainer">
+            <span id="lblScheduleDays">Графік</span>
+            <input type="number" id="scheduleDays" placeholder="0" onblur="calculateSalary()">
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label id="lblMonth">Місяць</label>
+        <select id="monthSelect"></select>
+    </div>
+
+    <!-- ПОЛЯ ЗГІДНО З ВАШИМ ПОРЯДКОМ -->
+    <div class="form-group">
+        <label id="lblBase">Загальна ставка (zł)</label>
+        <input type="number" id="baseSalary" value="5750" onfocus="this.value=''" onblur="if(this.value==='') calculateSalary();">
+    </div>
+
+    <div class="form-group">
+        <label id="lblBonus">Премія</label>
+        <select id="bonusPctSelect">
+            <option value="0">0%</option>
+            <option value="5">5%</option>
+            <option value="10">10%</option>
+            <option value="12.5">12.5%</option>
+            <option value="15" selected>15%</option>
+        </select>
+    </div>
+
+    <!-- БЛОК ЗМІН -->
+    <div class="form-group">
+        <label id="lblMorning">Ранкові зміни (шт)</label>
+        <input type="number" id="morningShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+    <div class="form-group">
+        <label id="lblAfternoon">Денні зміни (шт)</label>
+        <input type="number" id="afternoonShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+    <div class="form-group">
+        <label id="lblNight">Нічні зміни (шт)</label>
+        <input type="number" id="nightShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+
+    <div class="form-group">
+        <label id="lblWeekend">Робочі сб / нд (днів)</label>
+        <input type="number" id="weekendDays" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+
+    <div class="form-group">
+        <label id="lblOvertime">Надгодини (днів)</label>
+        <input type="number" id="overtimeDays" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+
+    <!-- ВІДПУСТКА ТА ЛІКАРНЯНИЙ (PRO) -->
+    <div class="form-group premium-field">
+        <label id="lblVacationDays">Відпустка (днів)</label>
+        <input type="number" id="vacationDays" placeholder="0" onfocus="this.value=''">
+    </div>
+    <div class="form-group sub-group premium-field hidden" id="urlopBonusGroup">
+        <label id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ️️</label>
+        <input type="number" id="urlopBonus" placeholder="0.00" onfocus="this.value=''" style="color:var(--primary);">
+    </div>
+
+    <div class="form-group premium-field">
+        <label id="lblL4Days">Лікарняний L4 (календарні)</label>
+        <input type="number" id="l4Days" placeholder="0" onfocus="this.value=''" onblur="calculateSalary()">
+    </div>
+    <!-- НОВЕ ПОЛЕ: З'являється тільки при лікарняному -->
+    <div class="form-group sub-group premium-field hidden" id="l4MissedGroup">
+        <label id="lblL4Missed">Пропущено змін (шт) ℹ️</label>
+        <input type="number" id="l4MissedShifts" placeholder="0" onfocus="this.value=''" style="color:var(--primary);">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ПОДАТКИ -->
+    <div class="form-group">
+        <label id="lblUnder26">Вік до 26 років</label>
+        <select id="under26Select">
+            <option value="no" id="optU26No" selected>Ні</option>
+            <option value="yes" id="optU26Yes">Так</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label id="lblPPK">Участь у PPK</label>
+        <select id="ppkSelect">
+            <option value="no" id="optPpkNo" selected>Ні</option>
+            <option value="yes" id="optPpkYes">Так</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label id="lblInsurance">Додаткове страхування</label>
+        <select id="insuranceSelect">
+            <option value="yes" id="optInsYes" selected>Так</option>
+            <option value="no" id="optInsNo">Ні</option>
+        </select>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="results-panel">
+        <div class="result-box brutto">
+            <div class="result-title">BRUTTO</div>
+            <div class="result-value" id="grossResult">0.00 zł</div>
+        </div>
+        <div class="result-box netto">
+            <div class="result-title">NETTO</div>
+            <div class="result-value" id="netResult">0.00 zł</div>
+        </div>
+    </div>
+</div>
+
 <script type="module">
     /* ==========================================
        БЛОК 3: НАЛАШТУВАННЯ ТА БАЗА ДАНИХ FIREBASE
@@ -21,8 +307,9 @@
     
     let currentLang = 'ua';
     let isPremium = false;
-    window.cachedL4DailyRate = null; 
+    window.cachedL4DailyRate = null;
 
+    // Відстеження стану входу
     onAuthStateChanged(auth, async (user) => {
         isPremium = !!user;
         document.getElementById('app-body').classList.toggle('is-logged-in', isPremium);
@@ -48,6 +335,7 @@
     });
     document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
+    // Синхронізація (Збереження у хмару)
     document.getElementById('btn-sync-up').addEventListener('click', async () => {
         if (!auth.currentUser) return;
         const monthVal = document.getElementById('monthSelect').value;
@@ -61,10 +349,11 @@
         try {
             await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
             alert("Дані збережені у хмару! ☁️");
-            await updateL4Cache(monthVal); 
+            await updateL4Cache(monthVal);
         } catch (error) { alert("Помилка збереження: " + error.message); }
     });
 
+    // Завантаження з хмари
     async function loadCloudData() {
         if (!auth.currentUser) return;
         const monthVal = document.getElementById('monthSelect').value;
@@ -80,10 +369,10 @@
             } else {
                 clearInputs();
             }
-            await updateL4Cache(monthVal); 
+            await updateL4Cache(monthVal);
             calculateSalary();
         } catch(e) {
-            console.error("Помилка", e);
+            console.error("Помилка завантаження з хмари", e);
         }
     }
 
@@ -126,6 +415,9 @@
 
     const stateWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
 
+    /* ==========================================
+       БЛОК 5: ЛОГІКА ІНТЕРФЕЙСУ (UI)
+       ========================================== */
     window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); }
     window.setTheme = function(theme) { document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : ''); localStorage.setItem('theme', theme); }
     window.setLang = function(lang) {
@@ -147,6 +439,7 @@
         initMonths(); calculateSalary();
     }
 
+    // Динамічні місяці (Поточний + 11 назад)
     function initMonths() {
         const select = document.getElementById('monthSelect');
         const currentVal = select.value; 
@@ -176,6 +469,9 @@
         }
     }
 
+    /* ==========================================
+       БЛОК 6: МАТЕМАТИКА ТА РОЗРАХУНКИ З ХМАРИ
+       ========================================== */
     async function updateL4Cache(currentMonthVal) {
         if (!auth.currentUser) { window.cachedL4DailyRate = null; return; }
         
@@ -247,6 +543,7 @@
             let pMonth = monthIdx + 1 - i; let pYear = currentYear;
             if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
             const pastMonthStr = pYear + "-" + String(pMonth).padStart(2, '0');
+            
             const stDays = stateWorkDays[pMonth - 1] || 21;
             
             try {
@@ -265,9 +562,9 @@
                     
                     let pActual = mShifts + aShifts + nShifts;
                     const pastSched = parseInt(data.scheduleDays) || stDays;
-                    
                     const l4m = parseInt(data.l4MissedShifts) || 0;
                     const vac = parseInt(data.vacationDays) || 0;
+                    
                     if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
                         pActual = Math.max(0, pastSched - vac - l4m);
                     }
@@ -285,6 +582,7 @@
                 }
             } catch (e) {}
         }
+        
         if (totalWorkedDays === 0) return 0;
         return (totalExtras / totalWorkedDays);
     }
@@ -318,11 +616,12 @@
             }
             else if (l4 <= 2) bonusSelect.value = "12.5";
             else bonusSelect.value = "10";
+            
             calculateSalary();
         }
     });
 
-    ['morningShifts', 'afternoonShifts', 'nightShifts', 'overtimeDays', 'vacationDays', 'l4MissedShifts'].forEach(id => {
+    ['morningShifts', 'afternoonShifts', 'nightShifts', 'overtimeDays', 'vacationDays', 'l4Days', 'l4MissedShifts'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
             el.addEventListener('input', () => {
@@ -338,7 +637,6 @@
                     const vac = parseInt(document.getElementById('vacationDays').value) || 0;
                     const l4Missed = parseInt(document.getElementById('l4MissedShifts').value) || 0; 
                     
-                    // Перераховуємо графік ТІЛЬКИ якщо хоча б одна зміна введена
                     if (mStr !== '' || aStr !== '' || nStr !== '') {
                         let autoSched = (m + a + n) - over + vac + l4Missed;
                         if(autoSched > 0) {
@@ -385,7 +683,7 @@
         let actualWorkedDays = morningShifts + afternoonShifts + nightShifts;
         let schedDays = isPremium ? (parseInt(document.getElementById('scheduleDays').value) || stateDays) : stateDays;
 
-        // ЗАХИСТ: Якщо зміни взагалі не введено, програма припускає повну норму (щоб премія відразу показувалась)
+        // Запобіжник для премії, якщо зміни не введені
         if (mStr === '' && aStr === '' && nStr === '') {
             actualWorkedDays = Math.max(0, schedDays - vacDays - l4Missed);
         }
@@ -393,9 +691,7 @@
         const dailyUrlopBonus = (isPremium && vacDays > 0) ? (parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
         const totalUrlopBonus = dailyUrlopBonus * vacDays;
 
-        let adjustedBase = baseSalary; 
-        let l4Pay = 0;
-        
+        let adjustedBase = baseSalary; let l4Pay = 0;
         if (isPremium && l4Days > 0) {
             adjustedBase = baseSalary - ((baseSalary / 30) * l4Days);
             
@@ -438,16 +734,21 @@
         document.getElementById('netResult').innerText = n.toFixed(2) + ' zł';
     }
 
+    // Слухачі подій
     document.querySelectorAll('input, select').forEach(el => {
         if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays', 'l4Days', 'l4MissedShifts', 'monthSelect'].includes(el.id)) {
             el.addEventListener('input', calculateSalary); el.addEventListener('change', calculateSalary);
         }
     });
     
+    // При зміні місяця — автоматично тягнемо дані з хмари
     document.getElementById('monthSelect').addEventListener('change', async () => {
         await loadCloudData();
     });
 
+    // Ініціалізація
     setTheme(localStorage.getItem('theme') || 'light');
     window.setLang('ua');
 </script>
+</body>
+</html>
