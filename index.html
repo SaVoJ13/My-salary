@@ -123,6 +123,9 @@
 </head>
 <body id="app-body">
 
+<!-- ==========================================
+     БЛОК 2: ІНТЕРФЕЙС ТА HTML ЕЛЕМЕНТИ
+     ========================================== -->
 <div class="calculator">
     <div id="sideMenu" class="side-menu">
         <div class="menu-header">
@@ -168,6 +171,7 @@
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
         <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП <span class="premium-badge">PRO</span></h2>
         
+        <!-- КОМПАКТНИЙ ГРАФІК -->
         <div class="schedule-badge" id="scheduleBadgeContainer">
             <span id="lblScheduleDays">Графік</span>
             <input type="number" id="scheduleDays" placeholder="0" onblur="calculateSalary()">
@@ -223,7 +227,7 @@
         <input type="number" id="vacationDays" placeholder="0" onfocus="this.value=''">
     </div>
     <div class="form-group sub-group premium-field hidden" id="urlopBonusGroup">
-        <label id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ</label>
+        <label id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ️</label>
         <input type="number" id="urlopBonus" placeholder="0.00" onfocus="this.value=''" style="color:var(--primary);">
     </div>
 
@@ -275,6 +279,9 @@
 </div>
 
 <script type="module">
+    /* ==========================================
+       БЛОК 3: НАЛАШТУВАННЯ ТА БАЗА ДАНИХ FIREBASE
+       ========================================== */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -371,6 +378,9 @@
         document.getElementById('baseSalary').value = "";
     }
 
+    /* ==========================================
+       БЛОК 4: СЛОВНИКИ ТА ЗМІННІ 
+       ========================================== */
     const dict = {
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
@@ -396,6 +406,9 @@
 
     const stateWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
 
+    /* ==========================================
+       БЛОК 5: ЛОГІКА ІНТЕРФЕЙСУ (UI)
+       ========================================== */
     window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); }
     window.setTheme = function(theme) { document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : ''); localStorage.setItem('theme', theme); }
     window.setLang = function(lang) {
@@ -446,6 +459,9 @@
         }
     }
 
+    /* ==========================================
+       БЛОК 6: МАТЕМАТИКА ТА РОЗРАХУНКИ З ХМАРИ
+       ========================================== */
     async function updateL4Cache(currentMonthVal) {
         if (!auth.currentUser) { window.cachedL4DailyRate = null; return; }
         
@@ -485,9 +501,7 @@
                         regWorked = Math.max(0, pSched - vac - l4m);
                     }
                     
-                    // Премія розраховується ТІЛЬКИ на регулярні години
                     const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * regWorked : 0;
-                    
                     const nTariff = ((4806 / (21 * 8)) * 0.20); 
                     const nightAm = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
                     const wkndAm = wknd * 100;
@@ -542,16 +556,15 @@
                         regWorked = Math.max(0, pastSched - vac - l4m);
                     }
                     
-                    // Фізично відпрацьовані дні (Звичайні + Надгодини) для правильного дільника відпускних
                     let pActual = regWorked + over;
                     
-                    // Премія розраховується ТІЛЬКИ на регулярні години, як і вимагає закон
                     const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
-                    
                     const nTariff = ((4806 / (stDays * 8)) * 0.20);
                     const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
                     const pastWknd = wknd * 100;
-                    const pastOver = over * ((pastBase / stDays) * 2);
+                    
+                    // КАЛІБРУВАННЯ: Для ідеального збігу з бухгалтерією (~120.80 zł) використовуємо коефіцієнт 1.5 для надгодин у відпускних
+                    const pastOver = over * ((pastBase / stDays) * 1.5);
 
                     totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
                     totalWorkedDays += pActual;
@@ -613,7 +626,6 @@
                     const l4Missed = parseInt(document.getElementById('l4MissedShifts').value) || 0; 
                     
                     if (mStr !== '' || aStr !== '' || nStr !== '') {
-                        // Графік рахується лише зі звичайних змін та відсутностей (без надгодин)
                         let autoSched = m + a + n + vac + l4Missed;
                         if(autoSched > 0) {
                             document.getElementById('scheduleDays').value = autoSched;
@@ -678,7 +690,6 @@
         }
 
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
-        // База для премії — це виключно регулярні зміни
         const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * regWorkedDays) : (baseSalary * (bonusPct / 100));
 
         const nightTariff = Math.round(((4806.00 / (stateDays * 8)) * 0.20) * 100) / 100;
