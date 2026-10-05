@@ -710,7 +710,8 @@
             pit = Math.max(0, Math.round((pitBase * 0.12) - 300.00) + 54.00);
         }
 
-        const net = gross - zus - nfz - pit - (ppkActive ? gross * 0.02 : 0) - (document.getElementById('insuranceSelect').value === 'yes' ? 36.70 : 0) - 30.25 + 15.00;
+                const laundryAllowance = schedDays > 0 ? (regWorkedDays / schedDays) * 16.00 : 0;
+        const net = gross - zus - nfz - pit - (ppkActive ? gross * 0.02 : 0) - (document.getElementById('insuranceSelect').value === 'yes' ? 36.70 : 0) - 30.25 + laundryAllowance;
 
         updateUI(gross, net);
     }
