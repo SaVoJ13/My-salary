@@ -1,276 +1,7 @@
-<!DOCTYPE html>
-<html lang="ua">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ЗП Калькулятор Fiege</title>
-    <style>
-        /* ==========================================
-           БЛОК 1: ДИЗАЙН ТА СТИЛІ (CSS)
-           ========================================== */
-        :root {
-            --primary: #e3000f; 
-            --bg-color: #f4f6f9;
-            --panel-bg: #ffffff;
-            --text-main: #2c3e50;
-            --text-muted: #7f8c8d;
-            --border-color: #e0e5ec;
-            --success: #27ae60;
-            --premium-bg: #fff9e6;
-            --premium-border: #f1c40f;
-        }
-
-        [data-theme="dark"] {
-            --primary: #ff4d57;
-            --bg-color: #121212;
-            --panel-bg: #1e1e1e;
-            --text-main: #e0e0e0;
-            --text-muted: #a0a0a0;
-            --border-color: #333333;
-            --success: #2ecc71;
-            --premium-bg: #2a2411;
-            --premium-border: #d4ac0d;
-        }
-
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; 
-            box-sizing: border-box; display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; transition: background 0.3s, color 0.3s;
-        }
-
-        .calculator { 
-            width: 100%; max-width: 420px; background: var(--panel-bg); padding: 24px 20px; 
-            border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); 
-            box-sizing: border-box; position: relative; transition: background 0.3s;
-        }
-
-        .menu-btn, .close-menu { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-main); padding: 0; }
-        
-        .side-menu {
-            position: absolute; top: 0; left: 0; width: 280px; height: 100%;
-            background: var(--panel-bg); box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-            border-radius: 16px 0 0 16px; z-index: 10; display: flex; flex-direction: column;
-            padding: 20px; box-sizing: border-box; transition: transform 0.3s ease;
-            transform: translateX(-100%); overflow-y: auto;
-        }
-        .side-menu.open { transform: translateX(0); }
-        .menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .menu-item { margin-bottom: 15px; }
-        .menu-item label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; width: 100%; }
-
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; position: relative; }
-        h2 { margin: 0; font-size: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px;}
-        .premium-badge { background: var(--premium-border); color: #000; font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; display: none; }
-
-        .schedule-badge {
-            background: var(--premium-bg); border: 1px solid var(--premium-border);
-            border-radius: 8px; padding: 4px 6px; display: none; 
-            flex-direction: column; align-items: center; justify-content: center;
-            min-width: 45px;
-        }
-        .is-logged-in .schedule-badge { display: flex; }
-        .schedule-badge span { font-size: 9px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
-        .schedule-badge input {
-            width: 100%; padding: 0; background: transparent; border: none;
-            font-size: 15px; font-weight: 800; color: var(--primary); text-align: center; box-shadow: none;
-        }
-        .schedule-badge input:focus { box-shadow: none; outline: none; }
-
-        .form-group { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
-        
-        .premium-field { display: none; }
-        .is-logged-in .premium-field { display: flex; }
-        .is-logged-in .premium-badge { display: inline-block; }
-        
-        .sub-group { margin-top: -6px; margin-bottom: 14px; padding-left: 15px; border-left: 2px solid var(--premium-border); }
-        label { font-size: 14px; font-weight: 500; color: var(--text-main); width: 60%; }
-        .sub-group label { font-size: 13px; font-weight: 600; color: var(--primary); }
-
-        input, select { 
-            width: 38%; padding: 10px; border: 1px solid var(--border-color); 
-            border-radius: 8px; font-size: 14px; text-align: center; 
-            background: var(--bg-color); color: var(--text-main);
-            font-weight: 600; box-sizing: border-box; appearance: none;
-        }
-        
-        select {
-            text-align-last: center; padding-right: 20px;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237f8c8d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 8px auto;
-        }
-        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1); }
-        input::placeholder { color: var(--text-muted); font-weight: 400; }
-
-        .divider { border-top: 1px solid var(--border-color); margin: 20px 0; }
-        
-        .results-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .result-box { border-radius: 12px; padding: 16px 12px; text-align: center; }
-        .result-box.brutto { background: var(--bg-color); border: 1px solid var(--border-color); }
-        .result-box.netto { background: rgba(39, 174, 96, 0.08); border: 1px solid var(--success); }
-        .result-title { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 700; letter-spacing: 0.5px; }
-        .result-value { font-size: 20px; font-weight: 800; }
-        .brutto .result-value { color: var(--text-main); }
-        .netto .result-value { color: var(--success); }
-
-        .hidden { display: none !important; }
-        .action-btn { width: 100%; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 6px; }
-        .btn-sync { background: var(--success); }
-        .btn-auth-action { background: var(--primary); }
-        .btn-logout { background: var(--text-muted); }
-        .cloud-section { background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border-color); }
-    </style>
-</head>
-<body id="app-body">
-
-<div class="calculator">
-    <div id="sideMenu" class="side-menu">
-        <div class="menu-header">
-            <span id="menuTitle" style="font-size: 15px; font-weight: bold;">Меню</span>
-            <button class="close-menu" onclick="toggleMenu()">✕</button>
-        </div>
-        <div class="menu-item">
-            <label id="lblMenuLang">Мова</label>
-            <select id="langSelect" style="width: 100%;" onchange="setLang(this.value)">
-                <option value="ua">Українська</option>
-                <option value="pl">Polski</option>
-            </select>
-        </div>
-        <div class="menu-item">
-            <label id="lblMenuTheme">Тема</label>
-            <select id="themeSelect" style="width: 100%;" onchange="setTheme(this.value)">
-                <option value="light" id="optThemeLight">Світла</option>
-                <option value="dark" id="optThemeDark">Темна</option>
-            </select>
-        </div>
-        <div class="divider" style="margin: 10px 0;"></div>
-        <div class="cloud-section">
-            <label style="width: 100%; font-weight: bold; margin-bottom: 8px; display: block;" id="lblCloudHeader">Акаунт & Хмара</label>
-            <div id="auth-container">
-                <input type="email" id="email" placeholder="Email" style="width: 100%; margin-bottom: 6px; text-align: left;" onfocus="this.value=''">
-                <input type="password" id="password" placeholder="Пароль" style="width: 100%; margin-bottom: 8px; text-align: left;" onfocus="this.value=''">
-                <button id="btn-login" class="action-btn btn-auth-action">Увійти (PRO)</button>
-                <button id="btn-register" class="action-btn" style="background: var(--text-main); margin-top: 4px;">Реєстрація</button>
-            </div>
-            <div id="sync-container" class="hidden">
-                <span id="user-email-display" style="font-size: 11px; display: block; margin-bottom: 8px; word-break: break-all; font-weight: bold;"></span>
-                <button id="btn-sync-up" class="action-btn btn-sync">Зберегти місяць ☁️</button>
-                <button id="btn-sync-down" class="action-btn" style="background: #2980b9; margin-top: 4px;">Завантажити місяць 📥</button>
-                <button id="btn-logout" class="action-btn btn-logout" style="margin-top: 8px;">Вийти (Гостьовий режим)</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="header-row">
-        <button class="menu-btn" onclick="toggleMenu()">☰</button>
-        <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП <span class="premium-badge">PRO</span></h2>
-        
-        <div class="schedule-badge" id="scheduleBadgeContainer">
-            <span id="lblScheduleDays">Графік</span>
-            <input type="number" id="scheduleDays" placeholder="0" onblur="calculateSalary()">
-        </div>
-    </div>
-    
-    <div class="form-group">
-        <label id="lblMonth">Місяць</label>
-        <select id="monthSelect"></select>
-    </div>
-
-    <div class="form-group">
-        <label id="lblBase">Загальна ставка (zł)</label>
-        <input type="number" id="baseSalary" value="5750" onfocus="this.value=''" onblur="if(this.value==='') calculateSalary();">
-    </div>
-
-    <div class="form-group">
-        <label id="lblBonus">Премія</label>
-        <select id="bonusPctSelect">
-            <option value="0">0%</option>
-            <option value="5">5%</option>
-            <option value="10">10%</option>
-            <option value="12.5">12.5%</option>
-            <option value="15" selected>15%</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label id="lblMorning">Ранкові зміни (шт)</label>
-        <input type="number" id="morningShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
-    </div>
-    <div class="form-group">
-        <label id="lblAfternoon">Денні зміни (шт)</label>
-        <input type="number" id="afternoonShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
-    </div>
-    <div class="form-group">
-        <label id="lblNight">Нічні зміни (шт)</label>
-        <input type="number" id="nightShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
-    </div>
-
-    <div class="form-group">
-        <label id="lblWeekend">Робочі сб / нд (днів)</label>
-        <input type="number" id="weekendDays" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
-    </div>
-    <div class="form-group">
-        <label id="lblOvertime">Надгодини (днів)</label>
-        <input type="number" id="overtimeDays" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
-    </div>
-
-    <div class="form-group premium-field">
-        <label id="lblVacationDays">Відпустка (днів)</label>
-        <input type="number" id="vacationDays" placeholder="0" onfocus="this.value=''">
-    </div>
-    <div class="form-group sub-group premium-field hidden" id="urlopBonusGroup">
-        <label id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ️</label>
-        <input type="number" id="urlopBonus" placeholder="0.00" onfocus="this.value=''" style="color:var(--primary);">
-    </div>
-
-    <div class="form-group premium-field">
-        <label id="lblL4Days">Лікарняний L4 (календарні)</label>
-        <input type="number" id="l4Days" placeholder="0" onfocus="this.value=''" onblur="calculateSalary()">
-    </div>
-    <div class="form-group sub-group premium-field hidden" id="l4MissedGroup">
-        <label id="lblL4Missed">Пропущено змін (шт) ℹ️</label>
-        <input type="number" id="l4MissedShifts" placeholder="0" onfocus="this.value=''" style="color:var(--primary);">
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="form-group">
-        <label id="lblUnder26">Вік до 26 років</label>
-        <select id="under26Select">
-            <option value="no" id="optU26No" selected>Ні</option>
-            <option value="yes" id="optU26Yes">Так</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label id="lblPPK">Участь у PPK</label>
-        <select id="ppkSelect">
-            <option value="no" id="optPpkNo" selected>Ні</option>
-            <option value="yes" id="optPpkYes">Так</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label id="lblInsurance">Додаткове страхування</label>
-        <select id="insuranceSelect">
-            <option value="yes" id="optInsYes" selected>Так</option>
-            <option value="no" id="optInsNo">Ні</option>
-        </select>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="results-panel">
-        <div class="result-box brutto">
-            <div class="result-title">BRUTTO</div>
-            <div class="result-value" id="grossResult">0.00 zł</div>
-        </div>
-        <div class="result-box netto">
-            <div class="result-title">NETTO</div>
-            <div class="result-value" id="netResult">0.00 zł</div>
-        </div>
-    </div>
-</div>
-
 <script type="module">
+    /* ==========================================
+       БЛОК 3: НАЛАШТУВАННЯ ТА БАЗА ДАНИХ FIREBASE
+       ========================================== */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -290,7 +21,7 @@
     
     let currentLang = 'ua';
     let isPremium = false;
-    window.cachedL4DailyRate = null; // Глобальний кеш для ставки L4
+    window.cachedL4DailyRate = null; 
 
     onAuthStateChanged(auth, async (user) => {
         isPremium = !!user;
@@ -330,7 +61,7 @@
         try {
             await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
             alert("Дані збережені у хмару! ☁️");
-            await updateL4Cache(monthVal); // Оновлюємо кеш після збереження
+            await updateL4Cache(monthVal); 
         } catch (error) { alert("Помилка збереження: " + error.message); }
     });
 
@@ -349,7 +80,7 @@
             } else {
                 clearInputs();
             }
-            await updateL4Cache(monthVal); // Рахуємо середню базу за 12 місяців
+            await updateL4Cache(monthVal); 
             calculateSalary();
         } catch(e) {
             console.error("Помилка", e);
@@ -367,6 +98,9 @@
         document.getElementById('baseSalary').value = "";
     }
 
+    /* ==========================================
+       БЛОК 4: СЛОВНИКИ ТА ЗМІННІ 
+       ========================================== */
     const dict = {
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
@@ -413,7 +147,6 @@
         initMonths(); calculateSalary();
     }
 
-    // 1. АВТОМАТИЧНА ГЕНЕРАЦІЯ МІСЯЦІВ (Поточний + 11 назад)
     function initMonths() {
         const select = document.getElementById('monthSelect');
         const currentVal = select.value; 
@@ -424,7 +157,6 @@
         const currentMonth = now.getMonth(); 
         const dNames = dict[currentLang].monthNames;
         
-        // Генеруємо список: від наступного місяця до 11 місяців тому
         for(let i = 1; i >= -11; i--) {
             let d = new Date(currentYear, currentMonth + i, 1);
             let y = d.getFullYear();
@@ -444,7 +176,6 @@
         }
     }
 
-    // 2. ХМАРНИЙ АЛГОРИТМ ZUS ДЛЯ ЛІКАРНЯНОГО (Середня за наявні місяці)
     async function updateL4Cache(currentMonthVal) {
         if (!auth.currentUser) { window.cachedL4DailyRate = null; return; }
         
@@ -481,6 +212,9 @@
                     const pSched = autoSched > 0 ? autoSched : 21;
                     
                     let pActual = mS + aS + nS;
+                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
+                        pActual = Math.max(0, pSched - vac - l4m);
+                    }
                     let bWorked = Math.max(0, pActual - over);
                     
                     const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * bWorked : 0;
@@ -490,7 +224,7 @@
                     const overAm = over * ((pBase / 21) * 2);
                     
                     let grossBase = pBase + bonusAm + nightAm + wkndAm + overAm;
-                    let netZus = grossBase * 0.8629; // Віднімаємо 13.71%
+                    let netZus = grossBase * 0.8629; 
                     
                     totalNetBase += netZus;
                     monthsFound++;
@@ -499,13 +233,12 @@
         }
         
         if (monthsFound > 0) {
-            window.cachedL4DailyRate = (totalNetBase / monthsFound) / 30; // 100% денна ставка
+            window.cachedL4DailyRate = (totalNetBase / monthsFound) / 30; 
         } else {
             window.cachedL4DailyRate = null;
         }
     }
 
-    // Відпускні (3 місяці)
     async function getAutoDailyUrlopBonus(currentYear, monthIdx) {
         if (!auth.currentUser) return 0;
         let totalExtras = 0; let totalWorkedDays = 0;
@@ -532,6 +265,13 @@
                     
                     let pActual = mShifts + aShifts + nShifts;
                     const pastSched = parseInt(data.scheduleDays) || stDays;
+                    
+                    const l4m = parseInt(data.l4MissedShifts) || 0;
+                    const vac = parseInt(data.vacationDays) || 0;
+                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
+                        pActual = Math.max(0, pastSched - vac - l4m);
+                    }
+                    
                     let baseWorkedForBonus = Math.max(0, pActual - over);
                     const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * baseWorkedForBonus : 0;
                     
@@ -587,18 +327,25 @@
         if(el) {
             el.addEventListener('input', () => {
                 if(isPremium) {
-                    const m = parseInt(document.getElementById('morningShifts').value) || 0;
-                    const a = parseInt(document.getElementById('afternoonShifts').value) || 0;
-                    const n = parseInt(document.getElementById('nightShifts').value) || 0;
+                    const mStr = document.getElementById('morningShifts').value;
+                    const aStr = document.getElementById('afternoonShifts').value;
+                    const nStr = document.getElementById('nightShifts').value;
+                    
+                    const m = parseInt(mStr) || 0;
+                    const a = parseInt(aStr) || 0;
+                    const n = parseInt(nStr) || 0;
                     const over = parseFloat(document.getElementById('overtimeDays').value) || 0;
                     const vac = parseInt(document.getElementById('vacationDays').value) || 0;
                     const l4Missed = parseInt(document.getElementById('l4MissedShifts').value) || 0; 
                     
-                    let autoSched = (m + a + n) - over + vac + l4Missed;
-                    if(autoSched > 0) {
-                        document.getElementById('scheduleDays').value = autoSched;
-                    } else {
-                        document.getElementById('scheduleDays').value = "";
+                    // Перераховуємо графік ТІЛЬКИ якщо хоча б одна зміна введена
+                    if (mStr !== '' || aStr !== '' || nStr !== '') {
+                        let autoSched = (m + a + n) - over + vac + l4Missed;
+                        if(autoSched > 0) {
+                            document.getElementById('scheduleDays').value = autoSched;
+                        } else {
+                            document.getElementById('scheduleDays').value = "";
+                        }
                     }
                 }
                 calculateSalary();
@@ -624,14 +371,24 @@
         document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays === 0);
         document.getElementById('l4MissedGroup').classList.toggle('hidden', l4Days === 0);
 
-        const morningShifts = parseInt(document.getElementById('morningShifts').value) || 0;
-        const afternoonShifts = parseInt(document.getElementById('afternoonShifts').value) || 0;
-        const nightShifts = parseInt(document.getElementById('nightShifts').value) || 0;
+        const mStr = document.getElementById('morningShifts').value;
+        const aStr = document.getElementById('afternoonShifts').value;
+        const nStr = document.getElementById('nightShifts').value;
+
+        const morningShifts = parseInt(mStr) || 0;
+        const afternoonShifts = parseInt(aStr) || 0;
+        const nightShifts = parseInt(nStr) || 0;
         const overtimeDays = parseFloat(document.getElementById('overtimeDays').value) || 0;
         const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
+        const l4Missed = parseInt(document.getElementById('l4MissedShifts').value) || 0;
 
-        const actualWorkedDays = morningShifts + afternoonShifts + nightShifts;
+        let actualWorkedDays = morningShifts + afternoonShifts + nightShifts;
         let schedDays = isPremium ? (parseInt(document.getElementById('scheduleDays').value) || stateDays) : stateDays;
+
+        // ЗАХИСТ: Якщо зміни взагалі не введено, програма припускає повну норму (щоб премія відразу показувалась)
+        if (mStr === '' && aStr === '' && nStr === '') {
+            actualWorkedDays = Math.max(0, schedDays - vacDays - l4Missed);
+        }
 
         const dailyUrlopBonus = (isPremium && vacDays > 0) ? (parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
         const totalUrlopBonus = dailyUrlopBonus * vacDays;
@@ -642,10 +399,9 @@
         if (isPremium && l4Days > 0) {
             adjustedBase = baseSalary - ((baseSalary / 30) * l4Days);
             
-            // 3. ВИКОРИСТОВУЄМО ХМАРНУ БАЗУ АБО МІНІМАЛЬНУ
-            let l4DailyRate = (baseSalary * 0.8629) / 30; // Базовий мінімум
+            let l4DailyRate = (baseSalary * 0.8629) / 30; 
             if (window.cachedL4DailyRate && window.cachedL4DailyRate > 0) {
-                l4DailyRate = window.cachedL4DailyRate; // Хмарна середня з преміями
+                l4DailyRate = window.cachedL4DailyRate; 
             }
             l4Pay = l4DailyRate * 0.80 * l4Days; 
         }
@@ -695,5 +451,3 @@
     setTheme(localStorage.getItem('theme') || 'light');
     window.setLang('ua');
 </script>
-</body>
-</html>
