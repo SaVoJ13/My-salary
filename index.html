@@ -63,7 +63,6 @@
         h2 { margin: 0; font-size: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px;}
         .premium-badge { background: var(--premium-border); color: #000; font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; display: none; }
 
-        /* Компактний бейдж "Графік" */
         .schedule-badge {
             background: var(--premium-bg); border: 1px solid var(--premium-border);
             border-radius: 8px; padding: 4px 6px; display: none; 
@@ -124,16 +123,12 @@
 </head>
 <body id="app-body">
 
-<!-- ==========================================
-     БЛОК 2: ІНТЕРФЕЙС ТА HTML ЕЛЕМЕНТИ
-     ========================================== -->
 <div class="calculator">
     <div id="sideMenu" class="side-menu">
         <div class="menu-header">
             <span id="menuTitle" style="font-size: 15px; font-weight: bold;">Меню</span>
             <button class="close-menu" onclick="toggleMenu()">✕</button>
         </div>
-
         <div class="menu-item">
             <label id="lblMenuLang">Мова</label>
             <select id="langSelect" style="width: 100%;" onchange="setLang(this.value)">
@@ -148,9 +143,7 @@
                 <option value="dark" id="optThemeDark">Темна</option>
             </select>
         </div>
-
         <div class="divider" style="margin: 10px 0;"></div>
-
         <div class="cloud-section">
             <label style="width: 100%; font-weight: bold; margin-bottom: 8px; display: block;" id="lblCloudHeader">Акаунт & Хмара</label>
             <div id="auth-container">
@@ -172,7 +165,6 @@
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
         <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП <span class="premium-badge">PRO</span></h2>
         
-        <!-- КОМПАКТНИЙ ГРАФІК -->
         <div class="schedule-badge" id="scheduleBadgeContainer">
             <span id="lblScheduleDays">Графік</span>
             <input type="number" id="scheduleDays" placeholder="0" onblur="calculateSalary()">
@@ -184,7 +176,6 @@
         <select id="monthSelect"></select>
     </div>
 
-    <!-- ПОЛЯ ЗГІДНО З ВАШИМ ПОРЯДКОМ -->
     <div class="form-group">
         <label id="lblBase">Загальна ставка (zł)</label>
         <input type="number" id="baseSalary" value="5750" onfocus="this.value=''" onblur="if(this.value==='') calculateSalary();">
@@ -201,7 +192,6 @@
         </select>
     </div>
 
-    <!-- БЛОК ЗМІН -->
     <div class="form-group">
         <label id="lblMorning">Ранкові зміни (шт)</label>
         <input type="number" id="morningShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
@@ -219,13 +209,11 @@
         <label id="lblWeekend">Робочі сб / нд (днів)</label>
         <input type="number" id="weekendDays" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
-
     <div class="form-group">
         <label id="lblOvertime">Надгодини (днів)</label>
         <input type="number" id="overtimeDays" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
 
-    <!-- ВІДПУСТКА ТА ЛІКАРНЯНИЙ (PRO) -->
     <div class="form-group premium-field">
         <label id="lblVacationDays">Відпустка (днів)</label>
         <input type="number" id="vacationDays" placeholder="0" onfocus="this.value=''">
@@ -239,7 +227,6 @@
         <label id="lblL4Days">Лікарняний L4 (календарні)</label>
         <input type="number" id="l4Days" placeholder="0" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
-    <!-- НОВЕ ПОЛЕ: З'являється тільки при лікарняному -->
     <div class="form-group sub-group premium-field hidden" id="l4MissedGroup">
         <label id="lblL4Missed">Пропущено змін (шт) ℹ️</label>
         <input type="number" id="l4MissedShifts" placeholder="0" onfocus="this.value=''" style="color:var(--primary);">
@@ -247,7 +234,6 @@
 
     <div class="divider"></div>
 
-    <!-- ПОДАТКИ -->
     <div class="form-group">
         <label id="lblUnder26">Вік до 26 років</label>
         <select id="under26Select">
@@ -285,9 +271,6 @@
 </div>
 
 <script type="module">
-    /* ==========================================
-       БЛОК 3: НАЛАШТУВАННЯ ТА БАЗА ДАНИХ FIREBASE
-       ========================================== */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -307,9 +290,9 @@
     
     let currentLang = 'ua';
     let isPremium = false;
+    window.cachedL4DailyRate = null; // Глобальний кеш для ставки L4
 
-    // Відстеження стану входу
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         isPremium = !!user;
         document.getElementById('app-body').classList.toggle('is-logged-in', isPremium);
         document.getElementById('auth-container').classList.toggle('hidden', isPremium);
@@ -317,12 +300,8 @@
         
         if(user) {
             document.getElementById('user-email-display').innerText = "👤 " + user.email;
-            loadCloudData(); // Завантажуємо місяць при вході
+            await loadCloudData(); 
         } else {
-            document.getElementById('vacationDays').value = "";
-            document.getElementById('l4Days').value = "";
-            document.getElementById('urlopBonus').value = "";
-            document.getElementById('l4MissedShifts').value = "";
             clearInputs();
         }
         calculateSalary();
@@ -338,7 +317,6 @@
     });
     document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-    // Синхронізація (Збереження у хмару)
     document.getElementById('btn-sync-up').addEventListener('click', async () => {
         if (!auth.currentUser) return;
         const monthVal = document.getElementById('monthSelect').value;
@@ -352,10 +330,10 @@
         try {
             await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
             alert("Дані збережені у хмару! ☁️");
+            await updateL4Cache(monthVal); // Оновлюємо кеш після збереження
         } catch (error) { alert("Помилка збереження: " + error.message); }
     });
 
-    // Завантаження з хмари
     async function loadCloudData() {
         if (!auth.currentUser) return;
         const monthVal = document.getElementById('monthSelect').value;
@@ -371,9 +349,10 @@
             } else {
                 clearInputs();
             }
+            await updateL4Cache(monthVal); // Рахуємо середню базу за 12 місяців
             calculateSalary();
         } catch(e) {
-            console.error("Помилка завантаження з хмари", e);
+            console.error("Помилка", e);
         }
     }
 
@@ -388,9 +367,6 @@
         document.getElementById('baseSalary').value = "";
     }
 
-    /* ==========================================
-       БЛОК 4: СЛОВНИКИ ТА ЗМІННІ 
-       ========================================== */
     const dict = {
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
@@ -400,7 +376,7 @@
             overtime: "Надгодини (днів)", under26: "Вік до 26 років", ppk: "Участь у PPK", 
             insurance: "Дод. страхування", yes: "Так", no: "Ні",
             menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", 
-            months: ["Січень 2026", "Лютий 2026", "Березень 2026", "Квітень 2026", "Травень 2026", "Червень 2026", "Липень 2026", "Серпень 2026", "Вересень 2026", "Жовтень 2026", "Листопад 2026", "Грудень 2026"]
+            monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
         },
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
@@ -410,15 +386,12 @@
             overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat", ppk: "PPK", 
             insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
             menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
-            months: ["Styczeń 2026", "Luty 2026", "Marzec 2026", "Kwiecień 2026", "Maj 2026", "Czerwiec 2026", "Lipiec 2026", "Sierpień 2026", "Wrzesień 2026", "Październik 2026", "Listopad 2026", "Grudzień 2026"]
+            monthNames: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
         }
     };
 
     const stateWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
 
-    /* ==========================================
-       БЛОК 5: ЛОГІКА ІНТЕРФЕЙСУ (UI)
-       ========================================== */
     window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); }
     window.setTheme = function(theme) { document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : ''); localStorage.setItem('theme', theme); }
     window.setLang = function(lang) {
@@ -440,21 +413,99 @@
         initMonths(); calculateSalary();
     }
 
+    // 1. АВТОМАТИЧНА ГЕНЕРАЦІЯ МІСЯЦІВ (Поточний + 11 назад)
     function initMonths() {
         const select = document.getElementById('monthSelect');
         const currentVal = select.value; 
-        select.innerHTML = '<option value="" disabled selected>-</option>';
-        dict[currentLang].months.forEach((m, idx) => {
+        select.innerHTML = '';
+        
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth(); 
+        const dNames = dict[currentLang].monthNames;
+        
+        // Генеруємо список: від наступного місяця до 11 місяців тому
+        for(let i = 1; i >= -11; i--) {
+            let d = new Date(currentYear, currentMonth + i, 1);
+            let y = d.getFullYear();
+            let m = d.getMonth();
+            let val = y + "-" + String(m + 1).padStart(2, '0');
+            
             let opt = document.createElement('option');
-            opt.value = "2026-" + String(idx + 1).padStart(2, '0');
-            opt.text = m; select.appendChild(opt);
-        });
-        select.value = currentVal || "2026-01";
+            opt.value = val;
+            opt.text = dNames[m] + " " + y;
+            select.appendChild(opt);
+        }
+        
+        if(!currentVal) {
+            select.value = currentYear + "-" + String(currentMonth + 1).padStart(2, '0');
+        } else {
+            select.value = currentVal;
+        }
     }
 
-    /* ==========================================
-       БЛОК 6: МАТЕМАТИКА ТА РОЗРАХУНКИ З ХМАРИ
-       ========================================== */
+    // 2. ХМАРНИЙ АЛГОРИТМ ZUS ДЛЯ ЛІКАРНЯНОГО (Середня за наявні місяці)
+    async function updateL4Cache(currentMonthVal) {
+        if (!auth.currentUser) { window.cachedL4DailyRate = null; return; }
+        
+        const [yStr, mStr] = currentMonthVal.split('-');
+        let cYear = parseInt(yStr);
+        let cMonth = parseInt(mStr);
+        
+        let totalNetBase = 0;
+        let monthsFound = 0;
+        
+        for (let i = 1; i <= 12; i++) {
+            let pMonth = cMonth - i;
+            let pYear = cYear;
+            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
+            const pastStr = pYear + "-" + String(pMonth).padStart(2, '0');
+            
+            try {
+                const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastStr));
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const pBase = parseFloat(data.baseSalary) || 5750;
+                    let pPct = parseFloat(data.bonusPctSelect);
+                    if (isNaN(pPct)) pPct = 15;
+                    
+                    const mS = parseInt(data.morningShifts) || 0;
+                    const aS = parseInt(data.afternoonShifts) || 0;
+                    const nS = parseInt(data.nightShifts) || 0;
+                    const over = parseFloat(data.overtimeDays) || 0;
+                    const wknd = parseInt(data.weekendDays) || 0;
+                    const vac = parseInt(data.vacationDays) || 0;
+                    const l4m = parseInt(data.l4MissedShifts) || 0;
+                    
+                    let autoSched = (mS + aS + nS) - over + vac + l4m;
+                    const pSched = autoSched > 0 ? autoSched : 21;
+                    
+                    let pActual = mS + aS + nS;
+                    let bWorked = Math.max(0, pActual - over);
+                    
+                    const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * bWorked : 0;
+                    const nTariff = ((4806 / (21 * 8)) * 0.20); 
+                    const nightAm = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
+                    const wkndAm = wknd * 100;
+                    const overAm = over * ((pBase / 21) * 2);
+                    
+                    let grossBase = pBase + bonusAm + nightAm + wkndAm + overAm;
+                    let netZus = grossBase * 0.8629; // Віднімаємо 13.71%
+                    
+                    totalNetBase += netZus;
+                    monthsFound++;
+                }
+            } catch(e) {}
+        }
+        
+        if (monthsFound > 0) {
+            window.cachedL4DailyRate = (totalNetBase / monthsFound) / 30; // 100% денна ставка
+        } else {
+            window.cachedL4DailyRate = null;
+        }
+    }
+
+    // Відпускні (3 місяці)
     async function getAutoDailyUrlopBonus(currentYear, monthIdx) {
         if (!auth.currentUser) return 0;
         let totalExtras = 0; let totalWorkedDays = 0;
@@ -463,7 +514,6 @@
             let pMonth = monthIdx + 1 - i; let pYear = currentYear;
             if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
             const pastMonthStr = pYear + "-" + String(pMonth).padStart(2, '0');
-            
             const stDays = stateWorkDays[pMonth - 1] || 21;
             
             try {
@@ -493,11 +543,8 @@
                     totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
                     totalWorkedDays += pActual;
                 }
-            } catch (e) {
-                console.error("Помилка зчитування хмари для середньої", e);
-            }
+            } catch (e) {}
         }
-        
         if (totalWorkedDays === 0) return 0;
         return (totalExtras / totalWorkedDays);
     }
@@ -527,16 +574,15 @@
             
             if (l4 === 0) {
                 bonusSelect.value = "15";
-                document.getElementById('l4MissedShifts').value = ""; // Очищаємо, якщо лікарняний прибрали
+                document.getElementById('l4MissedShifts').value = ""; 
             }
             else if (l4 <= 2) bonusSelect.value = "12.5";
             else bonusSelect.value = "10";
-            
             calculateSalary();
         }
     });
 
-    ['morningShifts', 'afternoonShifts', 'nightShifts', 'overtimeDays', 'vacationDays', 'l4Days', 'l4MissedShifts'].forEach(id => {
+    ['morningShifts', 'afternoonShifts', 'nightShifts', 'overtimeDays', 'vacationDays', 'l4MissedShifts'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
             el.addEventListener('input', () => {
@@ -548,7 +594,6 @@
                     const vac = parseInt(document.getElementById('vacationDays').value) || 0;
                     const l4Missed = parseInt(document.getElementById('l4MissedShifts').value) || 0; 
                     
-                    // Ідеальна формула: Всі зміни - Надгодини + Відпустка + Пропущені через L4
                     let autoSched = (m + a + n) - over + vac + l4Missed;
                     if(autoSched > 0) {
                         document.getElementById('scheduleDays').value = autoSched;
@@ -591,10 +636,18 @@
         const dailyUrlopBonus = (isPremium && vacDays > 0) ? (parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
         const totalUrlopBonus = dailyUrlopBonus * vacDays;
 
-        let adjustedBase = baseSalary; let l4Pay = 0;
+        let adjustedBase = baseSalary; 
+        let l4Pay = 0;
+        
         if (isPremium && l4Days > 0) {
             adjustedBase = baseSalary - ((baseSalary / 30) * l4Days);
-            l4Pay = ((baseSalary * 0.8629) / 30) * 0.80 * l4Days; 
+            
+            // 3. ВИКОРИСТОВУЄМО ХМАРНУ БАЗУ АБО МІНІМАЛЬНУ
+            let l4DailyRate = (baseSalary * 0.8629) / 30; // Базовий мінімум
+            if (window.cachedL4DailyRate && window.cachedL4DailyRate > 0) {
+                l4DailyRate = window.cachedL4DailyRate; // Хмарна середня з преміями
+            }
+            l4Pay = l4DailyRate * 0.80 * l4Days; 
         }
 
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
@@ -629,20 +682,16 @@
         document.getElementById('netResult').innerText = n.toFixed(2) + ' zł';
     }
 
-    // Слухачі подій
     document.querySelectorAll('input, select').forEach(el => {
-        // Ми додаємо перевірку і для нового поля l4MissedShifts
-        if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays', 'l4Days', 'l4MissedShifts'].includes(el.id)) {
+        if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays', 'l4Days', 'l4MissedShifts', 'monthSelect'].includes(el.id)) {
             el.addEventListener('input', calculateSalary); el.addEventListener('change', calculateSalary);
         }
     });
     
-    // При зміні місяця — автоматично тягнемо дані з хмари
     document.getElementById('monthSelect').addEventListener('change', async () => {
         await loadCloudData();
     });
 
-    // Ініціалізація
     setTheme(localStorage.getItem('theme') || 'light');
     window.setLang('ua');
 </script>
