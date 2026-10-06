@@ -229,7 +229,11 @@
 
     <div class="form-group premium-field">
         <label id="lblBloodDonation">Донація крові (днів)</label>
-        <input type="number" id="bloodDonationDays" placeholder="0" min="0" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="bloodDonationDays" placeholder="0" min="0" onfocus="this.value=''">
+    </div>
+    <div class="form-group sub-group premium-field hidden" id="bloodBonusGroup">
+        <label id="lblBloodBonus">Середня за 1 дн. донації (zł) ℹ️</label>
+        <input type="number" id="bloodBonus" placeholder="0.00" min="0" onfocus="this.value=''" style="color:var(--primary);">
     </div>
 
     <div class="form-group premium-field">
@@ -399,20 +403,22 @@
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
             schedDays: "Графік", vacationDays: "Відпустка (днів)", urlopBonus: "Середня за 1 день відп. (zł) ℹ️", 
-            bloodDonation: "Донація крові (днів)", l4Days: "Лікарняний L4 (календарні)", bonus: "Премія", 
-            morning: "Ранкові зміни (шт)", afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", 
-            weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)", under26: "Вік до 26 років", 
-            ppk: "Участь у PPK", insurance: "Дод. страхування", yes: "Так", no: "Ні",
+            bloodDonation: "Донація крові (днів)", bloodBonus: "Середня за 1 дн. донації (zł) ℹ️", 
+            l4Days: "Лікарняний L4 (календарні)", bonus: "Премія", morning: "Ранкові зміни (шт)", 
+            afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
+            overtime: "Надгодини (днів)", under26: "Вік до 26 років", ppk: "Участь у PPK", 
+            insurance: "Дод. страхування", yes: "Так", no: "Ні",
             menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", 
             monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
         },
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
             schedDays: "Grafik", vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa za 1 dzień ℹ️", 
-            bloodDonation: "Oddanie krwi (dni)", l4Days: "L4 (dni kalendarzowe)", bonus: "Premia", 
-            morning: "Poranne zmiany (szt)", afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", 
-            weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat", 
-            ppk: "PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
+            bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia za 1 dn. oddania (zł) ℹ️", 
+            l4Days: "L4 (dni kalendarzowe)", bonus: "Premia", morning: "Poranne zmiany (szt)", 
+            afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
+            overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat", ppk: "PPK", 
+            insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
             menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
             monthNames: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
         }
@@ -428,7 +434,7 @@
         document.getElementById('lblMonth').innerText = d.month; document.getElementById('lblBase').innerText = d.base;
         document.getElementById('lblScheduleDays').innerText = d.schedDays;
         document.getElementById('lblVacationDays').innerText = d.vacationDays; document.getElementById('lblUrlopBonus').innerText = d.urlopBonus;
-        document.getElementById('lblBloodDonation').innerText = d.bloodDonation;
+        document.getElementById('lblBloodDonation').innerText = d.bloodDonation; document.getElementById('lblBloodBonus').innerText = d.bloodBonus;
         document.getElementById('lblL4Days').innerText = d.l4Days; 
         document.getElementById('lblBonus').innerText = d.bonus; document.getElementById('lblMorning').innerText = d.morning;
         document.getElementById('lblAfternoon').innerText = d.afternoon; document.getElementById('lblNight').innerText = d.night; 
@@ -586,20 +592,29 @@
         return (totalExtras / totalWorkedDays);
     }
 
+    // ПОДІЯ: Відпустка (Оновлення або Скидання якщо 0)
     document.getElementById('vacationDays').addEventListener('input', async function() {
         const vacDays = Math.max(0, parseInt(this.value) || 0);
-        const monthVal = document.getElementById('monthSelect').value;
-        if (!monthVal) return;
-        const [year, month] = monthVal.split('-');
         const urlopInput = document.getElementById('urlopBonus');
         
-        if (isPremium && vacDays > 0) {
-            if (!urlopInput.value || parseFloat(urlopInput.value) === 0) {
+        if (vacDays === 0) {
+            urlopInput.value = ""; 
+        } else if (isPremium) {
+            const monthVal = document.getElementById('monthSelect').value;
+            if (monthVal && (!urlopInput.value || parseFloat(urlopInput.value) === 0)) {
+                const [year, month] = monthVal.split('-');
                 const autoDaily = await getAutoDailyUrlopBonus(parseInt(year), parseInt(month) - 1);
                 if (autoDaily > 0) urlopInput.value = autoDaily.toFixed(2);
             }
-        } else { 
-            urlopInput.value = ""; 
+        }
+        calculateSalary();
+    });
+
+    // ПОДІЯ: Донація крові (Скидання якщо 0)
+    document.getElementById('bloodDonationDays').addEventListener('input', function() {
+        const bloodDays = Math.max(0, parseInt(this.value) || 0);
+        if (bloodDays === 0) {
+            document.getElementById('bloodBonus').value = "";
         }
         calculateSalary();
     });
@@ -668,6 +683,7 @@
         const l4Days = isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0;
         
         document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays === 0);
+        document.getElementById('bloodBonusGroup').classList.toggle('hidden', bloodDonationDays === 0);
         document.getElementById('l4MissedGroup').classList.toggle('hidden', l4Days === 0);
 
         const mStr = document.getElementById('morningShifts').value;
@@ -712,9 +728,16 @@
 
         const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         
-        // ОПЛАТА ЗА ДОНАЦІЮ КРОВІ (Пропорційна частка змінних поточного місяця)
+        // ОПЛАТА ЗА ДОНАЦІЮ КРОВІ (Автозаповнення поля або використання введеного)
         const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff);
-        const bloodDonationPay = (isPremium && schedDays > 0 && bloodDonationDays > 0) ? (currentVariables / schedDays) * bloodDonationDays : 0;
+        const autoDailyBlood = (isPremium && schedDays > 0) ? (currentVariables / schedDays) : 0;
+        
+        const bloodBonusInput = document.getElementById('bloodBonus');
+        if (bloodDonationDays > 0 && !bloodBonusInput.value) {
+            bloodBonusInput.value = autoDailyBlood.toFixed(2);
+        }
+        const finalDailyBlood = parseFloat(bloodBonusInput.value) || 0;
+        const bloodDonationPay = finalDailyBlood * bloodDonationDays;
 
         const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff) + totalUrlopBonus + bloodDonationPay;
 
