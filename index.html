@@ -223,7 +223,7 @@
         <input type="number" id="vacationDays" placeholder="0" min="0">
     </div>
     <div class="form-group sub-group premium-field hidden" id="urlopBonusGroup">
-        <label id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ️</label>
+        <label id="lblUrlopBonus">Погод. ставка відп. (zł/год) ℹ️</label>
         <input type="number" id="urlopBonus" placeholder="0.00" min="0" style="color:var(--primary);">
     </div>
 
@@ -315,7 +315,7 @@
     const dict = {
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
-            schedDays: "Графік", vacationDays: "Відпустка (днів)", urlopBonus: "Середня за 1 день відп. (zł) ℹ️", 
+            schedDays: "Графік", vacationDays: "Відпустка (днів)", urlopBonus: "Погод. ставка відп. (zł/год) ℹ️", 
             bloodDonation: "Донація крові (днів)", bloodBonus: "Середня за 1 дн. донації (zł) ℹ️", 
             l4Days: "Лікарняний L4 (календарні)", bonus: "Премія", morning: "Ранкові зміни (шт)", 
             afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
@@ -325,7 +325,7 @@
         },
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
-            schedDays: "Grafik", vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa za 1 dzień ℹ️", 
+            schedDays: "Grafik", vacationDays: "Urlop (dni)", urlopBonus: "Stawka urlopowa (zł/godz) ℹ️", 
             bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia za 1 dn. oddania (zł) ℹ️", 
             l4Days: "L4 (dni kalendarzowe)", bonus: "Premia", morning: "Poranne zmiany (szt)", 
             afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
@@ -371,7 +371,9 @@
 
         const currentVariables = bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay;
 
-        const totalUrlopPay = inputData.vacationDays > 0 ? (inputData.dailyUrlopRate * inputData.vacationDays) : 0;
+        // Погодинна оплата відпустки згідно з § 9 MPiPS (ставка за 1 год * години відпустки)
+        const totalUrlopPay = inputData.vacationDays > 0 ? (inputData.hourlyUrlopRate * (inputData.vacationDays * 8)) : 0;
+        
         const autoDailyBloodRate = scheduleDays > 0 ? (currentVariables / scheduleDays) : 0;
         const bloodDonationPay = (inputData.bloodDailyRate !== null && !isNaN(inputData.bloodDailyRate)) 
             ? (inputData.bloodDailyRate * inputData.bloodDonationDays) 
@@ -470,7 +472,7 @@
 
         try {
             await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
-            alert("Дані збережені у хмару! ☁️️");
+            alert("Дані збережені у хмару! ☁️");
             await updateL4Cache(monthVal);
         } catch (error) { alert("Помилка збереження: " + error.message); } 
         finally { btn.innerText = originalText; }
@@ -585,6 +587,69 @@
         window.cachedL4DailyRate = monthsFound > 0 ? (totalNetBase / monthsFound) / 30 : null;
     }
 
+    // Погодинна ставка відпустки згідно з § 9 MPiPS (за останні 3 місяці)
+    async function getAutoHourlyUrlopRate(currentYear, monthIdx) {
+        if (!auth.currentUser) return 0;
+        let totalExtras = 0; let totalWorkedHours = 0;
+        
+        for (let i = 1; i <= 3; i++) {
+            let pMonth = monthIdx + 1 - i; let pYear = currentYear;
+            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
+            const pastMonthStr = pYear + "-" + String(pMonth).padStart(2, '0');
+            const stDays = stateWorkDays[pMonth - 1] || 21;
+            
+            try {
+                const docSnap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastMonthStr));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
+                    let pastPct = parseFloat(data.bonusPctSelect); if (isNaN(pastPct)) pastPct = 15;
+                    const mS = Math.max(0, parseInt(data.morningShifts) || 0); 
+                    const aS = Math.max(0, parseInt(data.afternoonShifts) || 0);
+                    const nS = Math.max(0, parseInt(data.nightShifts) || 0); 
+                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
+                    const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
+                    
+                    let regWorkedDays = mS + aS + nS; const pastSched = parseInt(data.scheduleDays) || stDays;
+                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0); const vac = Math.max(0, parseInt(data.vacationDays) || 0);
+                    const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
+                    
+                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
+                        regWorkedDays = Math.max(0, pastSched - vac - blood - l4m);
+                    }
+                    const over = Math.min(rawOver, regWorkedDays); 
+                    let pActualDays = regWorkedDays + over;
+                    
+                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorkedDays : 0;
+                    const nTariff = ((COMPANY_CONFIG.fiege.nightBaseSalary / (stDays * 8)) * COMPANY_CONFIG.fiege.nightBonusPercent);
+                    const pastNight = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
+                    const pastWknd = wknd * 100; const pastOver = over * ((pastBase / stDays) * 1.5);
+
+                    totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
+                    totalWorkedHours += (pActualDays * 8); // Переведення днів у години
+                }
+            } catch (e) {}
+        }
+        if (totalWorkedHours === 0) return 0;
+        return (totalExtras / totalWorkedHours);
+    }
+
+    // ПОДІЯ: Відпустка
+    document.getElementById('vacationDays').addEventListener('input', async function() {
+        const vacDays = Math.max(0, parseInt(this.value) || 0);
+        const urlopInput = document.getElementById('urlopBonus');
+        if (vacDays === 0 || this.value === '') { urlopInput.value = ""; } 
+        else if (isPremium) {
+            const monthVal = document.getElementById('monthSelect').value;
+            if (monthVal && (!urlopInput.value || parseFloat(urlopInput.value) === 0)) {
+                const [year, month] = monthVal.split('-');
+                const autoHourly = await getAutoHourlyUrlopRate(parseInt(year), parseInt(month) - 1);
+                if (autoHourly > 0) urlopInput.value = autoHourly.toFixed(2);
+            }
+        }
+        calculateSalaryAdapter();
+    });
+
     window.calculateSalaryAdapter = function() {
         const monthVal = document.getElementById('monthSelect').value;
         if (!monthVal) { document.getElementById('grossResult').innerText = '0.00 zł'; document.getElementById('netResult').innerText = '0.00 zł'; return; }
@@ -616,7 +681,7 @@
             overtimeDays: Math.max(0, parseFloat(document.getElementById('overtimeDays').value)) || 0,
             
             vacationDays: isPremium ? Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0) : 0,
-            dailyUrlopRate: Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0),
+            hourlyUrlopRate: Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0),
             
             bloodDonationDays: isPremium ? Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0) : 0,
             bloodDailyRate: bloodDailyRate,
@@ -652,7 +717,7 @@
         document.getElementById('netResult').innerText = result.totals.net.toFixed(2) + ' zł';
     }
 
-    // Покращення UX: виділення тексту замість стирання значень при фокусі
+    // UX: виділення тексту замість стирання значень при кліку (зручно для мобільних)
     document.querySelectorAll('input[type=number]').forEach(el => {
         el.addEventListener('focus', function() { this.select(); });
     });
