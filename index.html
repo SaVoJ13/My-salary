@@ -123,9 +123,6 @@
 </head>
 <body id="app-body">
 
-<!-- ==========================================
-     БЛОК 2: ІНТЕРФЕЙС ТА HTML ЕЛЕМЕНТИ
-     ========================================== -->
 <div class="calculator">
     <div id="sideMenu" class="side-menu">
         <div class="menu-header">
@@ -171,7 +168,6 @@
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
         <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП <span class="premium-badge">PRO</span></h2>
         
-        <!-- КОМПАКТНИЙ ГРАФІК -->
         <div class="schedule-badge" id="scheduleBadgeContainer">
             <span id="lblScheduleDays">Графік</span>
             <input type="number" id="scheduleDays" placeholder="0" onblur="calculateSalary()">
@@ -279,9 +275,6 @@
 </div>
 
 <script type="module">
-    /* ==========================================
-       БЛОК 3: НАЛАШТУВАННЯ ТА БАЗА ДАНИХ FIREBASE
-       ========================================== */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -378,9 +371,6 @@
         document.getElementById('baseSalary').value = "";
     }
 
-    /* ==========================================
-       БЛОК 4: СЛОВНИКИ ТА ЗМІННІ 
-       ========================================== */
     const dict = {
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
@@ -406,9 +396,6 @@
 
     const stateWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
 
-    /* ==========================================
-       БЛОК 5: ЛОГІКА ІНТЕРФЕЙСУ (UI)
-       ========================================== */
     window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); }
     window.setTheme = function(theme) { document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : ''); localStorage.setItem('theme', theme); }
     window.setLang = function(lang) {
@@ -459,9 +446,6 @@
         }
     }
 
-    /* ==========================================
-       БЛОК 6: МАТЕМАТИКА ТА РОЗРАХУНКИ З ХМАРИ
-       ========================================== */
     async function updateL4Cache(currentMonthVal) {
         if (!auth.currentUser) { window.cachedL4DailyRate = null; return; }
         
@@ -563,7 +547,6 @@
                     const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
                     const pastWknd = wknd * 100;
                     
-                    // КАЛІБРУВАННЯ: Для ідеального збігу з бухгалтерією (~120.80 zł) використовуємо коефіцієнт 1.5 для надгодин у відпускних
                     const pastOver = over * ((pastBase / stDays) * 1.5);
 
                     totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
@@ -710,7 +693,9 @@
             pit = Math.max(0, Math.round((pitBase * 0.12) - 300.00) + 54.00);
         }
 
-                const laundryAllowance = schedDays > 0 ? (regWorkedDays / schedDays) * 16.00 : 0;
+        // ДИНАМІЧНИЙ ДОДАТОК НА ПРАННЯ (Пропорційно відпрацьованим дням)
+        const laundryAllowance = schedDays > 0 ? (regWorkedDays / schedDays) * 16.00 : 0;
+        
         const net = gross - zus - nfz - pit - (ppkActive ? gross * 0.02 : 0) - (document.getElementById('insuranceSelect').value === 'yes' ? 36.70 : 0) - 30.25 + laundryAllowance;
 
         updateUI(gross, net);
