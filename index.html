@@ -414,7 +414,7 @@
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
             schedDays: "Grafik", vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa za 1 dzień ℹ️", 
-            bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia za 1 dn. oddania (zł) ℹ️", 
+            bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia za 1 dn. oddania (zł) ℹ️️", 
             l4Days: "L4 (dni kalendarzowe)", bonus: "Premia", morning: "Poranne zmiany (szt)", 
             afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
             overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat", ppk: "PPK", 
@@ -597,7 +597,7 @@
         const vacDays = Math.max(0, parseInt(this.value) || 0);
         const urlopInput = document.getElementById('urlopBonus');
         
-        if (vacDays === 0) {
+        if (vacDays === 0 || this.value === '') {
             urlopInput.value = ""; 
         } else if (isPremium) {
             const monthVal = document.getElementById('monthSelect').value;
@@ -613,7 +613,7 @@
     // ПОДІЯ: Донація крові (Скидання якщо 0)
     document.getElementById('bloodDonationDays').addEventListener('input', function() {
         const bloodDays = Math.max(0, parseInt(this.value) || 0);
-        if (bloodDays === 0) {
+        if (bloodDays === 0 || this.value === '') {
             document.getElementById('bloodBonus').value = "";
         }
         calculateSalary();
@@ -624,7 +624,7 @@
             const l4 = Math.max(0, parseInt(this.value) || 0);
             const bonusSelect = document.getElementById('bonusPctSelect');
             
-            if (l4 === 0) {
+            if (l4 === 0 || this.value === '') {
                 bonusSelect.value = "15";
                 document.getElementById('l4MissedShifts').value = ""; 
             }
@@ -635,6 +635,7 @@
         }
     });
 
+    // Універсальний обробник для перерахунку ГРАФІКА
     ['morningShifts', 'afternoonShifts', 'nightShifts', 'vacationDays', 'bloodDonationDays', 'l4Days', 'l4MissedShifts'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
@@ -643,21 +644,23 @@
                     const mStr = document.getElementById('morningShifts').value;
                     const aStr = document.getElementById('afternoonShifts').value;
                     const nStr = document.getElementById('nightShifts').value;
+                    const vStr = document.getElementById('vacationDays').value;
+                    const bStr = document.getElementById('bloodDonationDays').value;
+                    const lStr = document.getElementById('l4MissedShifts').value;
                     
                     const m = Math.max(0, parseInt(mStr) || 0);
                     const a = Math.max(0, parseInt(aStr) || 0);
                     const n = Math.max(0, parseInt(nStr) || 0);
-                    const vac = Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0);
-                    const blood = Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0);
-                    const l4Missed = Math.max(0, parseInt(document.getElementById('l4MissedShifts').value) || 0); 
+                    const vac = Math.max(0, parseInt(vStr) || 0);
+                    const blood = Math.max(0, parseInt(bStr) || 0);
+                    const l4Missed = Math.max(0, parseInt(lStr) || 0); 
                     
-                    if (mStr !== '' || aStr !== '' || nStr !== '') {
+                    // Якщо заповнено хоча б ОДНЕ з цих полів, рахуємо графік. Якщо всі пусті - скидаємо.
+                    if (mStr !== '' || aStr !== '' || nStr !== '' || vStr !== '' || bStr !== '' || lStr !== '') {
                         let autoSched = m + a + n + vac + blood + l4Missed;
-                        if(autoSched > 0) {
-                            document.getElementById('scheduleDays').value = autoSched;
-                        } else {
-                            document.getElementById('scheduleDays').value = "";
-                        }
+                        document.getElementById('scheduleDays').value = autoSched > 0 ? autoSched : "";
+                    } else {
+                        document.getElementById('scheduleDays').value = "";
                     }
                 }
                 calculateSalary();
@@ -728,14 +731,22 @@
 
         const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         
-        // ОПЛАТА ЗА ДОНАЦІЮ КРОВІ (Автозаповнення поля або використання введеного)
+        // ОПЛАТА ЗА ДОНАЦІЮ КРОВІ (Автоматичне живе оновлення інформаційного поля)
         const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff);
         const autoDailyBlood = (isPremium && schedDays > 0) ? (currentVariables / schedDays) : 0;
         
         const bloodBonusInput = document.getElementById('bloodBonus');
-        if (bloodDonationDays > 0 && !bloodBonusInput.value) {
-            bloodBonusInput.value = autoDailyBlood.toFixed(2);
+        if (bloodDonationDays > 0) {
+            // Оновлюємо значення завжди, коли воно не знаходиться у фокусі (тобто коли користувач не редагує його вручну)
+            if (document.activeElement !== bloodBonusInput) {
+                bloodBonusInput.value = autoDailyBlood > 0 ? autoDailyBlood.toFixed(2) : "0.00";
+            }
+        } else {
+            if (document.activeElement !== bloodBonusInput) {
+                bloodBonusInput.value = "";
+            }
         }
+        
         const finalDailyBlood = parseFloat(bloodBonusInput.value) || 0;
         const bloodDonationPay = finalDailyBlood * bloodDonationDays;
 
