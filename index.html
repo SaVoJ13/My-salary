@@ -1,13 +1,10 @@
 <!DOCTYPE html>
-<html lang="ua">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ЗП Калькулятор Fiege</title>
+    <title>ЗП Калькулятор Fiege V2</title>
     <style>
-        /* ==========================================
-           БЛОК 1: ДИЗАЙН ТА СТИЛІ (CSS)
-           ========================================== */
         :root {
             --primary: #e3000f; 
             --bg-color: #f4f6f9;
@@ -126,66 +123,66 @@
 <div class="calculator">
     <div id="sideMenu" class="side-menu">
         <div class="menu-header">
-            <span id="menuTitle" style="font-size: 15px; font-weight: bold;">Меню</span>
+            <span data-i18n="menuTitle" style="font-size: 15px; font-weight: bold;">Меню</span>
             <button class="close-menu" onclick="toggleMenu()">✕</button>
         </div>
 
         <div class="menu-item">
-            <label id="lblMenuLang">Мова</label>
+            <label data-i18n="menuLang">Мова</label>
             <select id="langSelect" style="width: 100%;" onchange="setLang(this.value)">
                 <option value="ua">Українська</option>
                 <option value="pl">Polski</option>
             </select>
         </div>
         <div class="menu-item">
-            <label id="lblMenuTheme">Тема</label>
+            <label data-i18n="menuTheme">Тема</label>
             <select id="themeSelect" style="width: 100%;" onchange="setTheme(this.value)">
-                <option value="light" id="optThemeLight">Світла</option>
-                <option value="dark" id="optThemeDark">Темна</option>
+                <option value="light" data-i18n="optThemeLight">Світла</option>
+                <option value="dark" data-i18n="optThemeDark">Темна</option>
             </select>
         </div>
 
         <div class="divider" style="margin: 10px 0;"></div>
 
         <div class="cloud-section">
-            <label style="width: 100%; font-weight: bold; margin-bottom: 8px; display: block;" id="lblCloudHeader">Акаунт & Хмара</label>
+            <label style="width: 100%; font-weight: bold; margin-bottom: 8px; display: block;" data-i18n="lblCloudHeader">Акаунт & Хмара</label>
             <div id="auth-container">
                 <input type="email" id="email" placeholder="Email" style="width: 100%; margin-bottom: 6px; text-align: left;">
                 <input type="password" id="password" placeholder="Пароль" style="width: 100%; margin-bottom: 8px; text-align: left;">
                 <button id="btn-login" class="action-btn btn-auth-action">Увійти (PRO)</button>
-                <button id="btn-register" class="action-btn" style="background: var(--text-main); margin-top: 4px;">Реєстрація</button>
+                <button id="btn-register" class="action-btn" style="background: var(--text-main); margin-top: 4px;" data-i18n="btnRegister">Реєстрація</button>
             </div>
             <div id="sync-container" class="hidden">
                 <span id="user-email-display" style="font-size: 11px; display: block; margin-bottom: 8px; word-break: break-all; font-weight: bold;"></span>
-                <button id="btn-sync-up" class="action-btn btn-sync">Зберегти місяць ☁️</button>
-                <button id="btn-sync-down" class="action-btn" style="background: #2980b9; margin-top: 4px;">Завантажити місяць 📥</button>
-                <button id="btn-logout" class="action-btn btn-logout" style="margin-top: 8px;">Вийти (Гостьовий режим)</button>
+                <button id="btn-sync-up" class="action-btn btn-sync" data-i18n="btnSyncUp">Зберегти місяць ☁️</button>
+                <button id="btn-sync-down" class="action-btn" style="background: #2980b9; margin-top: 4px;" data-i18n="btnSyncDown">Завантажити місяць 📥</button>
+                <button id="btn-logout" class="action-btn btn-logout" style="margin-top: 8px;" data-i18n="btnLogout">Вийти (Гостьовий режим)</button>
             </div>
         </div>
     </div>
 
     <div class="header-row">
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
-        <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП <span class="premium-badge">PRO</span></h2>
+        <h2 style="margin-right: auto; margin-left: 15px;"><span data-i18n="title">Калькулятор ЗП</span> <span class="premium-badge">PRO</span></h2>
         
         <div class="schedule-badge" id="scheduleBadgeContainer">
-            <span id="lblScheduleDays">Графік</span>
+            <span data-i18n="schedDays">Графік</span>
             <input type="number" id="scheduleDays" placeholder="0" min="0">
         </div>
     </div>
     
     <div class="form-group">
-        <label id="lblMonth">Місяць</label>
+        <label data-i18n="month">Місяць</label>
         <select id="monthSelect"></select>
     </div>
 
     <div class="form-group">
-        <label id="lblBase">Загальна ставка (zł)</label>
+        <label data-i18n="base">Загальна ставка (zł)</label>
         <input type="number" id="baseSalary" value="5750" min="0">
     </div>
 
     <div class="form-group">
-        <label id="lblBonus">Премія</label>
+        <label data-i18n="bonus">Премія</label>
         <select id="bonusPctSelect">
             <option value="0">0%</option>
             <option value="5">5%</option>
@@ -196,76 +193,76 @@
     </div>
 
     <div class="form-group">
-        <label id="lblMorning">Ранкові зміни (шт)</label>
+        <label data-i18n="morning">Ранкові зміни (шт)</label>
         <input type="number" id="morningShifts" placeholder="-" min="0">
     </div>
     <div class="form-group">
-        <label id="lblAfternoon">Денні зміни (шт)</label>
+        <label data-i18n="afternoon">Денні зміни (шт)</label>
         <input type="number" id="afternoonShifts" placeholder="-" min="0">
     </div>
     <div class="form-group">
-        <label id="lblNight">Нічні зміни (шт)</label>
+        <label data-i18n="night">Нічні зміни (шт)</label>
         <input type="number" id="nightShifts" placeholder="-" min="0">
     </div>
 
     <div class="form-group">
-        <label id="lblWeekend">Робочі сб / нд (днів)</label>
+        <label data-i18n="weekend">Робочі сб / нд (днів)</label>
         <input type="number" id="weekendDays" placeholder="-" min="0">
     </div>
 
     <div class="form-group">
-        <label id="lblOvertime">Надгодини (днів)</label>
+        <label data-i18n="overtime">Надгодини (днів)</label>
         <input type="number" id="overtimeDays" placeholder="-" min="0" step="0.5">
     </div>
 
     <div class="form-group premium-field">
-        <label id="lblVacationDays">Відпустка (днів)</label>
+        <label data-i18n="vacationDays">Відпустка (днів)</label>
         <input type="number" id="vacationDays" placeholder="0" min="0">
     </div>
     <div class="form-group sub-group premium-field hidden" id="urlopBonusGroup">
-        <label id="lblUrlopBonus">Сума відпустки (zł) ℹ️</label>
+        <label data-i18n="urlopBonus">Сума відпустки (zł) ℹ️</label>
         <input type="number" id="urlopBonus" placeholder="0.00" min="0" style="color:var(--primary);">
     </div>
 
     <div class="form-group premium-field">
-        <label id="lblBloodDonation">Донація крові (днів)</label>
+        <label data-i18n="bloodDonation">Донація крові (днів)</label>
         <input type="number" id="bloodDonationDays" placeholder="0" min="0">
     </div>
     <div class="form-group sub-group premium-field hidden" id="bloodBonusGroup">
-        <label id="lblBloodBonus">Сума донації (zł) ℹ️</label>
+        <label data-i18n="bloodBonus">Сума донації (zł) ℹ️</label>
         <input type="number" id="bloodBonus" placeholder="0.00" min="0" style="color:var(--primary);">
     </div>
 
     <div class="form-group premium-field">
-        <label id="lblL4Days">Лікарняний L4 (календарні)</label>
+        <label data-i18n="l4Days">Лікарняний L4 (календарні)</label>
         <input type="number" id="l4Days" placeholder="0" min="0">
     </div>
     <div class="form-group sub-group premium-field hidden" id="l4MissedGroup">
-        <label id="lblL4Missed">Пропущено змін (шт) ℹ️️</label>
+        <label data-i18n="l4Missed">Пропущено змін (шт) ℹ️</label>
         <input type="number" id="l4MissedShifts" placeholder="0" min="0" style="color:var(--primary);">
     </div>
 
     <div class="divider"></div>
 
     <div class="form-group">
-        <label id="lblUnder26">Вік до 26 років</label>
+        <label data-i18n="under26">Вік до 26 років</label>
         <select id="under26Select">
-            <option value="no" id="optU26No" selected>Ні</option>
-            <option value="yes" id="optU26Yes">Так</option>
+            <option value="no" data-i18n="no" selected>Ні</option>
+            <option value="yes" data-i18n="yes">Так</option>
         </select>
     </div>
     <div class="form-group">
-        <label id="lblPPK">Участь у PPK</label>
+        <label data-i18n="ppk">Участь у PPK</label>
         <select id="ppkSelect">
-            <option value="no" id="optPpkNo" selected>Ні</option>
-            <option value="yes" id="optPpkYes">Так</option>
+            <option value="no" data-i18n="no" selected>Ні</option>
+            <option value="yes" data-i18n="yes">Так</option>
         </select>
     </div>
     <div class="form-group">
-        <label id="lblInsurance">Додаткове страхування</label>
+        <label data-i18n="insurance">Додаткове страхування</label>
         <select id="insuranceSelect">
-            <option value="yes" id="optInsYes" selected>Так</option>
-            <option value="no" id="optInsNo">Ні</option>
+            <option value="yes" data-i18n="yes" selected>Так</option>
+            <option value="no" data-i18n="no">Ні</option>
         </select>
     </div>
 
@@ -288,89 +285,102 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const TAX_RULES = {
-        2026: {
-            zusRate: 0.1371,
-            nfzRate: 0.09,
-            pitRate: 0.12,
-            kwotaWolna: 300.00,
-            benefitZusNfz: 30.25,
-            benefitTax: 54.00
-        }
+    /* ==========================================
+       КОНФІГУРАЦІЯ ТА РЕЄСТРИ ПЕРІОДІВ (V2)
+       ========================================== */
+    const CALENDAR_REGISTRY = {
+        "2026-01": { workingDays: 20 }, "2026-02": { workingDays: 20 }, "2026-03": { workingDays: 22 },
+        "2026-04": { workingDays: 21 }, "2026-05": { workingDays: 20 }, "2026-06": { workingDays: 21 },
+        "2026-07": { workingDays: 23 }, "2026-08": { workingDays: 20 }, "2026-09": { workingDays: 22 },
+        "2026-10": { workingDays: 22 }, "2026-11": { workingDays: 20 }, "2026-12": { workingDays: 20 },
+        // За замовчуванням для майбутніх періодів
+        "default": { workingDays: 21 }
     };
 
-    const COMPANY_CONFIG = {
-        fiege: {
-            nightBaseSalary: 4806.00,
-            nightBonusPercent: 0.20,
-            weekendBonus: 100.00,
-            overtimeMultiplier: 2.0,
-            laundryMax: 16.00,
-            ppkRate: 0.02,
-            extraInsurance: 36.70
-        }
+    const SALARY_RATES_REGISTRY = {
+        "2026": { defaultRate: 5750, raiseMonth: 10, newRate: 5950 },
+        "2027": { defaultRate: 5950 }
     };
 
-    const stateWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
-    const dict = {
+    const TAX_RULES_REGISTRY = {
+        2026: { zusRate: 0.1371, nfzRate: 0.09, pitRate: 0.12, kwotaWolna: 300.00, benefitZusNfz: 30.25, benefitTax: 54.00 },
+        2027: { zusRate: 0.1371, nfzRate: 0.09, pitRate: 0.12, kwotaWolna: 300.00, benefitZusNfz: 30.25, benefitTax: 54.00 }
+    };
+
+    const COMPANY_RULES_REGISTRY = {
+        fiege: { nightBaseSalary: 4806.00, nightBonusPercent: 0.20, weekendBonus: 100.00, overtimeMultiplier: 2.0, laundryMax: 16.00, ppkRate: 0.02, extraInsurance: 36.70 }
+    };
+
+    const DICTIONARIES = {
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
             schedDays: "Графік", vacationDays: "Відпустка (днів)", urlopBonus: "Сума відпустки (zł) ℹ️", 
             bloodDonation: "Донація крові (днів)", bloodBonus: "Сума донації (zł) ℹ️", 
-            l4Days: "Лікарняний L4 (календарні)", bonus: "Премія", morning: "Ранкові зміни (шт)", 
+            l4Days: "Лікарняний L4 (календарні)", l4Missed: "Пропущено змін (шт) ℹ️", bonus: "Премія", morning: "Ранкові зміни (шт)", 
             afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
             overtime: "Надгодини (днів)", under26: "Вік до 26 років", ppk: "Участь у PPK", 
             insurance: "Дод. страхування", yes: "Так", no: "Ні", menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", 
+            optThemeLight: "Світла", optThemeDark: "Темна", lblCloudHeader: "Акаунт & Хмара", btnRegister: "Реєстрація",
+            btnSyncUp: "Зберегти місяць ☁️", btnSyncDown: "Завантажити місяць 📥", btnLogout: "Вийти (Гостьовий режим)",
             monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
         },
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
             schedDays: "Grafik", vacationDays: "Urlop (dni)", urlopBonus: "Kwota urlopu (zł) ℹ️", 
             bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Kwota za krew (zł) ℹ️", 
-            l4Days: "L4 (dni kalendarzowe)", bonus: "Premia", morning: "Poranne zmiany (szt)", 
+            l4Days: "L4 (dni kalendarzowe)", l4Missed: "Przegapione zmiany (szt) ℹ️", bonus: "Premia", morning: "Poranne zmiany (szt)", 
             afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
             overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat", ppk: "PPK", 
             insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie", menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
+            optThemeLight: "Jasny", optThemeDark: "Ciemny", lblCloudHeader: "Konto & Chmura", btnRegister: "Rejestracja",
+            btnSyncUp: "Zapisz miesiąc ☁️", btnSyncDown: "Pobierz miesiąc 📥", btnLogout: "Wyloguj (Gość)",
             monthNames: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
         }
     };
 
-    function calculateSalaryEngine(inputData, taxRules, companyRules) {
-        let regWorkedDays = inputData.morningShifts + inputData.afternoonShifts + inputData.nightShifts;
-        if (inputData.isShiftsEmpty) {
-            regWorkedDays = Math.max(0, inputData.scheduleDays - inputData.vacationDays - inputData.bloodDonationDays - inputData.l4MissedShifts);
+    // ==========================================
+    // ЧИСТИЙ ДЕТЕРМІНОВАНИЙ PAYROLL ENGINE (V2)
+    // ==========================================
+    function calculateSalary(state, rules) {
+        const { taxRules, companyRules, calendarRules } = rules;
+        const monthKey = state.month;
+        const calendar = calendarRules[monthKey] || calendarRules["default"];
+        const stateDays = calendar.workingDays;
+
+        let regWorkedDays = state.shifts.morning + state.shifts.afternoon + state.shifts.night;
+        if (state.isShiftsEmpty) {
+            regWorkedDays = Math.max(0, state.scheduleDays - state.absences.vacationDays - state.absences.bloodDonationDays - state.absences.l4MissedShifts);
         }
         
-        const overtimeDays = Math.min(inputData.overtimeDays, regWorkedDays); 
-        const scheduleDays = inputData.scheduleDays;
-        const stateDays = inputData.stateDays;
+        const overtimeDays = Math.min(state.extras.overtimeDays, regWorkedDays); 
+        const scheduleDays = state.scheduleDays;
 
-        let adjustedBase = inputData.baseSalary;
+        let adjustedBase = state.salary.base;
         let l4Pay = 0;
         
-        if (inputData.l4Days > 0) {
-            adjustedBase = inputData.baseSalary - ((inputData.baseSalary / 30) * inputData.l4Days);
-            const fallbackL4Rate = (inputData.baseSalary * (1 - taxRules.zusRate)) / 30;
-            const l4DailyRate = inputData.cachedL4DailyRate > 0 ? inputData.cachedL4DailyRate : fallbackL4Rate;
-            l4Pay = l4DailyRate * 0.80 * inputData.l4Days;
+        if (state.absences.l4Days > 0) {
+            adjustedBase = state.salary.base - ((state.salary.base / 30) * state.absences.l4Days);
+            const fallbackL4Rate = (state.salary.base * (1 - taxRules.zusRate)) / 30;
+            const l4DailyRate = state.cachedL4DailyRate > 0 ? state.cachedL4DailyRate : fallbackL4Rate;
+            l4Pay = l4DailyRate * 0.80 * state.absences.l4Days;
         }
 
         const bonusAmount = scheduleDays > 0 
-            ? ((inputData.baseSalary * (inputData.bonusPct / 100)) / scheduleDays * regWorkedDays) 
-            : (inputData.baseSalary * (inputData.bonusPct / 100));
+            ? ((state.salary.base * (state.salary.bonusPct / 100)) / scheduleDays * regWorkedDays) 
+            : (state.salary.base * (state.salary.bonusPct / 100));
 
         const nightTariff = Math.round(((companyRules.nightBaseSalary / (stateDays * 8)) * companyRules.nightBonusPercent) * 100) / 100;
-        const overtimeTariff = Math.round(((inputData.baseSalary / stateDays) * companyRules.overtimeMultiplier) * 100) / 100;
+        const overtimeTariff = Math.round(((state.salary.base / stateDays) * companyRules.overtimeMultiplier) * 100) / 100;
 
-        const totalNightPay = Math.round((inputData.morningShifts * (10/60) * nightTariff) * 100) / 100 
-                            + (inputData.nightShifts * 8 * nightTariff) 
-                            + (inputData.nightShifts * 30);
+        const totalNightPay = Math.round((state.shifts.morning * (10/60) * nightTariff) * 100) / 100 
+                            + (state.shifts.night * 8 * nightTariff) 
+                            + (state.shifts.night * 30);
                             
-        const totalWeekendPay = inputData.weekendDays * companyRules.weekendBonus;
+        const totalWeekendPay = state.extras.weekendDays * companyRules.weekendBonus;
         const totalOvertimePay = overtimeDays * overtimeTariff;
 
-        const totalUrlopPay = inputData.vacationDays > 0 ? inputData.totalUrlopPay : 0;
-        const bloodDonationPay = inputData.bloodDonationDays > 0 ? inputData.totalBloodPay : 0;
+        const totalUrlopPay = state.absences.vacationDays > 0 ? state.absences.totalUrlopPay : 0;
+        const bloodDonationPay = state.absences.bloodDonationDays > 0 ? state.absences.totalBloodPay : 0;
 
         const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay + totalUrlopPay + bloodDonationPay;
 
@@ -380,7 +390,7 @@
         const nfz = Math.round((healthBase * taxRules.nfzRate) * 100) / 100;
         
         let pit = 0;
-        if (!inputData.under26) {
+        if (!state.deductions.under26) {
             const pitBase = Math.round(Math.max(0, healthBase - taxRules.kwotaWolna));
             pit = Math.max(0, Math.round((pitBase * taxRules.pitRate) - taxRules.kwotaWolna));
         }
@@ -390,19 +400,59 @@
             ? Math.min(companyRules.laundryMax, (regWorkedDays / scheduleDays) * companyRules.laundryMax) 
             : 0;
         
-        const ppkCost = inputData.ppkActive ? gross * companyRules.ppkRate : 0;
-        const insuranceCost = inputData.insuranceActive ? companyRules.extraInsurance : 0;
+        const ppkCost = state.deductions.ppk ? gross * companyRules.ppkRate : 0;
+        const insuranceCost = state.deductions.insurance ? companyRules.extraInsurance : 0;
 
         const net = gross - zus - nfz - pit - ppkCost - insuranceCost - totalBenefitCost + laundryAllowance;
 
         return {
-            totals: { gross, net },
-            taxes: { zus, nfz, pit },
-            metadata: { 
-                autoDailyBloodRate: scheduleDays > 0 ? ((bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay) / scheduleDays) : (inputData.baseSalary / stateDays) 
+            schemaVersion: 2,
+            month: monthKey,
+            breakdown: {
+                gross: {
+                    base: adjustedBase,
+                    l4: l4Pay,
+                    bonus: bonusAmount,
+                    night: totalNightPay,
+                    weekend: totalWeekendPay,
+                    overtime: totalOvertimePay,
+                    vacation: totalUrlopPay,
+                    bloodDonation: bloodDonationPay,
+                    total: gross
+                },
+                deductions: {
+                    zus,
+                    nfz,
+                    pit,
+                    ppk: ppkCost,
+                    insurance: insuranceCost,
+                    benefits: totalBenefitCost
+                },
+                additions: {
+                    laundry: laundryAllowance
+                },
+                net
+            },
+            metadata: {
+                autoDailyBloodRate: scheduleDays > 0 ? ((bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay) / scheduleDays) : (state.salary.base / stateDays)
             }
         };
     }
+
+    // ==========================================
+    // STATE МЕНЕДЖМЕНТ ТА DOM АДАПТЕР
+    // ==========================================
+    const state = {
+        month: "",
+        scheduleDays: 21,
+        salary: { base: 5750, bonusPct: 15 },
+        shifts: { morning: 0, afternoon: 0, night: 0 },
+        extras: { weekendDays: 0, overtimeDays: 0 },
+        absences: { vacationDays: 0, totalUrlopPay: 0, bloodDonationDays: 0, totalBloodPay: 0, l4Days: 0, l4MissedShifts: 0 },
+        deductions: { under26: false, ppk: false, insurance: true },
+        cachedL4DailyRate: null,
+        isShiftsEmpty: true
+    };
 
     const firebaseConfig = {
         apiKey: "AIzaSyAfsfF3nLzqaAJTAfp73715efQhri-SOT8",
@@ -419,7 +469,6 @@
     
     let currentLang = 'ua';
     let isPremium = false;
-    window.cachedL4DailyRate = null;
 
     onAuthStateChanged(auth, async (user) => {
         isPremium = !!user;
@@ -433,20 +482,18 @@
         } else {
             clearInputs();
         }
-        calculateSalaryAdapter();
+        syncDOMToState();
+        runCalculation();
     });
 
     document.getElementById('btn-login').addEventListener('click', async () => { 
-        try { 
-            await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); 
-        } catch (e) { alert("Помилка входу: " + e.message); } 
+        try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
+        catch (e) { alert("Помилка входу: " + e.message); } 
     });
     
     document.getElementById('btn-register').addEventListener('click', async () => { 
-        try { 
-            await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); 
-            alert("Реєстрація успішна!"); 
-        } catch (e) { alert("Помилка: " + e.message); } 
+        try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); alert("Реєстрація успішна!"); } 
+        catch (e) { alert("Помилка: " + e.message); } 
     });
     
     document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
@@ -460,14 +507,10 @@
         const originalText = btn.innerText;
         btn.innerText = "Збереження... ☁️"; 
 
-        const data = { updatedAt: new Date().toISOString() };
-        document.querySelectorAll('input, select').forEach(el => {
-            if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id)) data[el.id] = el.value;
-        });
-
+        const data = { schemaVersion: 2, month: monthVal, state, updatedAt: new Date().toISOString() };
         try {
             await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
-            alert("Дані збережені у хмару! ☁️");
+            alert("Дані збережені у хмару! ☁️️");
             await updateL4Cache(monthVal);
         } catch (error) { alert("Помилка збереження: " + error.message); } 
         finally { btn.innerText = originalText; }
@@ -482,12 +525,19 @@
             const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal));
             if (snap.exists()) {
                 const d = snap.data();
-                document.querySelectorAll('input, select').forEach(el => {
-                    if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id) && d[el.id] !== undefined) el.value = d[el.id];
-                });
-            } else { clearInputs(); }
+                if(d.state) {
+                    Object.assign(state, d.state);
+                    syncStateToDOM();
+                } else {
+                    // Міграція зі старої схеми якщо присутня
+                    document.querySelectorAll('input, select').forEach(el => {
+                        if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id) && d[el.id] !== undefined) el.value = d[el.id];
+                    });
+                    syncDOMToState();
+                }
+            } else { clearInputs(); syncDOMToState(); }
             await updateL4Cache(monthVal);
-            calculateSalaryAdapter();
+            runCalculation();
         } catch(e) { console.error("Помилка завантаження", e); }
     }
 
@@ -497,29 +547,20 @@
         document.querySelectorAll('input[type=number]').forEach(el => el.value = '');
         document.getElementById('bonusPctSelect').value = "15";
         document.getElementById('baseSalary').value = "";
+        syncDOMToState();
     }
 
     window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); }
     window.setTheme = function(theme) { document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : ''); localStorage.setItem('theme', theme); }
     
     window.setLang = function(lang) {
-        currentLang = lang; const d = dict[lang];
-        document.getElementById('lblTitle').innerHTML = d.title + ' <span class="premium-badge">PRO</span>';
-        document.getElementById('lblMonth').innerText = d.month; document.getElementById('lblBase').innerText = d.base;
-        document.getElementById('lblScheduleDays').innerText = d.schedDays;
-        document.getElementById('lblVacationDays').innerText = d.vacationDays; document.getElementById('lblUrlopBonus').innerText = d.urlopBonus;
-        document.getElementById('lblBloodDonation').innerText = d.bloodDonation; document.getElementById('lblBloodBonus').innerText = d.bloodBonus;
-        document.getElementById('lblL4Days').innerText = d.l4Days; 
-        document.getElementById('lblBonus').innerText = d.bonus; document.getElementById('lblMorning').innerText = d.morning;
-        document.getElementById('lblAfternoon').innerText = d.afternoon; document.getElementById('lblNight').innerText = d.night; 
-        document.getElementById('lblWeekend').innerText = d.weekend; document.getElementById('lblOvertime').innerText = d.overtime; 
-        document.getElementById('lblUnder26').innerText = d.under26; document.getElementById('lblPPK').innerText = d.ppk; 
-        document.getElementById('lblInsurance').innerText = d.insurance; document.getElementById('menuTitle').innerText = d.menuTitle; 
-        document.getElementById('lblMenuLang').innerText = d.menuLang; document.getElementById('lblMenuTheme').innerText = d.menuTheme; 
-        document.getElementById('optU26Yes').innerText = d.yes; document.getElementById('optU26No').innerText = d.no; 
-        document.getElementById('optPpkYes').innerText = d.yes; document.getElementById('optPpkNo').innerText = d.no; 
-        document.getElementById('optInsYes').innerText = d.yes; document.getElementById('optInsNo').innerText = d.no;
-        initMonths(); calculateSalaryAdapter();
+        currentLang = lang; const d = DICTIONARIES[lang];
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            if(d[key]) el.textContent = d[key];
+        });
+        initMonths();
+        runCalculation();
     }
 
     function initMonths() {
@@ -529,7 +570,7 @@
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonth = now.getMonth(); 
-        const dNames = dict[currentLang].monthNames;
+        const dNames = DICTIONARIES[currentLang].monthNames;
         
         for(let i = 1; i >= -11; i--) {
             let d = new Date(currentYear, currentMonth + i, 1);
@@ -542,6 +583,59 @@
         }
         if(!currentVal) select.value = currentYear + "-" + String(currentMonth + 1).padStart(2, '0');
         else select.value = currentVal;
+        
+        state.month = select.value;
+    }
+
+    function syncDOMToState() {
+        state.month = document.getElementById('monthSelect').value;
+        state.scheduleDays = parseInt(document.getElementById('scheduleDays').value) || 21;
+        state.salary.base = Math.max(0, parseFloat(document.getElementById('baseSalary').value) || 5750);
+        state.salary.bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
+        
+        state.shifts.morning = Math.max(0, parseInt(document.getElementById('morningShifts').value) || 0);
+        state.shifts.afternoon = Math.max(0, parseInt(document.getElementById('afternoonShifts').value) || 0);
+        state.shifts.night = Math.max(0, parseInt(document.getElementById('nightShifts').value) || 0);
+        
+        state.extras.weekendDays = Math.max(0, parseInt(document.getElementById('weekendDays').value) || 0);
+        state.extras.overtimeDays = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
+        
+        state.absences.vacationDays = isPremium ? Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0) : 0;
+        state.absences.totalUrlopPay = Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0);
+        
+        state.absences.bloodDonationDays = isPremium ? Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0) : 0;
+        state.absences.totalBloodPay = Math.max(0, parseFloat(document.getElementById('bloodBonus').value) || 0);
+        
+        state.absences.l4Days = isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0;
+        state.absences.l4MissedShifts = Math.max(0, parseInt(document.getElementById('l4MissedShifts').value) || 0);
+        
+        state.deductions.under26 = document.getElementById('under26Select').value === 'yes';
+        state.deductions.ppk = document.getElementById('ppkSelect').value === 'yes';
+        state.deductions.insurance = document.getElementById('insuranceSelect').value === 'yes';
+        
+        state.isShiftsEmpty = (document.getElementById('morningShifts').value === '' && document.getElementById('afternoonShifts').value === '' && document.getElementById('nightShifts').value === '');
+        state.cachedL4DailyRate = window.cachedL4DailyRate;
+    }
+
+    function syncStateToDOM() {
+        document.getElementById('monthSelect').value = state.month || document.getElementById('monthSelect').value;
+        document.getElementById('scheduleDays').value = state.scheduleDays;
+        document.getElementById('baseSalary').value = state.salary.base;
+        document.getElementById('bonusPctSelect').value = state.salary.bonusPct;
+        document.getElementById('morningShifts').value = state.shifts.morning || '';
+        document.getElementById('afternoonShifts').value = state.shifts.afternoon || '';
+        document.getElementById('nightShifts').value = state.shifts.night || '';
+        document.getElementById('weekendDays').value = state.extras.weekendDays || '';
+        document.getElementById('overtimeDays').value = state.extras.overtimeDays || '';
+        document.getElementById('vacationDays').value = state.absences.vacationDays || '';
+        document.getElementById('urlopBonus').value = state.absences.totalUrlopPay || '';
+        document.getElementById('bloodDonationDays').value = state.absences.bloodDonationDays || '';
+        document.getElementById('bloodBonus').value = state.absences.totalBloodPay || '';
+        document.getElementById('l4Days').value = state.absences.l4Days || '';
+        document.getElementById('l4MissedShifts').value = state.absences.l4MissedShifts || '';
+        document.getElementById('under26Select').value = state.deductions.under26 ? 'yes' : 'no';
+        document.getElementById('ppkSelect').value = state.deductions.ppk ? 'yes' : 'no';
+        document.getElementById('insuranceSelect').value = state.deductions.insurance ? 'yes' : 'no';
     }
 
     async function updateL4Cache(currentMonthVal) {
@@ -557,24 +651,29 @@
             try {
                 const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastStr));
                 if (snap.exists()) {
-                    const data = snap.data();
-                    const pBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
-                    let pPct = parseFloat(data.bonusPctSelect); if (isNaN(pPct)) pPct = 15;
-                    const mS = Math.max(0, parseInt(data.morningShifts) || 0); const aS = Math.max(0, parseInt(data.afternoonShifts) || 0);
-                    const nS = Math.max(0, parseInt(data.nightShifts) || 0); const over = Math.max(0, parseFloat(data.overtimeDays) || 0);
-                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0); const vac = Math.max(0, parseInt(data.vacationDays) || 0);
-                    const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0); const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
+                    const d = snap.data();
+                    const pastState = d.state || {};
+                    const pBase = Math.max(0, parseFloat(pastState.salary?.base) || 5750);
+                    let pPct = parseFloat(pastState.salary?.bonusPct); if (isNaN(pPct)) pPct = 15;
+                    const mS = Math.max(0, parseInt(pastState.shifts?.morning) || 0);
+                    const aS = Math.max(0, parseInt(pastState.shifts?.afternoon) || 0);
+                    const nS = Math.max(0, parseInt(pastState.shifts?.night) || 0);
+                    const over = Math.max(0, parseFloat(pastState.extras?.overtimeDays) || 0);
+                    const wknd = Math.max(0, parseInt(pastState.extras?.weekendDays) || 0);
+                    const vac = Math.max(0, parseInt(pastState.absences?.vacationDays) || 0);
+                    const blood = Math.max(0, parseInt(pastState.absences?.bloodDonationDays) || 0);
+                    const l4m = Math.max(0, parseInt(pastState.absences?.l4MissedShifts) || 0);
                     
-                    let regWorked = mS + aS + nS; const pSched = parseInt(data.scheduleDays) || 21;
-                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) regWorked = Math.max(0, pSched - vac - blood - l4m);
+                    let regWorked = mS + aS + nS; const pSched = parseInt(pastState.scheduleDays) || 21;
+                    if (mS === 0 && aS === 0 && nS === 0) regWorked = Math.max(0, pSched - vac - blood - l4m);
                     
                     const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * regWorked : 0;
-                    const nTariff = ((COMPANY_CONFIG.fiege.nightBaseSalary / (21 * 8)) * COMPANY_CONFIG.fiege.nightBonusPercent); 
+                    const nTariff = ((COMPANY_RULES_REGISTRY.fiege.nightBaseSalary / (21 * 8)) * COMPANY_RULES_REGISTRY.fiege.nightBonusPercent); 
                     const nightAm = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
                     const wkndAm = wknd * 100; const overAm = over * ((pBase / 21) * 2);
                     
                     let grossBase = pBase + bonusAm + nightAm + wkndAm + overAm;
-                    let netZus = grossBase * (1 - TAX_RULES[2026].zusRate); 
+                    let netZus = grossBase * (1 - TAX_RULES_REGISTRY[2026].zusRate); 
                     totalNetBase += netZus; monthsFound++;
                 }
             } catch(e) {}
@@ -590,32 +689,35 @@
             let pMonth = monthIdx + 1 - i; let pYear = currentYear;
             if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
             const pastMonthStr = pYear + "-" + String(pMonth).padStart(2, '0');
-            const stDays = stateWorkDays[pMonth - 1] || 21;
+            const calRule = CALENDAR_REGISTRY[pastMonthStr] || CALENDAR_REGISTRY["default"];
+            const stDays = calRule.workingDays;
             
             try {
                 const docSnap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastMonthStr));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
-                    let pastPct = parseFloat(data.bonusPctSelect); if (isNaN(pastPct)) pastPct = 15;
-                    const mS = Math.max(0, parseInt(data.morningShifts) || 0); 
-                    const aS = Math.max(0, parseInt(data.afternoonShifts) || 0);
-                    const nS = Math.max(0, parseInt(data.nightShifts) || 0); 
-                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
-                    const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
+                    const pastState = data.state || {};
+                    const pastBase = Math.max(0, parseFloat(pastState.salary?.base) || 5750);
+                    let pastPct = parseFloat(pastState.salary?.bonusPct); if (isNaN(pastPct)) pastPct = 15;
+                    const mS = Math.max(0, parseInt(pastState.shifts?.morning) || 0); 
+                    const aS = Math.max(0, parseInt(pastState.shifts?.afternoon) || 0);
+                    const nS = Math.max(0, parseInt(pastState.shifts?.night) || 0); 
+                    const wknd = Math.max(0, parseInt(pastState.extras?.weekendDays) || 0);
+                    const rawOver = Math.max(0, parseFloat(pastState.extras?.overtimeDays) || 0);
                     
-                    let regWorkedDays = mS + aS + nS; const pastSched = parseInt(data.scheduleDays) || stDays;
-                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0); const vac = Math.max(0, parseInt(data.vacationDays) || 0);
-                    const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
+                    let regWorkedDays = mS + aS + nS; const pastSched = parseInt(pastState.scheduleDays) || stDays;
+                    const l4m = Math.max(0, parseInt(pastState.absences?.l4MissedShifts) || 0); 
+                    const vac = Math.max(0, parseInt(pastState.absences?.vacationDays) || 0);
+                    const blood = Math.max(0, parseInt(pastState.absences?.bloodDonationDays) || 0);
                     
-                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
+                    if (mS === 0 && aS === 0 && nS === 0) {
                         regWorkedDays = Math.max(0, pastSched - vac - blood - l4m);
                     }
                     const over = Math.min(rawOver, regWorkedDays); 
                     let pActualDays = regWorkedDays + over;
                     
                     const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorkedDays : 0;
-                    const nTariff = ((COMPANY_CONFIG.fiege.nightBaseSalary / (stDays * 8)) * COMPANY_CONFIG.fiege.nightBonusPercent);
+                    const nTariff = ((COMPANY_RULES_REGISTRY.fiege.nightBaseSalary / (stDays * 8)) * COMPANY_RULES_REGISTRY.fiege.nightBonusPercent);
                     const pastNight = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
                     const pastWknd = wknd * 100; const pastOver = over * ((pastBase / stDays) * 1.5);
 
@@ -628,11 +730,12 @@
         return (totalExtras / totalWorkedHours);
     }
 
-    // ПОДІЯ: Зміна днів відпустки
+    // ПОДІЯ: Відпустка
     document.getElementById('vacationDays').addEventListener('input', async function() {
         const vacDays = Math.max(0, parseInt(this.value) || 0);
         const urlopInput = document.getElementById('urlopBonus');
         if (vacDays === 0 || this.value === '') { 
+            state.absences.totalUrlopPay = 0;
             urlopInput.value = ""; 
         } else if (isPremium) {
             const monthVal = document.getElementById('monthSelect').value;
@@ -641,57 +744,48 @@
                 const autoHourly = await getAutoHourlyUrlopRate(parseInt(year), parseInt(month) - 1);
                 if (autoHourly > 0) {
                     const totalVacationSum = autoHourly * (vacDays * 8);
+                    state.absences.totalUrlopPay = totalVacationSum;
                     urlopInput.value = totalVacationSum.toFixed(2);
                 }
             }
         }
-        calculateSalaryAdapter();
+        runCalculation();
     });
 
-    // ПОДІЯ: Зміна днів донації крові
+    document.getElementById('urlopBonus').addEventListener('input', function() {
+        state.absences.totalUrlopPay = Math.max(0, parseFloat(this.value) || 0);
+        runCalculation();
+    });
+
+    // ПОДІЯ: Донація крові
     document.getElementById('bloodDonationDays').addEventListener('input', function() {
         const bloodDays = Math.max(0, parseInt(this.value) || 0);
         const bloodInput = document.getElementById('bloodBonus');
         if (bloodDays === 0 || this.value === '') { 
+            state.absences.totalBloodPay = 0;
             bloodInput.value = ""; 
         } else {
-            const scheduleDays = parseInt(document.getElementById('scheduleDays').value) || 21;
-            const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 5750;
-            const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 15;
-            const mS = parseInt(document.getElementById('morningShifts').value) || 0;
-            const aS = parseInt(document.getElementById('afternoonShifts').value) || 0;
-            const nS = parseInt(document.getElementById('nightShifts').value) || 0;
-            const wknd = parseInt(document.getElementById('weekendDays').value) || 0;
-            const rawOver = parseFloat(document.getElementById('overtimeDays').value) || 0;
-
-            const mStr = document.getElementById('morningShifts').value;
-            const aStr = document.getElementById('afternoonShifts').value;
-            const nStr = document.getElementById('nightShifts').value;
-
-            let regWorkedDays = mS + aS + nS;
-            if (mStr === '' && aStr === '' && nStr === '') {
-                regWorkedDays = Math.max(0, scheduleDays - bloodDays - (parseInt(document.getElementById('vacationDays').value) || 0));
-            }
-            const overtimeDays = Math.min(rawOver, regWorkedDays);
-            const bonusAmount = scheduleDays > 0 ? ((baseSalary * (bonusPct / 100)) / scheduleDays * regWorkedDays) : 0;
-            const monthIdx = parseInt(document.getElementById('monthSelect').value.split('-')[1]) - 1;
-            const stateDays = stateWorkDays[monthIdx >= 0 ? monthIdx : 0];
-            const nightTariff = (COMPANY_CONFIG.fiege.nightBaseSalary / (stateDays * 8)) * COMPANY_CONFIG.fiege.nightBonusPercent;
-            const totalNightPay = (mS * (10/60) * nightTariff) + (nS * 8 * nightTariff) + (nS * 30);
-            const totalWeekendPay = wknd * COMPANY_CONFIG.fiege.weekendBonus;
-            const overtimeTariff = (baseSalary / stateDays) * COMPANY_CONFIG.fiege.overtimeMultiplier;
-            const totalOvertimePay = overtimeDays * overtimeTariff;
-
-            const currentVariables = bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay;
-            const autoDailyBloodRate = scheduleDays > 0 ? (currentVariables / scheduleDays) : (baseSalary / stateDays);
-            
-            const totalBloodSum = autoDailyBloodRate * bloodDays;
+            syncDOMToState();
+            // Тестовий прогін для визначення денної ставки
+            const rules = {
+                taxRules: TAX_RULES_REGISTRY[2026],
+                companyRules: COMPANY_RULES_REGISTRY.fiege,
+                calendarRules: CALENDAR_REGISTRY
+            };
+            const tempResult = calculateSalary(state, rules);
+            const totalBloodSum = tempResult.metadata.autoDailyBloodRate * bloodDays;
+            state.absences.totalBloodPay = totalBloodSum;
             bloodInput.value = totalBloodSum.toFixed(2);
         }
-        calculateSalaryAdapter();
+        runCalculation();
     });
 
-    // РЕАКТИВНІСТЬ ГРАФІКА: Автоматичний підрахунок днів графіку при вводі змін та відсутностей
+    document.getElementById('bloodBonus').addEventListener('input', function() {
+        state.absences.totalBloodPay = Math.max(0, parseFloat(this.value) || 0);
+        runCalculation();
+    });
+
+    // Реактивність графіка
     ['morningShifts', 'afternoonShifts', 'nightShifts', 'vacationDays', 'bloodDonationDays', 'l4MissedShifts'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
@@ -718,82 +812,63 @@
                         document.getElementById('scheduleDays').value = "";
                     }
                 }
-                calculateSalaryAdapter();
+                syncDOMToState();
+                runCalculation();
             });
         }
     });
 
-    window.calculateSalaryAdapter = function() {
-        const monthVal = document.getElementById('monthSelect').value;
-        if (!monthVal) { document.getElementById('grossResult').innerText = '0.00 zł'; document.getElementById('netResult').innerText = '0.00 zł'; return; }
+    function runCalculation() {
+        syncDOMToState();
         
-        const monthIdx = parseInt(monthVal.split('-')[1]) - 1;
-        const stateDays = stateWorkDays[monthIdx];
+        // Визначення ставки за роком/місяцем з динамічного реєстру
+        const [yStr, mStr] = state.month.split('-');
+        const yearRates = SALARY_RATES_REGISTRY[yStr] || { defaultRate: 5750 };
+        const monthNum = parseInt(mStr);
+        const autoBase = (yearRates.raiseMonth && monthNum >= yearRates.raiseMonth) ? yearRates.newRate : yearRates.defaultRate;
         
-        const autoBase = monthIdx >= 9 ? 5950 : 5750;
         let baseInput = document.getElementById('baseSalary');
-        if (!baseInput.value) baseInput.value = autoBase;
-        
-        const mStr = document.getElementById('morningShifts').value;
-        const aStr = document.getElementById('afternoonShifts').value;
-        const nStr = document.getElementById('nightShifts').value;
-        
-        const totalUrlopPay = Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0);
-        const totalBloodPay = Math.max(0, parseFloat(document.getElementById('bloodBonus').value) || 0);
+        if (!baseInput.value && autoBase) {
+            baseInput.value = autoBase;
+            state.salary.base = autoBase;
+        }
 
-        const inputData = {
-            baseSalary: Math.max(0, parseFloat(baseInput.value)) || 0,
-            bonusPct: parseFloat(document.getElementById('bonusPctSelect').value) || 0,
-            stateDays: stateDays,
-            scheduleDays: isPremium ? (parseInt(document.getElementById('scheduleDays').value) || stateDays) : stateDays,
-            
-            morningShifts: Math.max(0, parseInt(mStr) || 0),
-            afternoonShifts: Math.max(0, parseInt(aStr) || 0),
-            nightShifts: Math.max(0, parseInt(nStr) || 0),
-            weekendDays: Math.max(0, parseInt(document.getElementById('weekendDays').value) || 0),
-            overtimeDays: Math.max(0, parseFloat(document.getElementById('overtimeDays').value)) || 0,
-            
-            vacationDays: isPremium ? Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0) : 0,
-            totalUrlopPay: totalUrlopPay,
-            
-            bloodDonationDays: isPremium ? Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0) : 0,
-            totalBloodPay: totalBloodPay,
-            
-            l4Days: isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0,
-            l4MissedShifts: Math.max(0, parseInt(document.getElementById('l4MissedShifts').value) || 0),
-            cachedL4DailyRate: window.cachedL4DailyRate,
-            
-            under26: document.getElementById('under26Select').value === 'yes',
-            ppkActive: document.getElementById('ppkSelect').value === 'yes',
-            insuranceActive: document.getElementById('insuranceSelect').value === 'yes',
-            isShiftsEmpty: (mStr === '' && aStr === '' && nStr === '')
+        const rules = {
+            taxRules: TAX_RULES_REGISTRY[yStr] || TAX_RULES_REGISTRY[2026],
+            companyRules: COMPANY_RULES_REGISTRY.fiege,
+            calendarRules: CALENDAR_REGISTRY
         };
 
-        const result = calculateSalaryEngine(inputData, TAX_RULES[2026], COMPANY_CONFIG.fiege);
+        const result = calculateSalary(state, rules);
 
-        document.getElementById('urlopBonusGroup').classList.toggle('hidden', inputData.vacationDays === 0);
-        document.getElementById('bloodBonusGroup').classList.toggle('hidden', inputData.bloodDonationDays === 0);
-        document.getElementById('l4MissedGroup').classList.toggle('hidden', inputData.l4Days === 0);
+        document.getElementById('urlopBonusGroup').classList.toggle('hidden', state.absences.vacationDays === 0);
+        document.getElementById('bloodBonusGroup').classList.toggle('hidden', state.absences.bloodDonationDays === 0);
+        document.getElementById('l4MissedGroup').classList.toggle('hidden', state.absences.l4Days === 0);
 
-        document.getElementById('grossResult').innerText = result.totals.gross.toFixed(2) + ' zł';
-        document.getElementById('netResult').innerText = result.totals.net.toFixed(2) + ' zł';
+        document.getElementById('grossResult').innerText = result.breakdown.gross.total.toFixed(2) + ' zł';
+        document.getElementById('netResult').innerText = result.breakdown.net.toFixed(2) + ' zł';
     }
 
-    // UX: виділення тексту замість стирання значень при фокусі
+    // UX фокус
     document.querySelectorAll('input[type=number]').forEach(el => {
         el.addEventListener('focus', function() { this.select(); });
     });
 
     document.querySelectorAll('input, select').forEach(el => {
-        if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays', 'bloodDonationDays', 'l4Days', 'l4MissedShifts', 'monthSelect', 'scheduleDays', 'morningShifts', 'afternoonShifts', 'nightShifts'].includes(el.id)) {
-            el.addEventListener('input', window.calculateSalaryAdapter); 
-            el.addEventListener('change', window.calculateSalaryAdapter);
+        if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays', 'bloodDonationDays', 'urlopBonus', 'bloodBonus', 'l4Days', 'l4MissedShifts', 'monthSelect', 'scheduleDays', 'morningShifts', 'afternoonShifts', 'nightShifts'].includes(el.id)) {
+            el.addEventListener('input', () => { syncDOMToState(); runCalculation(); }); 
+            el.addEventListener('change', () => { syncDOMToState(); runCalculation(); });
         }
     });
     
-    document.getElementById('scheduleDays').addEventListener('input', window.calculateSalaryAdapter);
-    document.getElementById('monthSelect').addEventListener('change', async () => { await loadCloudData(); });
+    document.getElementById('scheduleDays').addEventListener('input', () => { syncDOMToState(); runCalculation(); });
+    document.getElementById('monthSelect').addEventListener('change', async () => { 
+        state.month = document.getElementById('monthSelect').value;
+        await loadCloudData(); 
+    });
+
     setTheme(localStorage.getItem('theme') || 'light');
+    initMonths();
     window.setLang('ua');
 </script>
 </body>
