@@ -170,7 +170,7 @@
         
         <div class="schedule-badge" id="scheduleBadgeContainer">
             <span id="lblScheduleDays">Графік</span>
-            <input type="number" id="scheduleDays" placeholder="0" onblur="calculateSalary()">
+            <input type="number" id="scheduleDays" placeholder="0" min="0" onblur="calculateSalary()">
         </div>
     </div>
     
@@ -181,7 +181,7 @@
 
     <div class="form-group">
         <label id="lblBase">Загальна ставка (zł)</label>
-        <input type="number" id="baseSalary" value="5750" onfocus="this.value=''" onblur="if(this.value==='') calculateSalary();">
+        <input type="number" id="baseSalary" value="5750" min="0" onfocus="this.value=''" onblur="if(this.value==='') calculateSalary();">
     </div>
 
     <div class="form-group">
@@ -197,43 +197,43 @@
 
     <div class="form-group">
         <label id="lblMorning">Ранкові зміни (шт)</label>
-        <input type="number" id="morningShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="morningShifts" placeholder="-" min="0" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
     <div class="form-group">
         <label id="lblAfternoon">Денні зміни (шт)</label>
-        <input type="number" id="afternoonShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="afternoonShifts" placeholder="-" min="0" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
     <div class="form-group">
         <label id="lblNight">Нічні зміни (шт)</label>
-        <input type="number" id="nightShifts" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="nightShifts" placeholder="-" min="0" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
 
     <div class="form-group">
         <label id="lblWeekend">Робочі сб / нд (днів)</label>
-        <input type="number" id="weekendDays" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="weekendDays" placeholder="-" min="0" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
 
     <div class="form-group">
         <label id="lblOvertime">Надгодини (днів)</label>
-        <input type="number" id="overtimeDays" placeholder="-" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="overtimeDays" placeholder="-" min="0" step="0.5" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
 
     <div class="form-group premium-field">
         <label id="lblVacationDays">Відпустка (днів)</label>
-        <input type="number" id="vacationDays" placeholder="0" onfocus="this.value=''">
+        <input type="number" id="vacationDays" placeholder="0" min="0" onfocus="this.value=''">
     </div>
     <div class="form-group sub-group premium-field hidden" id="urlopBonusGroup">
         <label id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ️</label>
-        <input type="number" id="urlopBonus" placeholder="0.00" onfocus="this.value=''" style="color:var(--primary);">
+        <input type="number" id="urlopBonus" placeholder="0.00" min="0" onfocus="this.value=''" style="color:var(--primary);">
     </div>
 
     <div class="form-group premium-field">
         <label id="lblL4Days">Лікарняний L4 (календарні)</label>
-        <input type="number" id="l4Days" placeholder="0" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="l4Days" placeholder="0" min="0" onfocus="this.value=''" onblur="calculateSalary()">
     </div>
     <div class="form-group sub-group premium-field hidden" id="l4MissedGroup">
         <label id="lblL4Missed">Пропущено змін (шт) ℹ️</label>
-        <input type="number" id="l4MissedShifts" placeholder="0" onfocus="this.value=''" style="color:var(--primary);">
+        <input type="number" id="l4MissedShifts" placeholder="0" min="0" onfocus="this.value=''" style="color:var(--primary);">
     </div>
 
     <div class="divider"></div>
@@ -278,6 +278,18 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // 1. ВИНЕСЕННЯ КОНСТАНТ 
+    const RATES = {
+        ZUS: 0.1371,
+        NFZ: 0.09,
+        PIT: 0.12,
+        KWOTA_WOLNA: 300.00,
+        NIGHT_BASE_SALARY: 4806.00, 
+        LAUNDRY_MAX: 16.00,
+        BENEFIT_ZUS_NFZ: 30.25,
+        BENEFIT_TAX: 54.00
+    };
 
     const firebaseConfig = {
         apiKey: "AIzaSyAfsfF3nLzqaAJTAfp73715efQhri-SOT8",
@@ -326,6 +338,10 @@
         const monthVal = document.getElementById('monthSelect').value;
         if (!monthVal) { alert("Оберіть місяць!"); return; }
 
+        const btn = document.getElementById('btn-sync-up');
+        const originalText = btn.innerText;
+        btn.innerText = "Збереження... ☁️"; 
+
         const data = { updatedAt: new Date().toISOString() };
         document.querySelectorAll('input, select').forEach(el => {
             if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id)) data[el.id] = el.value;
@@ -335,7 +351,11 @@
             await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
             alert("Дані збережені у хмару! ☁️");
             await updateL4Cache(monthVal);
-        } catch (error) { alert("Помилка збереження: " + error.message); }
+        } catch (error) { 
+            alert("Помилка збереження: " + error.message); 
+        } finally {
+            btn.innerText = originalText;
+        }
     });
 
     async function loadCloudData() {
@@ -466,17 +486,17 @@
                 const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastStr));
                 if (snap.exists()) {
                     const data = snap.data();
-                    const pBase = parseFloat(data.baseSalary) || 5750;
+                    const pBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
                     let pPct = parseFloat(data.bonusPctSelect);
                     if (isNaN(pPct)) pPct = 15;
                     
-                    const mS = parseInt(data.morningShifts) || 0;
-                    const aS = parseInt(data.afternoonShifts) || 0;
-                    const nS = parseInt(data.nightShifts) || 0;
-                    const over = parseFloat(data.overtimeDays) || 0;
-                    const wknd = parseInt(data.weekendDays) || 0;
-                    const vac = parseInt(data.vacationDays) || 0;
-                    const l4m = parseInt(data.l4MissedShifts) || 0;
+                    const mS = Math.max(0, parseInt(data.morningShifts) || 0);
+                    const aS = Math.max(0, parseInt(data.afternoonShifts) || 0);
+                    const nS = Math.max(0, parseInt(data.nightShifts) || 0);
+                    const over = Math.max(0, parseFloat(data.overtimeDays) || 0);
+                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
+                    const vac = Math.max(0, parseInt(data.vacationDays) || 0);
+                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
                     
                     let regWorked = mS + aS + nS;
                     const pSched = parseInt(data.scheduleDays) || 21;
@@ -486,13 +506,13 @@
                     }
                     
                     const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * regWorked : 0;
-                    const nTariff = ((4806 / (21 * 8)) * 0.20); 
+                    const nTariff = ((RATES.NIGHT_BASE_SALARY / (21 * 8)) * 0.20); 
                     const nightAm = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
                     const wkndAm = wknd * 100;
                     const overAm = over * ((pBase / 21) * 2);
                     
                     let grossBase = pBase + bonusAm + nightAm + wkndAm + overAm;
-                    let netZus = grossBase * 0.8629; 
+                    let netZus = grossBase * (1 - RATES.ZUS); 
                     
                     totalNetBase += netZus;
                     monthsFound++;
@@ -521,32 +541,32 @@
                 const docSnap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastMonthStr));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    const pastBase = parseFloat(data.baseSalary) || 5750;
+                    const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
                     let pastPct = parseFloat(data.bonusPctSelect);
                     if (isNaN(pastPct)) pastPct = 15;
                     
-                    const mShifts = parseInt(data.morningShifts) || 0;
-                    const aShifts = parseInt(data.afternoonShifts) || 0;
-                    const nShifts = parseInt(data.nightShifts) || 0;
-                    const wknd = parseInt(data.weekendDays) || 0;
-                    const over = parseFloat(data.overtimeDays) || 0;
+                    const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
+                    const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
+                    const nShifts = Math.max(0, parseInt(data.nightShifts) || 0);
+                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
+                    const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
                     
                     let regWorked = mShifts + aShifts + nShifts;
                     const pastSched = parseInt(data.scheduleDays) || stDays;
-                    const l4m = parseInt(data.l4MissedShifts) || 0;
-                    const vac = parseInt(data.vacationDays) || 0;
+                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
+                    const vac = Math.max(0, parseInt(data.vacationDays) || 0);
                     
                     if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
                         regWorked = Math.max(0, pastSched - vac - l4m);
                     }
                     
+                    const over = Math.min(rawOver, regWorked);
                     let pActual = regWorked + over;
                     
                     const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
-                    const nTariff = ((4806 / (stDays * 8)) * 0.20);
+                    const nTariff = ((RATES.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                     const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
                     const pastWknd = wknd * 100;
-                    
                     const pastOver = over * ((pastBase / stDays) * 1.5);
 
                     totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
@@ -560,7 +580,7 @@
     }
 
     document.getElementById('vacationDays').addEventListener('input', async function() {
-        const vacDays = parseInt(this.value) || 0;
+        const vacDays = Math.max(0, parseInt(this.value) || 0);
         const monthVal = document.getElementById('monthSelect').value;
         if (!monthVal) return;
         const [year, month] = monthVal.split('-');
@@ -579,7 +599,7 @@
 
     document.getElementById('l4Days').addEventListener('input', function() {
         if(isPremium) {
-            const l4 = parseInt(this.value) || 0;
+            const l4 = Math.max(0, parseInt(this.value) || 0);
             const bonusSelect = document.getElementById('bonusPctSelect');
             
             if (l4 === 0) {
@@ -593,7 +613,7 @@
         }
     });
 
-    ['morningShifts', 'afternoonShifts', 'nightShifts', 'overtimeDays', 'vacationDays', 'l4Days', 'l4MissedShifts'].forEach(id => {
+    ['morningShifts', 'afternoonShifts', 'nightShifts', 'vacationDays', 'l4Days', 'l4MissedShifts'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
             el.addEventListener('input', () => {
@@ -602,11 +622,11 @@
                     const aStr = document.getElementById('afternoonShifts').value;
                     const nStr = document.getElementById('nightShifts').value;
                     
-                    const m = parseInt(mStr) || 0;
-                    const a = parseInt(aStr) || 0;
-                    const n = parseInt(nStr) || 0;
-                    const vac = parseInt(document.getElementById('vacationDays').value) || 0;
-                    const l4Missed = parseInt(document.getElementById('l4MissedShifts').value) || 0; 
+                    const m = Math.max(0, parseInt(mStr) || 0);
+                    const a = Math.max(0, parseInt(aStr) || 0);
+                    const n = Math.max(0, parseInt(nStr) || 0);
+                    const vac = Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0);
+                    const l4Missed = Math.max(0, parseInt(document.getElementById('l4MissedShifts').value) || 0); 
                     
                     if (mStr !== '' || aStr !== '' || nStr !== '') {
                         let autoSched = m + a + n + vac + l4Missed;
@@ -632,10 +652,11 @@
         const autoBase = monthIdx >= 9 ? 5950 : 5750;
         let baseInput = document.getElementById('baseSalary');
         if (!baseInput.value) baseInput.value = autoBase;
-        const baseSalary = parseFloat(baseInput.value);
+        
+        const baseSalary = Math.max(0, parseFloat(baseInput.value));
 
-        const vacDays = isPremium ? (parseInt(document.getElementById('vacationDays').value) || 0) : 0;
-        const l4Days = isPremium ? (parseInt(document.getElementById('l4Days').value) || 0) : 0;
+        const vacDays = isPremium ? Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0) : 0;
+        const l4Days = isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0;
         
         document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays === 0);
         document.getElementById('l4MissedGroup').classList.toggle('hidden', l4Days === 0);
@@ -644,28 +665,30 @@
         const aStr = document.getElementById('afternoonShifts').value;
         const nStr = document.getElementById('nightShifts').value;
 
-        const morningShifts = parseInt(mStr) || 0;
-        const afternoonShifts = parseInt(aStr) || 0;
-        const nightShifts = parseInt(nStr) || 0;
-        const overtimeDays = parseFloat(document.getElementById('overtimeDays').value) || 0;
-        const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
-        const l4Missed = parseInt(document.getElementById('l4MissedShifts').value) || 0;
+        const morningShifts = Math.max(0, parseInt(mStr) || 0);
+        const afternoonShifts = Math.max(0, parseInt(aStr) || 0);
+        const nightShifts = Math.max(0, parseInt(nStr) || 0);
+        const weekendDays = Math.max(0, parseInt(document.getElementById('weekendDays').value) || 0);
+        const l4Missed = Math.max(0, parseInt(document.getElementById('l4MissedShifts').value) || 0);
 
         let regWorkedDays = morningShifts + afternoonShifts + nightShifts;
         let schedDays = isPremium ? (parseInt(document.getElementById('scheduleDays').value) || stateDays) : stateDays;
+
+        let rawOvertime = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
+        const overtimeDays = Math.min(rawOvertime, regWorkedDays); // Надгодин не більше ніж відпрацьованих днів
 
         if (mStr === '' && aStr === '' && nStr === '') {
             regWorkedDays = Math.max(0, schedDays - vacDays - l4Missed);
         }
 
-        const dailyUrlopBonus = (isPremium && vacDays > 0) ? (parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
+        const dailyUrlopBonus = (isPremium && vacDays > 0) ? Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
         const totalUrlopBonus = dailyUrlopBonus * vacDays;
 
         let adjustedBase = baseSalary; let l4Pay = 0;
         if (isPremium && l4Days > 0) {
             adjustedBase = baseSalary - ((baseSalary / 30) * l4Days);
             
-            let l4DailyRate = (baseSalary * 0.8629) / 30; 
+            let l4DailyRate = (baseSalary * (1 - RATES.ZUS)) / 30; 
             if (window.cachedL4DailyRate && window.cachedL4DailyRate > 0) {
                 l4DailyRate = window.cachedL4DailyRate; 
             }
@@ -675,7 +698,7 @@
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
         const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * regWorkedDays) : (baseSalary * (bonusPct / 100));
 
-        const nightTariff = Math.round(((4806.00 / (stateDays * 8)) * 0.20) * 100) / 100;
+        const nightTariff = Math.round(((RATES.NIGHT_BASE_SALARY / (stateDays * 8)) * 0.20) * 100) / 100;
         const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
 
         const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
@@ -684,19 +707,32 @@
         const isUnder26 = document.getElementById('under26Select').value === 'yes';
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
         
-        const zusBase = gross - l4Pay; const zus = zusBase * 0.1371; 
-        const healthBase = gross - zus; const nfz = Math.round((healthBase * 0.09) * 100) / 100;
+        const zusBase = gross - l4Pay; 
+        const zus = zusBase * RATES.ZUS; 
+        const healthBase = gross - zus; 
+        const nfz = Math.round((healthBase * RATES.NFZ) * 100) / 100;
         
+        // ЧИСТИЙ РОЗРАХУНОК ПОДАТКУ (PIT)
         let pit = 0;
         if (!isUnder26) {
-            const pitBase = Math.round(Math.max(0, healthBase - 300.00));
-            pit = Math.max(0, Math.round((pitBase * 0.12) - 300.00) + 54.00);
+            const pitBase = Math.round(Math.max(0, healthBase - RATES.KWOTA_WOLNA));
+            pit = Math.max(0, Math.round((pitBase * RATES.PIT) - RATES.KWOTA_WOLNA));
         }
 
-        // ДИНАМІЧНИЙ ДОДАТОК НА ПРАННЯ (Пропорційно відпрацьованим дням)
-        const laundryAllowance = schedDays > 0 ? (regWorkedDays / schedDays) * 16.00 : 0;
+        // ВИТРАТИ НА БЕНЕФІТИ
+        const totalBenefitCost = RATES.BENEFIT_ZUS_NFZ + RATES.BENEFIT_TAX; // 30.25 + 54.00 = 84.25
+
+        // ДОДАТОК НА ПРАННЯ
+        let laundryAllowance = 0;
+        if (schedDays > 0) {
+            laundryAllowance = Math.min(RATES.LAUNDRY_MAX, (regWorkedDays / schedDays) * RATES.LAUNDRY_MAX);
+        }
         
-        const net = gross - zus - nfz - pit - (ppkActive ? gross * 0.02 : 0) - (document.getElementById('insuranceSelect').value === 'yes' ? 36.70 : 0) - 30.25 + laundryAllowance;
+        const ppkCost = ppkActive ? gross * 0.02 : 0;
+        const extraInsurance = document.getElementById('insuranceSelect').value === 'yes' ? 36.70 : 0;
+
+        // ФІНАЛЬНЕ НЕТТО
+        const net = gross - zus - nfz - pit - ppkCost - extraInsurance - totalBenefitCost + laundryAllowance;
 
         updateUI(gross, net);
     }
