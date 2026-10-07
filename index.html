@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ЗП Калькулятор Fiege</title>
     <style>
-        /* ==========================================
-           БЛОК 1: ДИЗАЙН ТА СТИЛІ (CSS)
-           ========================================== */
         :root {
             --primary: #e3000f; 
             --bg-color: #f4f6f9;
@@ -288,13 +285,12 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Оновлені Константи з точним податковим ядром
     const RATES = {
         ZUS: 0.1371,
         NFZ: 0.09,
         PIT: 0.12,
-        KUP: 250.00,        
-        KWOTA_WOLNA: 300.00, 
+        KUP: 250.00,
+        KWOTA_WOLNA: 300.00,
         NIGHT_BASE_SALARY: 4806.00, 
         LAUNDRY_MAX: 16.00,
         BENEFIT_ZUS_NFZ: 30.25,
@@ -510,9 +506,7 @@
                         regWorked = Math.max(0, pSched - vac - blood - l4m);
                     }
                     
-                    const cappedRegWorked = Math.min(regWorked, pSched);
-                    const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * cappedRegWorked : 0;
-                    
+                    const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * regWorked : 0;
                     const nTariff = ((RATES.NIGHT_BASE_SALARY / (21 * 8)) * 0.20); 
                     const nightAm = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
                     const wkndAm = wknd * 100;
@@ -530,6 +524,7 @@
         else window.cachedL4DailyRate = null;
     }
 
+    // Виправлена функція розрахунку відпустки з урахуванням надгодин у знаменнику
     async function getAutoDailyUrlopBonus(currentYear, monthIdx) {
         if (!auth.currentUser) return 0;
         let totalExtras = 0; let totalWorkedDays = 0;
@@ -560,39 +555,29 @@
                     const vac = Math.max(0, parseInt(data.vacationDays) || 0);
                     const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
                     
-                    // БАГФІКС 1: Точний розрахунок дільника фактично відпрацьованих днів.
-                    // Щоб дільник не ставав штучно малим, якщо ви вручну ввели звичайні зміни, але не ввели їх як надгодини.
-                    let nominalWorked = Math.max(0, pastSched - vac - blood - l4m);
-                    const over = Math.min(rawOver, Math.max(0, Math.max(regWorked, nominalWorked)));
-                    
-                    let pActual = 0;
-                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
-                        pActual = nominalWorked + over; 
-                    } else {
-                        pActual = Math.max(regWorked, nominalWorked + over);
+                    if (regWorked === 0) {
+                        regWorked = Math.max(0, pastSched - vac - blood - l4m);
                     }
                     
-                    // БАГФІКС 2: Премія рахується тільки до 100% (не більше графіку)
-                    const cappedRegWorked = Math.min(nominalWorked, pastSched);
-                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * cappedRegWorked : 0;
+                    // БЕРЕМО ДО УВАГИ НАДГОДИНИ ТАКОЖ У ЗНАМЕННИКУ (ДНІ)
+                    let pActual = regWorked + rawOver;
                     
+                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
                     const nTariff = ((RATES.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                     const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
                     const pastWknd = wknd * 100;
-                    
-                    // Надгодини залишаються 100% база + 100% додаток (х2), як того вимагає ваш графік Fiege
-                    const pastOver = over * ((pastBase / stDays) * 2);
+                    const pastOver = rawOver * ((pastBase / stDays) * 2);
 
                     totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
                     totalWorkedDays += pActual;
                 }
             } catch (e) {}
         }
+        
         if (totalWorkedDays === 0) return 0;
         return (totalExtras / totalWorkedDays);
     }
 
-    // ПОДІЯ: Відпустка 
     document.getElementById('vacationDays').addEventListener('input', async function() {
         const vacDays = Math.max(0, parseInt(this.value) || 0);
         const urlopInput = document.getElementById('urlopBonus');
@@ -610,7 +595,6 @@
         calculateSalary();
     });
 
-    // ПОДІЯ: Донація крові
     document.getElementById('bloodDonationDays').addEventListener('input', function() {
         const bloodDays = Math.max(0, parseInt(this.value) || 0);
         if (bloodDays === 0 || this.value === '') {
@@ -632,8 +616,7 @@
         }
     });
 
-    // Універсальний обробник ГРАФІКА
-    ['morningShifts', 'afternoonShifts', 'nightShifts', 'vacationDays', 'bloodDonationDays', 'l4Days', 'l4MissedShifts'].forEach(id => {
+    ['morningShifts', 'afternoonShifts', 'nightShifts', 'vacationDays', 'bloodDonationDays', 'l4Days', 'l4MissedShifts', 'overtimeDays'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
             el.addEventListener('input', () => {
@@ -691,12 +674,12 @@
         let regWorkedDays = morningShifts + afternoonShifts + nightShifts;
         let schedDays = isPremium ? (parseInt(document.getElementById('scheduleDays').value) || stateDays) : stateDays;
 
+        let rawOvertime = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
+        const overtimeDays = Math.min(rawOvertime, regWorkedDays); 
+
         if (mStr === '' && aStr === '' && nStr === '') {
             regWorkedDays = Math.max(0, schedDays - vacDays - bloodDonationDays - l4Missed);
         }
-
-        let rawOvertime = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
-        const overtimeDays = Math.min(rawOvertime, Math.max(0, regWorkedDays)); 
 
         const dailyUrlopBonus = (isPremium && vacDays > 0) ? Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
         const totalUrlopBonus = dailyUrlopBonus * vacDays;
@@ -710,10 +693,7 @@
         }
 
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
-        
-        // Премія захищена від нарахування більше ніж 100%
-        const cappedWorkedDays = Math.min(regWorkedDays, schedDays);
-        const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * cappedWorkedDays) : (baseSalary * (bonusPct / 100));
+        const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * regWorkedDays) : (baseSalary * (bonusPct / 100));
 
         const nightTariff = ((RATES.NIGHT_BASE_SALARY / (stateDays * 8)) * 0.20);
         const totalNightPay = (morningShifts * (10/60) * nightTariff) + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
