@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ЗП Калькулятор Fiege V11 (Precision Payroll Core)</title>
+    <title>ЗП Калькулятор Fiege V12 (Precision Core)</title>
 
     <style>
         :root {
@@ -310,7 +310,7 @@
     <div class="header-row">
         <h2>
             Fiege Payroll
-            <span class="history-badge">V11 PRECISION CORE</span>
+            <span class="history-badge">V12 PRECISION CORE</span>
         </h2>
     </div>
 
@@ -472,12 +472,8 @@
 <script>
 
 /* =========================================================
-   FIEGE PAYROLL V11
+   FIEGE PAYROLL V12
    PRECISION PAYROLL CORE
-   ========================================================= */
-
-/* =========================================================
-   MONEY HELPERS
    ========================================================= */
 
 const toGrosz = val =>
@@ -486,866 +482,590 @@ const toGrosz = val =>
 const fromGrosz = val =>
     (Number(val) || 0) / 100;
 
-
-/* =========================================================
-   CALENDAR
-   ========================================================= */
-
 const CALENDAR_REGISTRY = {
-
-    "2026-01": {
-        workingDays: 20,
-        workingHours: 160
-    },
-
-    "2026-02": {
-        workingDays: 20,
-        workingHours: 160
-    },
-
-    "2026-03": {
-        workingDays: 22,
-        workingHours: 176
-    },
-
-    "2026-04": {
-        workingDays: 21,
-        workingHours: 168
-    },
-
-    "2026-05": {
-        workingDays: 20,
-        workingHours: 160
-    },
-
-    "2026-06": {
-        workingDays: 21,
-        workingHours: 168
-    },
-
-    "2026-07": {
-        workingDays: 23,
-        workingHours: 184
-    },
-
-    "2026-08": {
-        workingDays: 20,
-        workingHours: 160
-    },
-
-    "2026-09": {
-        workingDays: 22,
-        workingHours: 176
-    },
-
-    "2026-10": {
-        workingDays: 22,
-        workingHours: 176
-    },
-
-    "2026-11": {
-        workingDays: 20,
-        workingHours: 160
-    },
-
-    "2026-12": {
-        workingDays: 20,
-        workingHours: 160
-    }
+    "2026-01": { workingDays: 20, workingHours: 160 },
+    "2026-02": { workingDays: 20, workingHours: 160 },
+    "2026-03": { workingDays: 22, workingHours: 176 },
+    "2026-04": { workingDays: 21, workingHours: 168 },
+    "2026-05": { workingDays: 20, workingHours: 160 },
+    "2026-06": { workingDays: 21, workingHours: 168 },
+    "2026-07": { workingDays: 23, workingHours: 184 },
+    "2026-08": { workingDays: 20, workingHours: 160 },
+    "2026-09": { workingDays: 22, workingHours: 176 },
+    "2026-10": { workingDays: 22, workingHours: 176 },
+    "2026-11": { workingDays: 20, workingHours: 160 },
+    "2026-12": { workingDays: 20, workingHours: 160 }
 };
-
-
-/* =========================================================
-   SALARY REGISTRY
-   ========================================================= */
 
 const SALARY_RATES_REGISTRY = {
-
-    "2026-01": 5750,
-    "2026-02": 5750,
-    "2026-03": 5750,
-    "2026-04": 5750,
-    "2026-05": 5750,
-    "2026-06": 5750,
-    "2026-07": 5750,
-    "2026-08": 5750,
-    "2026-09": 5750,
-
-    "2026-10": 5950,
-    "2026-11": 5950,
-    "2026-12": 5950
+    "2026-01": 5750, "2026-02": 5750, "2026-03": 5750,
+    "2026-04": 5750, "2026-05": 5750, "2026-06": 5750,
+    "2026-07": 5750, "2026-08": 5750, "2026-09": 5750,
+    "2026-10": 5950, "2026-11": 5950, "2026-12": 5950
 };
 
-
-/* =========================================================
-   TAX RULES
-   ========================================================= */
-
 const TAX_RULES_REGISTRY = {
-
     2026: {
-
         taxThreshold: 120000,
-
         youthReliefLimit: 85528,
-
         rate1: 0.12,
-
         rate2: 0.32,
-
         kup: 250,
-
         zus: {
-
             pension: 0.0976,
-
             disability: 0.015,
-
             sickness: 0.0245,
-
             totalEmployee: 0.1371
         },
-
         nfz: 0.09
     }
 };
 
-
-/* =========================================================
-   COMPANY RULES
-   ========================================================= */
-
 const COMPANY_RULES = {
-
     fiege: {
-
         minWage: 4806,
-
         nightBonusPercent: 0.20,
-
         weekendBonus: 100.00,
-
         companyNightShiftBonus: 30.00,
-
         shiftMatrix: {
-
-            morning: {
-
-                duration: 8,
-
-                paidHours: 8,
-
-                nightMinutes: 10
-            },
-
-            afternoon: {
-
-                duration: 8,
-
-                paidHours: 8,
-
-                nightMinutes: 0
-            },
-
-            night: {
-
-                duration: 8,
-
-                paidHours: 8,
-
-                nightMinutes: 480
-            }
+            morning: { duration: 8, paidHours: 8, nightMinutes: 10 },
+            afternoon: { duration: 8, paidHours: 8, nightMinutes: 0 },
+            night: { duration: 8, paidHours: 8, nightMinutes: 480 }
         },
-
         ppk: {
-
             employeeRate: 0.02,
-
             employerRate: 0.015
         },
-
         extraInsurance: 36.70,
-
-        calculateBonus: function(
-            baseGrosz,
-            bonusPct,
-            scheduleDays,
-            workedDays
-        ) {
-
-            if (scheduleDays <= 0) {
-                return 0;
-            }
-
-            return Math.round(
-                (
-                    baseGrosz *
-                    (bonusPct / 100) /
-                    scheduleDays
-                ) *
-                workedDays
-            );
+        calculateBonus: function(baseGrosz, bonusPct, scheduleDays, workedDays) {
+            if (scheduleDays <= 0) return 0;
+            return Math.round((baseGrosz * (bonusPct / 100) / scheduleDays) * workedDays);
         }
     }
 };
 
-
-/* =========================================================
-   PAY COMPONENT RULES
-   ========================================================= */
-
 const PAY_COMPONENT_RULES = {
-
-    base: {
-        label: "Базова ставка",
-        isZusSocial: true,
-        isZusHealth: true,
-        isPit: true
-    },
-
-    bonus: {
-        label: "Премія (змінна)",
-        isZusSocial: true,
-        isZusHealth: true,
-        isPit: true
-    },
-
-    nightStatutory: {
-        label: "Нічні (закон)",
-        isZusSocial: true,
-        isZusHealth: true,
-        isPit: true
-    },
-
-    nightCompany: {
-        label: "Нічні (Fiege Bonus)",
-        isZusSocial: true,
-        isZusHealth: true,
-        isPit: true
-    },
-
-    weekend: {
-        label: "Вихідні доплата",
-        isZusSocial: true,
-        isZusHealth: true,
-        isPit: true
-    },
-
-    overtime100: {
-        label: "Надгодини 100%",
-        isZusSocial: true,
-        isZusHealth: true,
-        isPit: true
-    },
-
-    vacation: {
-        label: "Urlop Wypoczynkowy — змінна частина",
-        isZusSocial: true,
-        isZusHealth: true,
-        isPit: true
-    },
-
-    bloodDonation: {
-        label: "Urlop — кров — змінна частина",
-        isZusSocial: true,
-        isZusHealth: true,
-        isPit: true
-    },
-
-    sickness: {
-        label: "Wynagrodzenie chorobowe",
-        isZusSocial: false,
-        isZusHealth: true,
-        isPit: true
-    }
+    base: { label: "Базова ставка", isZusSocial: true, isZusHealth: true, isPit: true },
+    bonus: { label: "Премія (змінна)", isZusSocial: true, isZusHealth: true, isPit: true },
+    nightStatutory: { label: "Нічні (закон)", isZusSocial: true, isZusHealth: true, isPit: true },
+    nightCompany: { label: "Нічні (Fiege Bonus)", isZusSocial: true, isZusHealth: true, isPit: true },
+    weekend: { label: "Вихідні доплата", isZusSocial: true, isZusHealth: true, isPit: true },
+    overtime100: { label: "Надгодини 100%", isZusSocial: true, isZusHealth: true, isPit: true },
+    vacation: { label: "Urlop Wypoczynkowy — змінна частина", isZusSocial: true, isZusHealth: true, isPit: true },
+    bloodDonation: { label: "Urlop — кров — змінна частина", isZusSocial: true, isZusHealth: true, isPit: true },
+    sickness: { label: "Wynagrodzenie chorobowe", isZusSocial: false, isZusHealth: true, isPit: true }
 };
 
-
-/* =========================================================
-   INITIAL STATE
-   ========================================================= */
-
 const state = {
-
     month: "2026-10",
-
     mode: "schedule",
-
     scheduleDays: 22,
-
-    salary: {
-
-        base: 5950,
-
-        isAuto: true,
-
-        bonusPct: 15
-    },
-
-    shifts: {
-
-        morning: 0,
-
-        afternoon: 0,
-
-        night: 0
-    },
-
-    extras: {
-
-        weekendDays: 0,
-
-        overtime100: 0
-    },
-
-    absences: {
-
-        vacationHours: 0,
-
-        bloodDonationHours: 0,
-
-        l4Days: 0,
-
-        l4MissedDays: 0
-    },
-
-    tax: {
-
-        pit2Reduction: 300,
-
-        under26: false,
-
-        ppk: false,
-
-        insurance: true
-    },
-
+    salary: { base: 5950, isAuto: true, bonusPct: 15 },
+    shifts: { morning: 0, afternoon: 0, night: 0 },
+    extras: { weekendDays: 0, overtime100: 0 },
+    absences: { vacationHours: 0, bloodDonationHours: 0, l4Days: 0, l4MissedDays: 0 },
+    tax: { pit2Reduction: 300, under26: false, ppk: false, insurance: true },
     history: {
-
         months: [
-
-            {
-                month: "2026-09",
-                sicknessEligibleGrossGrosz: 685000,
-                vacationVariableGrossGrosz: 110000,
-                actualWorkedHours: 176,
-                pit0EligibleRevenueGrosz: 71000,
-                taxableIncomeGrosz: 60000
-            },
-
-            {
-                month: "2026-08",
-                sicknessEligibleGrossGrosz: 675000,
-                vacationVariableGrossGrosz: 100000,
-                actualWorkedHours: 160,
-                pit0EligibleRevenueGrosz: 71000,
-                taxableIncomeGrosz: 60000
-            },
-
-            {
-                month: "2026-07",
-                sicknessEligibleGrossGrosz: 710000,
-                vacationVariableGrossGrosz: 135000,
-                actualWorkedHours: 184,
-                pit0EligibleRevenueGrosz: 71000,
-                taxableIncomeGrosz: 60000
-            },
-
-            {
-                month: "2026-06",
-                sicknessEligibleGrossGrosz: 680000,
-                vacationVariableGrossGrosz: 105000,
-                actualWorkedHours: 168,
-                pit0EligibleRevenueGrosz: 71000,
-                taxableIncomeGrosz: 60000
-            },
-
-            {
-                month: "2026-05",
-                sicknessEligibleGrossGrosz: 660000,
-                vacationVariableGrossGrosz: 85000,
-                actualWorkedHours: 160,
-                pit0EligibleRevenueGrosz: 71000,
-                taxableIncomeGrosz: 60000
-            },
-
-            {
-                month: "2026-04",
-                sicknessEligibleGrossGrosz: 670000,
-                vacationVariableGrossGrosz: 95000,
-                actualWorkedHours: 168,
-                pit0EligibleRevenueGrosz: 71000,
-                taxableIncomeGrosz: 60000
-            },
-
-            {
-                month: "2026-03",
-                sicknessEligibleGrossGrosz: 690000,
-                vacationVariableGrossGrosz: 115000,
-                actualWorkedHours: 176,
-                pit0EligibleRevenueGrosz: 71000,
-                taxableIncomeGrosz: 60000
-            },
-
-            {
-                month: "2026-02",
-                sicknessEligibleGrossGrosz: 650000,
-                vacationVariableGrossGrosz: 75000,
-                actualWorkedHours: 160,
-                pit0EligibleRevenueGrosz: 71000,
-                taxableIncomeGrosz: 60000
-            },
-
-            {
-                month: "2026-01",
-                sicknessEligibleGrossGrosz: 660000,
-                vacationVariableGrossGrosz: 85000,
-                actualWorkedHours: 160,
-                pit0EligibleRevenueGrosz: 71000,
-                taxableIncomeGrosz: 60000
-            },
-
-            {
-                month: "2025-12",
-                sicknessEligibleGrossGrosz: 720000,
-                vacationVariableGrossGrosz: 145000,
-                actualWorkedHours: 168,
-                pit0EligibleRevenueGrosz: 0,
-                taxableIncomeGrosz: 0
-            },
-
-            {
-                month: "2025-11",
-                sicknessEligibleGrossGrosz: 650000,
-                vacationVariableGrossGrosz: 75000,
-                actualWorkedHours: 160,
-                pit0EligibleRevenueGrosz: 0,
-                taxableIncomeGrosz: 0
-            },
-
-            {
-                month: "2025-10",
-                sicknessEligibleGrossGrosz: 680000,
-                vacationVariableGrossGrosz: 105000,
-                actualWorkedHours: 176,
-                pit0EligibleRevenueGrosz: 0,
-                taxableIncomeGrosz: 0
-            }
+            { month: "2026-09", sicknessEligibleGrossGrosz: 685000, vacationVariableGrossGrosz: 110000, actualWorkedHours: 176, pit0EligibleRevenueGrosz: 71000, taxableIncomeGrosz: 60000 },
+            { month: "2026-08", sicknessEligibleGrossGrosz: 675000, vacationVariableGrossGrosz: 100000, actualWorkedHours: 160, pit0EligibleRevenueGrosz: 71000, taxableIncomeGrosz: 60000 },
+            { month: "2026-07", sicknessEligibleGrossGrosz: 710000, vacationVariableGrossGrosz: 135000, actualWorkedHours: 184, pit0EligibleRevenueGrosz: 71000, taxableIncomeGrosz: 60000 },
+            { month: "2026-06", sicknessEligibleGrossGrosz: 680000, vacationVariableGrossGrosz: 105000, actualWorkedHours: 168, pit0EligibleRevenueGrosz: 71000, taxableIncomeGrosz: 60000 },
+            { month: "2026-05", sicknessEligibleGrossGrosz: 660000, vacationVariableGrossGrosz: 85000,  actualWorkedHours: 160, pit0EligibleRevenueGrosz: 71000, taxableIncomeGrosz: 60000 },
+            { month: "2026-04", sicknessEligibleGrossGrosz: 670000, vacationVariableGrossGrosz: 95000,  actualWorkedHours: 168, pit0EligibleRevenueGrosz: 71000, taxableIncomeGrosz: 60000 },
+            { month: "2026-03", sicknessEligibleGrossGrosz: 690000, vacationVariableGrossGrosz: 115000, actualWorkedHours: 176, pit0EligibleRevenueGrosz: 71000, taxableIncomeGrosz: 60000 },
+            { month: "2026-02", sicknessEligibleGrossGrosz: 650000, vacationVariableGrossGrosz: 75000,  actualWorkedHours: 160, pit0EligibleRevenueGrosz: 71000, taxableIncomeGrosz: 60000 },
+            { month: "2026-01", sicknessEligibleGrossGrosz: 660000, vacationVariableGrossGrosz: 85000,  actualWorkedHours: 160, pit0EligibleRevenueGrosz: 71000, taxableIncomeGrosz: 60000 },
+            { month: "2025-12", sicknessEligibleGrossGrosz: 720000, vacationVariableGrossGrosz: 145000, actualWorkedHours: 168, pit0EligibleRevenueGrosz: 0, taxableIncomeGrosz: 0 },
+            { month: "2025-11", sicknessEligibleGrossGrosz: 650000, vacationVariableGrossGrosz: 75000,  actualWorkedHours: 160, pit0EligibleRevenueGrosz: 0, taxableIncomeGrosz: 0 },
+            { month: "2025-10", sicknessEligibleGrossGrosz: 680000, vacationVariableGrossGrosz: 105000, actualWorkedHours: 176, pit0EligibleRevenueGrosz: 0, taxableIncomeGrosz: 0 }
         ]
     }
 };
 
-
-/* =========================================================
-   RULES FOR MONTH
-   ========================================================= */
-
 function getRulesForMonth(monthStr) {
-
-    if (!monthStr) {
-        throw new Error("Місяць не обрано.");
-    }
-
+    if (!monthStr) throw new Error("Місяць не обрано.");
     const [year] = monthStr.split("-");
-
     const calendar = CALENDAR_REGISTRY[monthStr];
-
     const tax = TAX_RULES_REGISTRY[year];
-
     const salaryBase = SALARY_RATES_REGISTRY[monthStr];
 
-    if (!calendar) {
-        throw new Error(
-            `Відсутні дані календаря для ${monthStr}.`
-        );
-    }
+    if (!calendar) throw new Error(`Відсутні дані календаря для ${monthStr}.`);
+    if (!tax) throw new Error(`Відсутні податкові правила для ${year}.`);
+    if (salaryBase === undefined) throw new Error(`Відсутня базова ставка для ${monthStr}.`);
 
-    if (!tax) {
-        throw new Error(
-            `Відсутні податкові правила для ${year}.`
-        );
-    }
-
-    if (salaryBase === undefined) {
-        throw new Error(
-            `Відсутня базова ставка для ${monthStr}.`
-        );
-    }
-
-    return {
-
-        calendar,
-
-        tax,
-
-        company: COMPANY_RULES.fiege,
-
-        defaultBase: salaryBase
-    };
+    return { calendar, tax, company: COMPANY_RULES.fiege, defaultBase: salaryBase };
 }
 
-
-/* =========================================================
-   YTD ENGINE
-   ========================================================= */
-
-function getYTDTotals(
-    targetMonthStr,
-    historyObj
-) {
-
-    const [targetYear, targetMonth] =
-        targetMonthStr.split("-");
-
+function getYTDTotals(targetMonthStr, historyObj) {
+    const [targetYear, targetMonth] = targetMonthStr.split("-");
     let cumulativeRevenueGrosz = 0;
-
     let cumulativeIncomeGrosz = 0;
 
     historyObj.months.forEach(month => {
-
-        const [year, monthNumber] =
-            month.month.split("-");
-
-        if (
-            year === targetYear &&
-            parseInt(monthNumber, 10) <
-            parseInt(targetMonth, 10)
-        ) {
-
-            cumulativeRevenueGrosz +=
-                month.pit0EligibleRevenueGrosz || 0;
-
-            cumulativeIncomeGrosz +=
-                month.taxableIncomeGrosz || 0;
+        const [year, monthNumber] = month.month.split("-");
+        if (year === targetYear && parseInt(monthNumber, 10) < parseInt(targetMonth, 10)) {
+            cumulativeRevenueGrosz += month.pit0EligibleRevenueGrosz || 0;
+            cumulativeIncomeGrosz += month.taxableIncomeGrosz || 0;
         }
     });
 
-    return {
-
-        cumulativeRevenueGrosz,
-
-        cumulativeIncomeGrosz
-    };
+    return { cumulativeRevenueGrosz, cumulativeIncomeGrosz };
 }
 
-
-/* =========================================================
-   PREVIOUS MONTHS
-   ========================================================= */
-
-function getPreviousMonths(
-    targetMonthStr,
-    count,
-    historyObj
-) {
-
-    const sorted = [...historyObj.months]
-        .sort((a, b) =>
-            b.month.localeCompare(a.month)
-        );
-
-    return sorted
-        .filter(month =>
-            month.month < targetMonthStr
-        )
-        .slice(0, count);
+function getPreviousMonths(targetMonthStr, count, historyObj) {
+    const sorted = [...historyObj.months].sort((a, b) => b.month.localeCompare(a.month));
+    return sorted.filter(month => month.month < targetMonthStr).slice(0, count);
 }
 
-
-/* =========================================================
-   ATTENDANCE ENGINE
-   ========================================================= */
-
-function calculateAttendance(
-    currentState,
-    companyRules
-) {
-
+function calculateAttendance(currentState, companyRules) {
     let workedDays = 0;
-
     let workedHours = 0;
 
     if (currentState.mode === "shifts") {
+        const morning = companyRules.shiftMatrix.morning;
+        const afternoon = companyRules.shiftMatrix.afternoon;
+        const night = companyRules.shiftMatrix.night;
 
-        const morning =
-            companyRules.shiftMatrix.morning;
-
-        const afternoon =
-            companyRules.shiftMatrix.afternoon;
-
-        const night =
-            companyRules.shiftMatrix.night;
-
-        workedDays =
-            currentState.shifts.morning +
-            currentState.shifts.afternoon +
-            currentState.shifts.night;
-
-        workedHours =
-
-            currentState.shifts.morning *
-            morning.paidHours +
-
-            currentState.shifts.afternoon *
-            afternoon.paidHours +
-
-            currentState.shifts.night *
-            night.paidHours;
-
+        workedDays = currentState.shifts.morning + currentState.shifts.afternoon + currentState.shifts.night;
+        workedHours = currentState.shifts.morning * morning.paidHours +
+                      currentState.shifts.afternoon * afternoon.paidHours +
+                      currentState.shifts.night * night.paidHours;
     } else {
-
-        const vacationDays =
-            currentState.absences.vacationHours / 8;
-
-        const bloodDays =
-            currentState.absences.bloodDonationHours / 8;
-
-        workedDays = Math.max(
-
-            0,
-
-            currentState.scheduleDays -
-            vacationDays -
-            bloodDays -
-            currentState.absences.l4MissedDays
-
-        );
-
-        workedHours =
-            workedDays * 8;
+        const vacationDays = currentState.absences.vacationHours / 8;
+        const bloodDays = currentState.absences.bloodDonationHours / 8;
+        workedDays = Math.max(0, currentState.scheduleDays - vacationDays - bloodDays - currentState.absences.l4MissedDays);
+        workedHours = workedDays * 8;
     }
 
-    return {
-
-        workedDays,
-
-        workedHours
-    };
+    return { workedDays, workedHours };
 }
 
-
-/* =========================================================
-   SICKNESS PAY
-   ========================================================= */
-
-function calculateSicknessPay(
-    targetMonthStr,
-    historyObj,
-    rules,
-    l4Days
-) {
-
-    if (l4Days <= 0) {
-        return 0;
-    }
-
-    const previous12 =
-        getPreviousMonths(
-            targetMonthStr,
-            12,
-            historyObj
-        );
-
-    if (previous12.length === 0) {
-        return 0;
-    }
+function calculateSicknessPay(targetMonthStr, historyObj, rules, l4Days) {
+    if (l4Days <= 0) return 0;
+    const previous12 = getPreviousMonths(targetMonthStr, 12, historyObj);
+    if (previous12.length === 0) return 0;
 
     let totalBasisGrosz = 0;
-
     previous12.forEach(month => {
-
-        totalBasisGrosz +=
-            Number(
-                month.sicknessEligibleGrossGrosz
-            ) || 0;
+        totalBasisGrosz += Number(month.sicknessEligibleGrossGrosz) || 0;
     });
 
-    const averageGrossGrosz =
-        Math.round(
-            totalBasisGrosz /
-            previous12.length
-        );
+    const averageGrossGrosz = Math.round(totalBasisGrosz / previous12.length);
+    const zusDeductionGrosz = Math.round(averageGrossGrosz * rules.tax.zus.totalEmployee);
+    const dailyNetBasisGrosz = Math.round((averageGrossGrosz - zusDeductionGrosz) / 30);
 
-    const zusDeductionGrosz =
-        Math.round(
-            averageGrossGrosz *
-            rules.tax.zus.totalEmployee
-        );
-
-    const dailyNetBasisGrosz =
-        Math.round(
-            (
-                averageGrossGrosz -
-                zusDeductionGrosz
-            ) / 30
-        );
-
-    return Math.round(
-        dailyNetBasisGrosz *
-        0.80 *
-        l4Days
-    );
+    return Math.round(dailyNetBasisGrosz * 0.80 * l4Days);
 }
 
-
-/* =========================================================
-   VACATION VARIABLE COMPONENT
-   =========================================================
-
-   IMPORTANT:
-
-   The fixed monthly salary is already included in
-   earnings.base.
-
-   Therefore vacation does NOT add the fixed hourly
-   salary again.
-
-   Only the average variable component is added here.
-   ========================================================= */
-
-function calculateVacationPay(
-    targetMonthStr,
-    historyObj,
-    vacationHours
-) {
-
-    if (vacationHours <= 0) {
-        return 0;
-    }
-
-    const previous3 =
-        getPreviousMonths(
-            targetMonthStr,
-            3,
-            historyObj
-        );
-
-    if (previous3.length === 0) {
-        return 0;
-    }
+function calculateVacationPay(targetMonthStr, historyObj, vacationHours) {
+    if (vacationHours <= 0) return 0;
+    const previous3 = getPreviousMonths(targetMonthStr, 3, historyObj);
+    if (previous3.length === 0) return 0;
 
     let totalVariableGrosz = 0;
-
     let totalActualWorkedHours = 0;
 
     previous3.forEach(month => {
-
-        totalVariableGrosz +=
-            Number(
-                month.vacationVariableGrossGrosz
-            ) || 0;
-
-        totalActualWorkedHours +=
-            Number(
-                month.actualWorkedHours
-            ) || 0;
+        totalVariableGrosz += Number(month.vacationVariableGrossGrosz) || 0;
+        totalActualWorkedHours += Number(month.actualWorkedHours) || 0;
     });
 
-    if (totalActualWorkedHours <= 0) {
-        return 0;
-    }
+    if (totalActualWorkedHours <= 0) return 0;
 
-    /*
-       Average variable rate per actual worked hour.
-    */
-
-    const variableHourlyRateGrosz =
-        totalVariableGrosz /
-        totalActualWorkedHours;
-
-    /*
-       Vacation hours × variable hourly rate.
-    */
-
-    return Math.round(
-        vacationHours *
-        variableHourlyRateGrosz
-    );
+    const variableHourlyRateGrosz = totalVariableGrosz / totalActualWorkedHours;
+    return Math.round(vacationHours * variableHourlyRateGrosz);
 }
 
-
-/* =========================================================
-   BLOOD DONATION VARIABLE COMPONENT
-   =========================================================
-
-   Fixed salary remains in base.
-
-   Therefore only the variable component is added.
-   ========================================================= */
-
-function calculateBloodDonationPay(
-    currentVariableTotalGrosz,
-    currentWorkedHours,
-    bloodHours
-) {
-
-    if (bloodHours <= 0) {
-        return 0;
-    }
-
-    if (currentWorkedHours <= 0) {
-        return 0;
-    }
-
-    const hourlyVariableRateGrosz =
-        currentVariableTotalGrosz /
-        currentWorkedHours;
-
-    return Math.round(
-        bloodHours *
-        hourlyVariableRateGrosz
-    );
+function calculateBloodDonationPay(currentVariableTotalGrosz, currentWorkedHours, bloodHours) {
+    if (bloodHours <= 0 || currentWorkedHours <= 0) return 0;
+    const hourlyVariableRateGrosz = currentVariableTotalGrosz / currentWorkedHours;
+    return Math.round(bloodHours * hourlyVariableRateGrosz);
 }
-
-
-/* =========================================================
-   MAIN PAYROLL ENGINE
-   ========================================================= */
 
 function runPayrollEngine(currentState) {
-
     let rules;
-
     try {
-
-        rules =
-            getRulesForMonth(
-                currentState.month
-            );
-
+        rules = getRulesForMonth(currentState.month);
     } catch (error) {
-
-        showToast(
-            error.message,
-            "error"
-        );
-
+        showToast(error.message, "error");
         return null;
     }
 
-
-    /* =====================================================
-       VALIDATION
-       ===================================================== */
-
     const errors = [];
+    const vacationHours = Number(currentState.absences.vacationHours) || 0;
+    const bloodHours = Number(currentState.absences.bloodDonationHours) || 0;
+    const l4Days = Number(currentState.absences.l4Days) || 0;
+    const l4MissedDays = Number(currentState.absences.l4MissedDays) || 0;
 
+    if (vacationHours < 0 || vacationHours % 8 !== 0) {
+        errors.push("Відпустка повинна бути кратною 8 годинам.");
+    }
+    if (bloodHours < 0 || bloodHours % 8 !== 0) {
+        errors.push("Донація повинна бути кратною 8 годинам.");
+    }
+    if (currentState.extras.overtime100 < 0) {
+        errors.push("Кількість надгодин не може бути від'ємною.");
+    }
+    if (currentState.extras.overtime100 !== Math.floor(currentState.extras.overtime100)) {
+        errors.push("Надгодини вводяться тільки повними змінами.");
+    }
 
-    const vacationHours =
-        Number(
-            currentState.absences.vacationHours
-        ) || 0;
+    if (currentState.mode === "schedule") {
+        if (currentState.scheduleDays > 31 || currentState.scheduleDays < 0) {
+            errors.push("Графік некоректний.");
+        }
+        const totalScheduledAbsenceDays = (vacationHours / 8) + (bloodHours / 8) + l4MissedDays;
+        if (totalScheduledAbsenceDays > currentState.scheduleDays) {
+            errors.push("Відсутність перевищує кількість робочих днів графіка.");
+        }
+    }
 
-    const bloodHours =
-        Number(
-            currentState.absences.bloodDonationHours
-        ) || 0;
+    if (l4Days < 0) {
+        errors.push("Кількість днів L4 не може бути від'ємною.");
+    }
 
-    const l4Days =
-        Number(
-            currentState.absences.l4Days
-        ) || 0;
+    if (errors.length > 0) {
+        showToast(errors[0], "error");
+        return null;
+    }
 
-    const l4MissedDays =
-        Number(
-            currentState
+    const attendance = calculateAttendance(currentState, rules.company);
+    const overtimeDays = Number(currentState.extras.overtime100) || 0;
+    const overtimeHours = overtimeDays * 8;
+
+    const baseGrosz = toGrosz(currentState.salary.base);
+    const earnings = [];
+
+    const fixedDeductPerDayGrosz = Math.round(baseGrosz / 30);
+    const adjustedBaseGrosz = Math.max(0, baseGrosz - (fixedDeductPerDayGrosz * l4Days));
+
+    earnings.push({ type: "base", amount: adjustedBaseGrosz });
+
+    const l4PayGrosz = calculateSicknessPay(currentState.month, currentState.history, rules, l4Days);
+    if (l4PayGrosz > 0) {
+        earnings.push({ type: "sickness", amount: l4PayGrosz });
+    }
+
+    const bonusDividerDays = currentState.mode === "schedule" ? currentState.scheduleDays : attendance.workedDays;
+    const bonusGrosz = rules.company.calculateBonus(baseGrosz, currentState.salary.bonusPct, bonusDividerDays, attendance.workedDays);
+
+    if (bonusGrosz > 0) {
+        earnings.push({ type: "bonus", amount: bonusGrosz });
+    }
+
+    const hourlyNightTariff = Math.round((toGrosz(rules.company.minWage) / rules.calendar.workingHours) * rules.company.nightBonusPercent);
+    const statutoryNightGrosz = Math.round(currentState.shifts.morning * (rules.company.shiftMatrix.morning.nightMinutes / 60) * hourlyNightTariff) +
+                                Math.round(currentState.shifts.night * (rules.company.shiftMatrix.night.nightMinutes / 60) * hourlyNightTariff);
+    const companyNightGrosz = currentState.shifts.night * toGrosz(rules.company.companyNightShiftBonus);
+
+    if (statutoryNightGrosz > 0) earnings.push({ type: "nightStatutory", amount: statutoryNightGrosz });
+    if (companyNightGrosz > 0) earnings.push({ type: "nightCompany", amount: companyNightGrosz });
+
+    const weekendGrosz = currentState.extras.weekendDays * toGrosz(rules.company.weekendBonus);
+    if (weekendGrosz > 0) earnings.push({ type: "weekend", amount: weekendGrosz });
+
+    const hourlyBaseTariff = Math.round(baseGrosz / rules.calendar.workingHours);
+    
+    // FIX V12: Correct overtime calculation (overtimeHours * hourlyRate * 2.0)
+    const overtime100Grosz = Math.round(overtimeHours * hourlyBaseTariff * 2.0);
+
+    if (overtime100Grosz > 0) {
+        earnings.push({ type: "overtime100", amount: overtime100Grosz });
+    }
+
+    const currentMonthVariableGrosz = bonusGrosz + statutoryNightGrosz + companyNightGrosz + weekendGrosz + overtime100Grosz;
+    const totalCurrentWorkedHours = attendance.workedHours + overtimeHours;
+
+    const vacationPayGrosz = calculateVacationPay(currentState.month, currentState.history, vacationHours);
+    if (vacationPayGrosz > 0) {
+        earnings.push({ type: "vacation", amount: vacationPayGrosz });
+    }
+
+    const bloodPayGrosz = calculateBloodDonationPay(currentMonthVariableGrosz, totalCurrentWorkedHours, bloodHours);
+    if (bloodPayGrosz > 0) {
+        earnings.push({ type: "bloodDonation", amount: bloodPayGrosz });
+    }
+
+    let totalGrossGrosz = 0;
+    let zusSocialBaseGrosz = 0;
+    let zusHealthBaseRawGrosz = 0;
+    let pitBaseRawGrosz = 0;
+
+    earnings.forEach(item => {
+        const component = PAY_COMPONENT_RULES[item.type];
+        totalGrossGrosz += item.amount;
+        if (component.isZusSocial) zusSocialBaseGrosz += item.amount;
+        if (component.isZusHealth) zusHealthBaseRawGrosz += item.amount;
+        if (component.isPit) pitBaseRawGrosz += item.amount;
+    });
+
+    const zusEm = Math.round(zusSocialBaseGrosz * rules.tax.zus.pension);
+    const zusRe = Math.round(zusSocialBaseGrosz * rules.tax.zus.disability);
+    const zusCh = Math.round(zusSocialBaseGrosz * rules.tax.zus.sickness);
+    const zusTotalSocialGrosz = zusEm + zusRe + zusCh;
+
+    const healthBaseGrosz = Math.max(0, zusHealthBaseRawGrosz - zusTotalSocialGrosz);
+    const nfzGrosz = Math.round(healthBaseGrosz * rules.tax.nfz);
+
+    let ppkEmplGrosz = 0;
+    let ppkEmployerGrosz = 0;
+
+    if (currentState.tax.ppk) {
+        ppkEmplGrosz = Math.round(zusSocialBaseGrosz * rules.company.ppk.employeeRate);
+        ppkEmployerGrosz = Math.round(zusSocialBaseGrosz * rules.company.ppk.employerRate);
+        pitBaseRawGrosz += ppkEmployerGrosz;
+    }
+
+    const ytdMetrics = getYTDTotals(currentState.month, currentState.history);
+
+    let pitGrosz = 0;
+    let pitBaseRoundedGrosz = 0;
+    let taxableRevenueGrosz = 0;
+    const totalRevenueThisMonthGrosz = pitBaseRawGrosz;
+
+    if (currentState.tax.under26) {
+        const youthLimitGrosz = toGrosz(rules.tax.youthReliefLimit);
+        const availableLimitGrosz = Math.max(0, youthLimitGrosz - ytdMetrics.cumulativeRevenueGrosz);
+
+        if (totalRevenueThisMonthGrosz <= availableLimitGrosz) {
+            taxableRevenueGrosz = 0;
+        } else {
+            taxableRevenueGrosz = totalRevenueThisMonthGrosz - availableLimitGrosz;
+        }
+    } else {
+        taxableRevenueGrosz = totalRevenueThisMonthGrosz;
+    }
+
+    let kupGrosz = 0;
+
+    if (taxableRevenueGrosz > 0) {
+        kupGrosz = toGrosz(rules.tax.kup);
+        const dochodGrosz = Math.max(0, taxableRevenueGrosz - zusTotalSocialGrosz - kupGrosz);
+        pitBaseRoundedGrosz = Math.round(dochodGrosz / 100) * 100;
+
+        let calculatedTaxRaw = 0;
+        const thresholdGrosz = toGrosz(rules.tax.taxThreshold);
+        const cumulativePriorIncomeGrosz = ytdMetrics.cumulativeIncomeGrosz;
+        const cumulativeNewIncomeGrosz = cumulativePriorIncomeGrosz + pitBaseRoundedGrosz;
+
+        if (cumulativeNewIncomeGrosz <= thresholdGrosz) {
+            calculatedTaxRaw = Math.round(pitBaseRoundedGrosz * rules.tax.rate1);
+        } else if (cumulativePriorIncomeGrosz >= thresholdGrosz) {
+            calculatedTaxRaw = Math.round(pitBaseRoundedGrosz * rules.tax.rate2);
+        } else {
+            const amountInFirst = thresholdGrosz - cumulativePriorIncomeGrosz;
+            const amountInSecond = pitBaseRoundedGrosz - amountInFirst;
+            calculatedTaxRaw = Math.round((amountInFirst * rules.tax.rate1) + (amountInSecond * rules.tax.rate2));
+        }
+
+        pitGrosz = Math.max(0, calculatedTaxRaw - toGrosz(currentState.tax.pit2Reduction));
+    }
+
+    const insuranceGrosz = currentState.tax.insurance ? toGrosz(rules.company.extraInsurance) : 0;
+    const netGrosz = totalGrossGrosz - zusTotalSocialGrosz - nfzGrosz - pitGrosz - ppkEmplGrosz - insuranceGrosz;
+
+    return {
+        earnings,
+        gross: totalGrossGrosz,
+        net: Math.max(0, netGrosz),
+        kupGrosz,
+        metrics: {
+            cumRev: ytdMetrics.cumulativeRevenueGrosz,
+            cumInc: ytdMetrics.cumulativeIncomeGrosz,
+            ordinaryWorkedHours: attendance.workedHours,
+            overtimeHours,
+            totalWorkedHours: totalCurrentWorkedHours
+        },
+        deductions: {
+            zusEm,
+            zusRe,
+            zusCh,
+            zusTotal: zusTotalSocialGrosz,
+            nfz: nfzGrosz,
+            pitBase: pitBaseRoundedGrosz,
+            pit: pitGrosz,
+            ppkEmpl: ppkEmplGrosz,
+            taxablePpkEmployerBenefit: ppkEmployerGrosz,
+            insurance: insuranceGrosz
+        }
+    };
+}
+
+function showToast(message, type = "error") {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = `show ${type}`;
+    setTimeout(() => { toast.className = ""; }, 3000);
+}
+
+function getNum(id) {
+    const element = document.getElementById(id);
+    if (!element) return 0;
+    const value = element.value;
+    if (value === "") return 0;
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function readStateFromDOM() {
+    state.scheduleDays = getNum("scheduleDays") || 22;
+    if (!state.salary.isAuto) {
+        state.salary.base = getNum("baseSalary");
+    }
+    state.salary.bonusPct = getNum("bonusPctSelect");
+    state.shifts.morning = getNum("morningShifts");
+    state.shifts.afternoon = getNum("afternoonShifts");
+    state.shifts.night = getNum("nightShifts");
+    state.extras.weekendDays = getNum("weekendDays");
+    state.extras.overtime100 = getNum("overtime100");
+    state.absences.vacationHours = getNum("vacationHours");
+    state.absences.bloodDonationHours = getNum("bloodDonationHours");
+    state.absences.l4Days = getNum("l4Days");
+    state.absences.l4MissedDays = getNum("l4MissedDays");
+    state.tax.pit2Reduction = getNum("pit2Select");
+    state.tax.under26 = document.getElementById("under26Select").value === "yes";
+    state.tax.ppk = document.getElementById("ppkSelect").value === "yes";
+    state.tax.insurance = document.getElementById("insuranceSelect").value === "yes";
+}
+
+function renderBreakdown(res) {
+    let html = `<div class="breakdown-header">ДОХОДИ (BRUTTO)</div>`;
+    res.earnings.forEach(item => {
+        html += `
+            <div class="breakdown-row">
+                <span>${PAY_COMPONENT_RULES[item.type].label}:</span>
+                <span>${fromGrosz(item.amount).toFixed(2)} zł</span>
+            </div>
+        `;
+    });
+    html += `
+        <div class="breakdown-row total">
+            <span>Всього BRUTTO:</span>
+            <span>${fromGrosz(res.gross).toFixed(2)} zł</span>
+        </div>
+    `;
+
+    html += `
+        <div class="breakdown-header">ВІДРАХУВАННЯ (ZUS)</div>
+        <div class="breakdown-row sub"><span>Emerytalna (9.76%):</span><span>-${fromGrosz(res.deductions.zusEm).toFixed(2)} zł</span></div>
+        <div class="breakdown-row sub"><span>Rentowa (1.50%):</span><span>-${fromGrosz(res.deductions.zusRe).toFixed(2)} zł</span></div>
+        <div class="breakdown-row sub"><span>Chorobowa (2.45%):</span><span>-${fromGrosz(res.deductions.zusCh).toFixed(2)} zł</span></div>
+        <div class="breakdown-row total"><span>Всього ZUS працівника:</span><span>-${fromGrosz(res.deductions.zusTotal).toFixed(2)} zł</span></div>
+    `;
+
+    html += `
+        <div class="breakdown-header">ПОДАТКИ ТА PPK</div>
+        <div class="breakdown-row"><span>NFZ (Zdrowotna 9%):</span><span>-${fromGrosz(res.deductions.nfz).toFixed(2)} zł</span></div>
+        <div class="breakdown-row sub"><span>KUP:</span><span>${fromGrosz(res.kupGrosz).toFixed(2)} zł</span></div>
+        <div class="breakdown-row employer"><span>PPK Pracodawca (1.5%):</span><span>+${fromGrosz(res.deductions.taxablePpkEmployerBenefit).toFixed(2)} zł</span></div>
+        <div class="breakdown-row sub"><span>Przychód YTD:</span><span>${fromGrosz(res.metrics.cumRev).toFixed(2)} zł</span></div>
+        <div class="breakdown-row sub"><span>Dochód YTD:</span><span>${fromGrosz(res.metrics.cumInc).toFixed(2)} zł</span></div>
+        <div class="breakdown-row sub"><span>База PIT:</span><span>${fromGrosz(res.deductions.pitBase).toFixed(2)} zł</span></div>
+        <div class="breakdown-row"><span>PIT:</span><span>-${fromGrosz(res.deductions.pit).toFixed(2)} zł</span></div>
+        <div class="breakdown-row"><span>PPK Pracownik (2%):</span><span>-${fromGrosz(res.deductions.ppkEmpl).toFixed(2)} zł</span></div>
+    `;
+
+    html += `
+        <div class="breakdown-header">ВІДПРАЦЬОВАНІ ГОДИНИ</div>
+        <div class="breakdown-row sub"><span>Звичайні:</span><span>${res.metrics.ordinaryWorkedHours} год</span></div>
+        <div class="breakdown-row sub"><span>Надгодини:</span><span>${res.metrics.overtimeHours} год</span></div>
+        <div class="breakdown-row total"><span>Фактично:</span><span>${res.metrics.totalWorkedHours} год</span></div>
+    `;
+
+    html += `
+        <div class="breakdown-header">ІНШЕ</div>
+        <div class="breakdown-row"><span>Страхування:</span><span>-${fromGrosz(res.deductions.insurance).toFixed(2)} zł</span></div>
+        <div class="breakdown-row total" style="color: var(--success); font-size: 15px; margin-top: 15px;">
+            <span>ДО ВИПЛАТИ (NETTO):</span>
+            <span>${fromGrosz(res.net).toFixed(2)} zł</span>
+        </div>
+    `;
+
+    document.getElementById("breakdownPanel").innerHTML = html;
+}
+
+function updateUI(readDOM = true) {
+    if (readDOM) readStateFromDOM();
+    try {
+        const rules = getRulesForMonth(state.month);
+        document.getElementById("calendarInfoText").textContent = `Календар: ${rules.calendar.workingDays} днів (${rules.calendar.workingHours} год)`;
+    } catch (error) {}
+
+    const result = runPayrollEngine(state);
+    if (!result) return;
+
+    document.getElementById("grossResult").textContent = fromGrosz(result.gross).toFixed(2) + " zł";
+    document.getElementById("netResult").textContent = fromGrosz(result.net).toFixed(2) + " zł";
+    renderBreakdown(result);
+}
+
+function handleMonthChange() {
+    state.month = document.getElementById("monthSelect").value;
+    try {
+        const rules = getRulesForMonth(state.month);
+        state.scheduleDays = rules.calendar.workingDays;
+        document.getElementById("scheduleDays").value = rules.calendar.workingDays;
+
+        if (state.salary.isAuto) {
+            state.salary.base = rules.defaultBase;
+            document.getElementById("baseSalary").value = rules.defaultBase;
+        }
+    } catch (error) {
+        showToast(error.message, "error");
+    }
+    updateUI(true);
+}
+
+const monthKeys = Object.keys(CALENDAR_REGISTRY).sort().reverse();
+document.getElementById("monthSelect").innerHTML = monthKeys.map(month => `<option value="${month}">${month}</option>`).join("");
+
+document.getElementById("btnModeSchedule").onclick = function() {
+    state.mode = "schedule";
+    this.classList.add("active");
+    document.getElementById("btnModeShifts").classList.remove("active");
+    document.getElementById("groupSchedule").classList.remove("hidden");
+    document.getElementById("shiftsContainer").classList.add("hidden");
+    updateUI();
+};
+
+document.getElementById("btnModeShifts").onclick = function() {
+    state.mode = "shifts";
+    this.classList.add("active");
+    document.getElementById("btnModeSchedule").classList.remove("active");
+    document.getElementById("groupSchedule").classList.add("hidden");
+    document.getElementById("shiftsContainer").classList.remove("hidden");
+    updateUI();
+};
+
+document.getElementById("resultsPanel").onclick = function() {
+    document.getElementById("breakdownPanel").classList.toggle("open");
+};
+
+document.getElementById("baseSalary").oninput = function() {
+    state.salary.isAuto = false;
+    state.salary.base = getNum("baseSalary");
+    updateUI();
+};
+
+document.getElementById("monthSelect").onchange = handleMonthChange;
+
+document.querySelectorAll("input:not(#baseSalary), select:not(#monthSelect)").forEach(element => {
+    element.addEventListener("input", function() {
+        updateUI();
+    });
+});
+
+document.querySelectorAll("input[type=number]").forEach(element => {
+    element.addEventListener("focus", function() {
+        this.select();
+    });
+});
+
+state.month = document.getElementById("monthSelect").value;
+handleMonthChange();
+
+</script>
+
+</body>
+</html>
