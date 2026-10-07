@@ -330,6 +330,8 @@
                 </div>
             </div>
 
+            <button id="btn-sync-page2" class="action-btn btn-sync hidden" style="margin-top: 15px; padding: 14px; font-size: 15px;">Зберегти місяць у хмару ☁️</button>
+
             <div class="swipe-hint" style="margin-top: 30px;">Свайп вправо для повернення →</div>
         </div>
 
@@ -420,6 +422,7 @@
         document.getElementById('app-body').classList.toggle('is-logged-in', isPremium);
         document.getElementById('auth-container').classList.toggle('hidden', isPremium);
         document.getElementById('sync-container').classList.toggle('hidden', !isPremium);
+        document.getElementById('btn-sync-page2').classList.toggle('hidden', !isPremium);
         
         if(user) {
             document.getElementById('user-email-display').innerText = "👤 " + user.email;
@@ -440,14 +443,14 @@
     });
     document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-    document.getElementById('btn-sync-up').addEventListener('click', async () => {
+    // Спільна функція для збереження даних у хмару (використовується двома кнопками)
+    async function saveMonthToCloud(btnElement) {
         if (!auth.currentUser) return;
         const monthVal = document.getElementById('monthSelect').value;
         if (!monthVal) { alert("Оберіть місяць!"); return; }
 
-        const btn = document.getElementById('btn-sync-up');
-        const originalText = btn.innerText;
-        btn.innerText = "Збереження... ☁️"; 
+        const originalText = btnElement.innerText;
+        btnElement.innerText = "Збереження... ☁️"; 
 
         const data = { updatedAt: new Date().toISOString() };
         document.querySelectorAll('input, select').forEach(el => {
@@ -461,9 +464,13 @@
         } catch (error) { 
             alert("Помилка збереження: " + error.message); 
         } finally {
-            btn.innerText = originalText;
+            btnElement.innerText = originalText;
         }
-    });
+    }
+
+    // Прив'язка кнопок збереження (меню та сторінка аналітики)
+    document.getElementById('btn-sync-up').addEventListener('click', function() { saveMonthToCloud(this); });
+    document.getElementById('btn-sync-page2').addEventListener('click', function() { saveMonthToCloud(this); });
 
     async function loadCloudData() {
         if (!auth.currentUser) return;
@@ -746,7 +753,6 @@
         }
     });
 
-    // АВТОМАТИЧНЕ ОНОВЛЕННЯ БЕЙДЖА ГРАФІКА ПРИ ЗМІНІ ЗМІН ТА ВІДПУСТОК
     ['morningShifts', 'afternoonShifts', 'nightShifts', 'vacationDays', 'bloodDonationDays', 'l4MissedShifts'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
