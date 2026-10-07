@@ -305,7 +305,7 @@
             <div class="swipe-hint">← Свайп вліво для деталей місяця</div>
         </div>
 
-        <!-- СТОРІНКА 2: ДЕТАЛІ ТА АНАЛІТИКА МІСЯЦЯ -->
+        <!-- СТОРІНКА 1: ДЕТАЛІ ТА АНАЛІТИКА МІСЯЦЯ -->
         <div class="calculator-page">
             <div class="header-row">
                 <button class="menu-btn" onclick="switchPage(1)">➔</button>
@@ -695,7 +695,6 @@
                         const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                         const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
                         const pastWknd = wknd * 100;
-                        // Виправлено: враховуємо і надбавку, і базову виплату за надгодини (множник 2 замість 1.5 або чистої надбавки)
                         const pastOver = over * ((pastBase / stDays) * 2);
 
                         totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
@@ -839,8 +838,6 @@
         const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         
         const totalEngagedDays = regWorkedDays + vacDays + bloodDonationDays + overtimeDays;
-
-        // Виправлено: для бази відпустки тепер сумуємо повну вартість надгодин (як надбавку, так і базову доплату)
         const overtimeTotalPay = overtimeDays * overtimeTariff;
 
         window.currentMonthCalc = {
