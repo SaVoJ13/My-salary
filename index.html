@@ -470,6 +470,9 @@
         const monthVal = document.getElementById('monthSelect').value;
         if (!monthVal) return;
 
+        const monthIdx = parseInt(monthVal.split('-')[1]) - 1;
+        const defaultSched = stateWorkDays[monthIdx];
+
         try {
             const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal));
             if (snap.exists()) {
@@ -477,6 +480,9 @@
                 document.querySelectorAll('input, select').forEach(el => {
                     if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id) && d[el.id] !== undefined) el.value = d[el.id];
                 });
+                if (!d.scheduleDays) {
+                    document.getElementById('scheduleDays').value = defaultSched;
+                }
             } else {
                 clearInputs();
             }
@@ -493,10 +499,16 @@
     });
 
     function clearInputs() {
-        document.querySelectorAll('input[type=number]').forEach(el => el.value = '');
+        document.querySelectorAll('input[type=number]').forEach(el => {
+            if(el.id !== 'scheduleDays') el.value = '';
+        });
         document.getElementById('bonusPctSelect').value = "15";
         const monthVal = document.getElementById('monthSelect').value;
-        if(monthVal) setDefaultBaseSalary(monthVal);
+        if(monthVal) {
+            setDefaultBaseSalary(monthVal);
+            const mIdx = parseInt(monthVal.split('-')[1]) - 1;
+            document.getElementById('scheduleDays').value = stateWorkDays[mIdx];
+        }
     }
 
     function setDefaultBaseSalary(monthVal) {
@@ -679,7 +691,7 @@
                     
                     const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
-                    const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
+                    const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nS * 30);
                     const pastWknd = wknd * 100;
                     const pastOver = over * ((pastBase / stDays) * 1.5);
 
@@ -744,7 +756,6 @@
         setDefaultBaseSalary(monthVal);
         let baseSalary = Math.max(0, parseFloat(document.getElementById('baseSalary').value) || 5750);
 
-        // Якщо бейдж графіка порожній — виставляємо місячну норму за замовчуванням (не перезаписується автоматично від надгодин)
         const schedInput = document.getElementById('scheduleDays');
         if (!schedInput.value) {
             schedInput.value = stateDays;
@@ -764,7 +775,6 @@
         const weekendDays = Math.max(0, parseInt(document.getElementById('weekendDays').value) || 0);
         const overtimeDays = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
 
-        // ВПРАВЛЕНИЙ АЛГОРИТМ: Відпрацьовані регулярні зміни
         let regWorkedDays = morningShifts + afternoonShifts + nightShifts;
         let schedDays = parseInt(schedInput.value) || stateDays;
 
@@ -830,7 +840,6 @@
 
         updateUI(gross, net);
 
-        // ОНОВЛЕННЯ ДАНИХ НА ДРУГІЙ СТОРІНЦІ (ДЕТАЛІ У ФОРМАТІ ГОДИН/ХВИЛИН ТА ЗАДІЯНИХ ДНІВ)
         const totalNightMinutes = Math.round(((morningShifts * (10/60)) + (nightShifts * 8)) * 60);
         const nHours = Math.floor(totalNightMinutes / 60);
         const nMins = totalNightMinutes % 60;
@@ -871,7 +880,15 @@
     document.getElementById('insuranceSelect').addEventListener('change', calculateSalary);
     
     document.getElementById('monthSelect').addEventListener('change', async () => {
-        await loadCloudData();
+        const monthVal = document.getElementById('monthSelect').value;
+        const mIdx = parseInt(monthVal.split('-')[1]) - 1;
+        document.getElementById('scheduleDays').value = stateWorkDays[mIdx];
+        if (auth.currentUser) {
+            await loadCloudData();
+        } else {
+            clearInputs();
+        }
+        calculateSalary();
     });
 
     setTheme(localStorage.getItem('theme') || 'light');
