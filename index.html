@@ -691,7 +691,7 @@
                     
                     const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
-                    const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nS * 30);
+                    const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
                     const pastWknd = wknd * 100;
                     const pastOver = over * ((pastBase / stDays) * 1.5);
 
@@ -743,6 +743,41 @@
             else bonusSelect.value = "10";
             
             calculateSalary();
+        }
+    });
+
+    // АВТОМАТИЧНЕ ОНОВЛЕННЯ БЕЙДЖА ГРАФІКА ПРИ ЗМІНІ ЗМІН ТА ВІДПУСТОК
+    ['morningShifts', 'afternoonShifts', 'nightShifts', 'vacationDays', 'bloodDonationDays', 'l4MissedShifts'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) {
+            el.addEventListener('input', () => {
+                const m = Math.max(0, parseInt(document.getElementById('morningShifts').value) || 0);
+                const a = Math.max(0, parseInt(document.getElementById('afternoonShifts').value) || 0);
+                const n = Math.max(0, parseInt(document.getElementById('nightShifts').value) || 0);
+                const vac = Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0);
+                const blood = Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0);
+                const l4Missed = Math.max(0, parseInt(document.getElementById('l4MissedShifts').value) || 0); 
+                
+                const schedInput = document.getElementById('scheduleDays');
+                const monthVal = document.getElementById('monthSelect').value;
+                const mIdx = monthVal ? parseInt(monthVal.split('-')[1]) - 1 : 0;
+                const stateDays = stateWorkDays[mIdx] || 21;
+
+                const mStr = document.getElementById('morningShifts').value;
+                const aStr = document.getElementById('afternoonShifts').value;
+                const nStr = document.getElementById('nightShifts').value;
+                const vacStr = document.getElementById('vacationDays').value;
+                const bloodStr = document.getElementById('bloodDonationDays').value;
+                const l4mStr = document.getElementById('l4MissedShifts').value;
+
+                if (mStr !== '' || aStr !== '' || nStr !== '' || vacStr !== '' || bloodStr !== '' || l4mStr !== '') {
+                    let autoSched = m + a + n + vac + blood + l4Missed;
+                    schedInput.value = autoSched > 0 ? autoSched : stateDays;
+                } else {
+                    schedInput.value = stateDays;
+                }
+                calculateSalary();
+            });
         }
     });
 
@@ -869,7 +904,7 @@
     }
 
     document.querySelectorAll('input, select').forEach(el => {
-        if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays', 'bloodDonationDays', 'l4Days', 'l4MissedShifts', 'monthSelect'].includes(el.id)) {
+        if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays', 'bloodDonationDays', 'l4Days', 'l4MissedShifts', 'monthSelect', 'morningShifts', 'afternoonShifts', 'nightShifts'].includes(el.id)) {
             el.addEventListener('input', calculateSalary); el.addEventListener('change', calculateSalary);
         }
     });
