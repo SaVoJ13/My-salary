@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ЗП Калькулятор Fiege</title>
+    <title>ЗП Калькулятор Fiege (Enterprise)</title>
     <style>
         :root {
             --primary: #e3000f; 
@@ -167,7 +167,7 @@
         
         <div class="schedule-badge" id="scheduleBadgeContainer">
             <span id="lblScheduleDays">Графік</span>
-            <input type="number" id="scheduleDays" placeholder="0" min="0" onblur="calculateSalary()">
+            <input type="number" id="scheduleDays" placeholder="0" min="0">
         </div>
     </div>
     
@@ -178,7 +178,7 @@
 
     <div class="form-group">
         <label id="lblBase">Загальна ставка (zł)</label>
-        <input type="number" id="baseSalary" value="5750" min="0" onfocus="this.value=''" onblur="if(this.value==='') calculateSalary();">
+        <input type="number" id="baseSalary" value="5750" min="0">
     </div>
 
     <div class="form-group">
@@ -194,52 +194,52 @@
 
     <div class="form-group">
         <label id="lblMorning">Ранкові зміни (шт)</label>
-        <input type="number" id="morningShifts" placeholder="-" min="0" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="morningShifts" placeholder="-" min="0">
     </div>
     <div class="form-group">
         <label id="lblAfternoon">Денні зміни (шт)</label>
-        <input type="number" id="afternoonShifts" placeholder="-" min="0" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="afternoonShifts" placeholder="-" min="0">
     </div>
     <div class="form-group">
         <label id="lblNight">Нічні зміни (шт)</label>
-        <input type="number" id="nightShifts" placeholder="-" min="0" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="nightShifts" placeholder="-" min="0">
     </div>
 
     <div class="form-group">
         <label id="lblWeekend">Робочі сб / нд (днів)</label>
-        <input type="number" id="weekendDays" placeholder="-" min="0" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="weekendDays" placeholder="-" min="0">
     </div>
 
     <div class="form-group">
         <label id="lblOvertime">Надгодини (днів)</label>
-        <input type="number" id="overtimeDays" placeholder="-" min="0" step="0.5" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="overtimeDays" placeholder="-" min="0" step="0.5">
     </div>
 
     <div class="form-group premium-field">
         <label id="lblVacationDays">Відпустка (днів)</label>
-        <input type="number" id="vacationDays" placeholder="0" min="0" onfocus="this.value=''">
+        <input type="number" id="vacationDays" placeholder="0" min="0">
     </div>
     <div class="form-group sub-group premium-field hidden" id="urlopBonusGroup">
         <label id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ️</label>
-        <input type="number" id="urlopBonus" placeholder="0.00" min="0" onfocus="this.value=''" style="color:var(--primary);">
+        <input type="number" id="urlopBonus" placeholder="0.00" min="0" style="color:var(--primary);">
     </div>
 
     <div class="form-group premium-field">
         <label id="lblBloodDonation">Донація крові (днів)</label>
-        <input type="number" id="bloodDonationDays" placeholder="0" min="0" onfocus="this.value=''">
+        <input type="number" id="bloodDonationDays" placeholder="0" min="0">
     </div>
     <div class="form-group sub-group premium-field hidden" id="bloodBonusGroup">
         <label id="lblBloodBonus">Середня за 1 дн. донації (zł) ℹ️</label>
-        <input type="number" id="bloodBonus" placeholder="0.00" min="0" onfocus="this.value=''" style="color:var(--primary);">
+        <input type="number" id="bloodBonus" placeholder="0.00" min="0" style="color:var(--primary);">
     </div>
 
     <div class="form-group premium-field">
         <label id="lblL4Days">Лікарняний L4 (календарні)</label>
-        <input type="number" id="l4Days" placeholder="0" min="0" onfocus="this.value=''" onblur="calculateSalary()">
+        <input type="number" id="l4Days" placeholder="0" min="0">
     </div>
     <div class="form-group sub-group premium-field hidden" id="l4MissedGroup">
         <label id="lblL4Missed">Пропущено змін (шт) ℹ️</label>
-        <input type="number" id="l4MissedShifts" placeholder="0" min="0" onfocus="this.value=''" style="color:var(--primary);">
+        <input type="number" id="l4MissedShifts" placeholder="0" min="0" style="color:var(--primary);">
     </div>
 
     <div class="divider"></div>
@@ -285,6 +285,7 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+    // --- DOMAIN CONSTANTS & RATES ---
     const RATES = {
         ZUS: 0.1371,
         NFZ: 0.09,
@@ -299,6 +300,89 @@
         PPK_EMPLOYER: 0.015
     };
 
+    const STATE_WORK_DAYS = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
+
+    // --- SALARY ENGINE (PURE DOMAIN LOGIC) ---
+    const SalaryEngine = {
+        calculateGross(inputs, stateDays, cachedL4DailyRate) {
+            const baseSalary = Math.max(0, inputs.baseSalary);
+            const regWorkedDays = inputs.regWorkedDays;
+            const schedDays = inputs.schedDays;
+            const bonusPct = inputs.bonusPct;
+            
+            const morningShifts = inputs.morningShifts;
+            const nightShifts = inputs.nightShifts;
+            const weekendDays = inputs.weekendDays;
+            const overtimeDays = inputs.overtimeDays;
+            
+            const vacDays = inputs.vacationDays;
+            const dailyUrlopBonus = inputs.dailyUrlopBonus;
+            const totalUrlopBonus = dailyUrlopBonus * vacDays;
+
+            const bloodDays = inputs.bloodDonationDays;
+            const bloodBonus = inputs.bloodBonus;
+            const bloodDonationPay = bloodBonus * bloodDays;
+
+            const l4Days = inputs.l4Days;
+            let adjustedBase = baseSalary; 
+            let l4Pay = 0;
+            
+            if (l4Days > 0) {
+                adjustedBase = baseSalary - ((baseSalary / 30) * l4Days);
+                let l4DailyRate = (baseSalary * (1 - RATES.ZUS)) / 30; 
+                if (cachedL4DailyRate && cachedL4DailyRate > 0) l4DailyRate = cachedL4DailyRate; 
+                l4Pay = l4DailyRate * 0.80 * l4Days; 
+            }
+
+            const bonusAmount = (inputs.isPremium && schedDays > 0) 
+                ? ((baseSalary * (bonusPct / 100)) / schedDays * regWorkedDays) 
+                : (baseSalary * (bonusPct / 100));
+
+            const nightTariff = ((RATES.NIGHT_BASE_SALARY / (stateDays * 8)) * 0.20);
+            const totalNightPay = (morningShifts * (10/60) * nightTariff) + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
+            
+            const overtimeTariff = (baseSalary / stateDays) * 2;
+            const totalOvertimePay = overtimeDays * overtimeTariff;
+
+            const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + (weekendDays * 100) + totalOvertimePay + totalUrlopBonus + bloodDonationPay;
+            return { gross, l4Pay, bonusAmount, totalNightPay, totalOvertimePay, totalUrlopBonus };
+        },
+
+        calculateNet(gross, l4Pay, regWorkedDays, vacDays, bloodDays, isUnder26, ppkActive, extraInsuranceActive, schedDays) {
+            const zusBase = gross - l4Pay; 
+            const zus = Math.round((zusBase * RATES.ZUS) * 100) / 100; 
+            const healthBase = gross - zus; 
+            const nfz = Math.round((healthBase * RATES.NFZ) * 100) / 100;
+            
+            const ppkEmpl = ppkActive ? Math.round((zusBase * RATES.PPK_EMPLOYEE) * 100) / 100 : 0;
+            const ppkEmployer = ppkActive ? Math.round((zusBase * RATES.PPK_EMPLOYER) * 100) / 100 : 0;
+
+            let pit = 0;
+            if (!isUnder26) {
+                const isWorkingMonth = regWorkedDays > 0 || vacDays > 0 || bloodDays > 0;
+                const kup = isWorkingMonth ? RATES.KUP : 0;
+                
+                let pitBaseRaw = healthBase - kup + ppkEmployer;
+                let pitBase = Math.max(0, Math.round(pitBaseRaw));
+
+                let calculatedPit = Math.round(pitBase * RATES.PIT) - RATES.KWOTA_WOLNA;
+                pit = Math.max(0, calculatedPit);
+            }
+
+            const totalBenefitCost = RATES.BENEFIT_ZUS_NFZ + RATES.BENEFIT_TAX; 
+
+            let laundryAllowance = 0;
+            if (schedDays > 0) {
+                laundryAllowance = Math.min(RATES.LAUNDRY_MAX, (regWorkedDays / schedDays) * RATES.LAUNDRY_MAX);
+            }
+            
+            const extraInsurance = extraInsuranceActive ? 36.70 : 0;
+            const net = gross - zus - nfz - pit - ppkEmpl - extraInsurance - totalBenefitCost + laundryAllowance;
+            return net;
+        }
+    };
+
+    // --- FIREBASE CONFIG & APP SETUP ---
     const firebaseConfig = {
         apiKey: "AIzaSyAfsfF3nLzqaAJTAfp73715efQhri-SOT8",
         authDomain: "my-salary-9ea25.firebaseapp.com",
@@ -316,6 +400,257 @@
     let isPremium = false;
     window.cachedL4DailyRate = null;
 
+    // --- LOCALIZATION DICTIONARY ---
+    const dict = {
+        ua: {
+            title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
+            schedDays: "Графік", vacationDays: "Відпустка (днів)", urlopBonus: "Середня за 1 день відп. (zł) ℹ️", 
+            bloodDonation: "Донація крові (днів)", bloodBonus: "Середня за 1 дн. донації (zł) ℹ️", 
+            l4Days: "Лікарняний L4 (календарні)", bonus: "Премія", morning: "Ранкові зміни (шт)", 
+            afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
+            overtime: "Надгодини (днів)", under26: "Вік до 26 років", ppk: "Участь у PPK", 
+            insurance: "Дод. страхування", yes: "Так", no: "Ні",
+            menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", 
+            monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
+        },
+        pl: {
+            title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
+            schedDays: "Grafik", vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa za 1 dzień ℹ️", 
+            bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia za 1 dn. oddania (zł) ℹ", 
+            l4Days: "L4 (dni kalendarzowe)", bonus: "Premia", morning: "Poranne zmiany (szt)", 
+            afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
+            overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat", ppk: "PPK", 
+            insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
+            menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
+            monthNames: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
+        }
+    };
+
+    // --- UI CONTROLLER & EVENT BINDINGS ---
+    window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); }
+    window.setTheme = function(theme) { document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : ''); localStorage.setItem('theme', theme); }
+    
+    window.setLang = function(lang) {
+        currentLang = lang; const d = dict[lang];
+        document.getElementById('lblTitle').innerHTML = d.title + ' <span class="premium-badge">PRO</span>';
+        document.getElementById('lblMonth').innerText = d.month; document.getElementById('lblBase').innerText = d.base;
+        document.getElementById('lblScheduleDays').innerText = d.schedDays;
+        document.getElementById('lblVacationDays').innerText = d.vacationDays; document.getElementById('lblUrlopBonus').innerText = d.urlopBonus;
+        document.getElementById('lblBloodDonation').innerText = d.bloodDonation; document.getElementById('lblBloodBonus').innerText = d.bloodBonus;
+        document.getElementById('lblL4Days').innerText = d.l4Days; 
+        document.getElementById('lblBonus').innerText = d.bonus; document.getElementById('lblMorning').innerText = d.morning;
+        document.getElementById('lblAfternoon').innerText = d.afternoon; document.getElementById('lblNight').innerText = d.night; 
+        document.getElementById('lblWeekend').innerText = d.weekend; document.getElementById('lblOvertime').innerText = d.overtime; 
+        document.getElementById('lblUnder26').innerText = d.under26; document.getElementById('lblPPK').innerText = d.ppk; 
+        document.getElementById('lblInsurance').innerText = d.insurance; document.getElementById('menuTitle').innerText = d.menuTitle; 
+        document.getElementById('lblMenuLang').innerText = d.menuLang; document.getElementById('lblMenuTheme').innerText = d.menuTheme; 
+        document.getElementById('optU26Yes').innerText = d.yes; document.getElementById('optU26No').innerText = d.no; 
+        document.getElementById('optPpkYes').innerText = d.yes; document.getElementById('optPpkNo').innerText = d.no; 
+        document.getElementById('optInsYes').innerText = d.yes; document.getElementById('optInsNo').innerText = d.no;
+        initMonths(); calculateSalary();
+    }
+
+    function initMonths() {
+        const select = document.getElementById('monthSelect');
+        const currentVal = select.value; 
+        select.innerHTML = '';
+        
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth(); 
+        const dNames = dict[currentLang].monthNames;
+        
+        for(let i = 1; i >= -11; i--) {
+            let d = new Date(currentYear, currentMonth + i, 1);
+            let y = d.getFullYear();
+            let m = d.getMonth();
+            let val = y + "-" + String(m + 1).padStart(2, '0');
+            let opt = document.createElement('option');
+            opt.value = val; opt.text = dNames[m] + " " + y;
+            select.appendChild(opt);
+        }
+        
+        if(!currentVal) select.value = currentYear + "-" + String(currentMonth + 1).padStart(2, '0');
+        else select.value = currentVal;
+    }
+
+    async function updateL4Cache(currentMonthVal) {
+        if (!auth.currentUser) { window.cachedL4DailyRate = null; return; }
+        const [yStr, mStr] = currentMonthVal.split('-');
+        let cYear = parseInt(yStr); let cMonth = parseInt(mStr);
+        let totalNetBase = 0; let monthsFound = 0;
+        
+        for (let i = 1; i <= 12; i++) {
+            let pMonth = cMonth - i; let pYear = cYear;
+            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
+            const pastStr = pYear + "-" + String(pMonth).padStart(2, '0');
+            
+            try {
+                const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastStr));
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const pBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
+                    let pPct = parseFloat(data.bonusPctSelect);
+                    if (isNaN(pPct)) pPct = 15;
+                    
+                    const mS = Math.max(0, parseInt(data.morningShifts) || 0);
+                    const aS = Math.max(0, parseInt(data.afternoonShifts) || 0);
+                    const nS = Math.max(0, parseInt(data.nightShifts) || 0);
+                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
+                    const vac = Math.max(0, parseInt(data.vacationDays) || 0);
+                    const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
+                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
+                    
+                    let regWorked = mS + aS + nS;
+                    const pSched = parseInt(data.scheduleDays) || 21;
+                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
+                        regWorked = Math.max(0, pSched - vac - blood - l4m);
+                    }
+                    
+                    const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * regWorked : 0;
+                    const nTariff = ((RATES.NIGHT_BASE_SALARY / (21 * 8)) * 0.20); 
+                    const nightAm = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
+                    const wkndAm = wknd * 100;
+                    
+                    let grossBase = pBase + bonusAm + nightAm + wkndAm;
+                    let netZus = grossBase * (1 - RATES.ZUS); 
+                    totalNetBase += netZus; monthsFound++;
+                }
+            } catch(e) {}
+        }
+        window.cachedL4DailyRate = monthsFound > 0 ? (totalNetBase / monthsFound) / 30 : null;
+    }
+
+    // Виправлена функція: надгодини повнiстю виключенi з бази розрахунку відпустки згідно з § 6 RPiPS
+    async function getAutoDailyUrlopBonus(currentYear, monthIdx) {
+        if (!auth.currentUser) return 0;
+        let totalExtras = 0; let totalWorkedDays = 0;
+        
+        for (let i = 1; i <= 3; i++) {
+            let pMonth = monthIdx + 1 - i; let pYear = currentYear;
+            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
+            const pastMonthStr = pYear + "-" + String(pMonth).padStart(2, '0');
+            const stDays = STATE_WORK_DAYS[pMonth - 1] || 21;
+            
+            try {
+                const docSnap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastMonthStr));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
+                    let pastPct = parseFloat(data.bonusPctSelect);
+                    if (isNaN(pastPct)) pastPct = 15;
+                    
+                    const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
+                    const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
+                    const nShifts = Math.max(0, parseInt(data.nightShifts) || 0);
+                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
+                    
+                    let regWorked = mShifts + aShifts + nShifts;
+                    const pastSched = parseInt(data.scheduleDays) || stDays;
+                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
+                    const vac = Math.max(0, parseInt(data.vacationDays) || 0);
+                    const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
+                    
+                    if (regWorked === 0) {
+                        regWorked = Math.max(0, pastSched - vac - blood - l4m);
+                    }
+                    
+                    let pActual = regWorked; // Надгодини НЕ беруться до уваги у знаменнику та чисельнику
+                    
+                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
+                    const nTariff = ((RATES.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
+                    const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
+                    const pastWknd = wknd * 100;
+
+                    totalExtras += (pastBonusVal + pastNight + pastWknd);
+                    totalWorkedDays += pActual;
+                }
+            } catch (e) {}
+        }
+        
+        return totalWorkedDays === 0 ? 0 : (totalExtras / totalWorkedDays);
+    }
+
+    window.calculateSalary = async function() {
+        const monthVal = document.getElementById('monthSelect').value;
+        if (!monthVal) return updateUI(0, 0);
+        
+        const monthIdx = parseInt(monthVal.split('-')[1]) - 1;
+        const stateDays = STATE_WORK_DAYS[monthIdx];
+        
+        const autoBase = monthIdx >= 9 ? 5950 : 5750;
+        let baseInput = document.getElementById('baseSalary');
+        if (!baseInput.value) baseInput.value = autoBase;
+        const baseSalary = Math.max(0, parseFloat(baseInput.value));
+
+        const vacDays = isPremium ? Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0) : 0;
+        const bloodDonationDays = isPremium ? Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0) : 0;
+        const l4Days = isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0;
+        
+        document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays === 0);
+        document.getElementById('bloodBonusGroup').classList.toggle('hidden', bloodDonationDays === 0);
+        document.getElementById('l4MissedGroup').classList.toggle('hidden', l4Days === 0);
+
+        const morningShifts = Math.max(0, parseInt(document.getElementById('morningShifts').value) || 0);
+        const afternoonShifts = Math.max(0, parseInt(document.getElementById('afternoonShifts').value) || 0);
+        const nightShifts = Math.max(0, parseInt(document.getElementById('nightShifts').value) || 0);
+        const weekendDays = Math.max(0, parseInt(document.getElementById('weekendDays').value) || 0);
+        const l4Missed = Math.max(0, parseInt(document.getElementById('l4MissedShifts').value) || 0);
+
+        let regWorkedDays = morningShifts + afternoonShifts + nightShifts;
+        let schedDays = isPremium ? (parseInt(document.getElementById('scheduleDays').value) || stateDays) : stateDays;
+
+        let rawOvertime = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
+        const overtimeDays = Math.min(rawOvertime, regWorkedDays); 
+
+        if (!document.getElementById('morningShifts').value && !document.getElementById('afternoonShifts').value && !document.getElementById('nightShifts').value) {
+            regWorkedDays = Math.max(0, schedDays - vacDays - bloodDonationDays - l4Missed);
+        }
+
+        const urlopInput = document.getElementById('urlopBonus');
+        if (vacDays > 0 && isPremium && monthVal && (!urlopInput.value || parseFloat(urlopInput.value) === 0)) {
+            const [year, month] = monthVal.split('-');
+            const autoDaily = await getAutoDailyUrlopBonus(parseInt(year), parseInt(month) - 1);
+            if (autoDaily > 0) urlopInput.value = autoDaily.toFixed(2);
+        }
+
+        const dailyUrlopBonus = (isPremium && vacDays > 0) ? Math.max(0, parseFloat(urlopInput.value) || 0) : 0;
+        const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
+
+        const inputs = {
+            baseSalary, regWorkedDays, schedDays, bonusPct,
+            morningShifts, nightShifts, weekendDays, overtimeDays,
+            vacationDays, dailyUrlopBonus, bloodDonationDays, bloodBonus: parseFloat(document.getElementById('bloodBonus').value) || 0,
+            l4Days, isPremium
+        };
+
+        const { gross, l4Pay, bonusAmount, totalNightPay, totalOvertimePay } = SalaryEngine.calculateGross(inputs, stateDays, window.cachedL4DailyRate);
+
+        const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + totalOvertimePay;
+        const autoDailyBlood = (isPremium && schedDays > 0) ? (currentVariables / schedDays) : 0;
+        
+        const bloodBonusInput = document.getElementById('bloodBonus');
+        if (bloodDonationDays > 0 && document.activeElement !== bloodBonusInput) {
+            bloodBonusInput.value = autoDailyBlood > 0 ? autoDailyBlood.toFixed(2) : "0.00";
+        } else if (bloodDonationDays === 0 && document.activeElement !== bloodBonusInput) {
+            bloodBonusInput.value = "";
+        }
+
+        const isUnder26 = document.getElementById('under26Select').value === 'yes';
+        const ppkActive = document.getElementById('ppkSelect').value === 'yes';
+        const extraInsuranceActive = document.getElementById('insuranceSelect').value === 'yes';
+
+        const net = SalaryEngine.calculateNet(gross, l4Pay, regWorkedDays, vacDays, bloodDonationDays, isUnder26, ppkActive, extraInsuranceActive, schedDays);
+
+        updateUI(gross, net);
+    }
+
+    function updateUI(g, n) {
+        document.getElementById('grossResult').innerText = g.toFixed(2) + ' zł';
+        document.getElementById('netResult').innerText = n.toFixed(2) + ' zł';
+    }
+
+    // --- AUTH & SYNC HANDLERS ---
     onAuthStateChanged(auth, async (user) => {
         isPremium = !!user;
         document.getElementById('app-body').classList.toggle('is-logged-in', isPremium);
@@ -328,7 +663,7 @@
         } else {
             clearInputs();
         }
-        calculateSalary();
+        await calculateSalary();
     });
 
     document.getElementById('btn-login').addEventListener('click', async () => {
@@ -382,7 +717,7 @@
                 clearInputs();
             }
             await updateL4Cache(monthVal);
-            calculateSalary();
+            await calculateSalary();
         } catch(e) {}
     }
 
@@ -397,370 +732,11 @@
         document.getElementById('baseSalary').value = "";
     }
 
-    const dict = {
-        ua: {
-            title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
-            schedDays: "Графік", vacationDays: "Відпустка (днів)", urlopBonus: "Середня за 1 день відп. (zł) ℹ️", 
-            bloodDonation: "Донація крові (днів)", bloodBonus: "Середня за 1 дн. донації (zł) ℹ️", 
-            l4Days: "Лікарняний L4 (календарні)", bonus: "Премія", morning: "Ранкові зміни (шт)", 
-            afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
-            overtime: "Надгодини (днів)", under26: "Вік до 26 років", ppk: "Участь у PPK", 
-            insurance: "Дод. страхування", yes: "Так", no: "Ні",
-            menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", 
-            monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
-        },
-        pl: {
-            title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
-            schedDays: "Grafik", vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa za 1 dzień ℹ️", 
-            bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia za 1 dn. oddania (zł) ℹ", 
-            l4Days: "L4 (dni kalendarzowe)", bonus: "Premia", morning: "Poranne zmiany (szt)", 
-            afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
-            overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat", ppk: "PPK", 
-            insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
-            menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
-            monthNames: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
-        }
-    };
-
-    const stateWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
-
-    window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); }
-    window.setTheme = function(theme) { document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : ''); localStorage.setItem('theme', theme); }
-    window.setLang = function(lang) {
-        currentLang = lang; const d = dict[lang];
-        document.getElementById('lblTitle').innerHTML = d.title + ' <span class="premium-badge">PRO</span>';
-        document.getElementById('lblMonth').innerText = d.month; document.getElementById('lblBase').innerText = d.base;
-        document.getElementById('lblScheduleDays').innerText = d.schedDays;
-        document.getElementById('lblVacationDays').innerText = d.vacationDays; document.getElementById('lblUrlopBonus').innerText = d.urlopBonus;
-        document.getElementById('lblBloodDonation').innerText = d.bloodDonation; document.getElementById('lblBloodBonus').innerText = d.bloodBonus;
-        document.getElementById('lblL4Days').innerText = d.l4Days; 
-        document.getElementById('lblBonus').innerText = d.bonus; document.getElementById('lblMorning').innerText = d.morning;
-        document.getElementById('lblAfternoon').innerText = d.afternoon; document.getElementById('lblNight').innerText = d.night; 
-        document.getElementById('lblWeekend').innerText = d.weekend; document.getElementById('lblOvertime').innerText = d.overtime; 
-        document.getElementById('lblUnder26').innerText = d.under26; document.getElementById('lblPPK').innerText = d.ppk; 
-        document.getElementById('lblInsurance').innerText = d.insurance; document.getElementById('menuTitle').innerText = d.menuTitle; 
-        document.getElementById('lblMenuLang').innerText = d.menuLang; document.getElementById('lblMenuTheme').innerText = d.menuTheme; 
-        document.getElementById('optU26Yes').innerText = d.yes; document.getElementById('optU26No').innerText = d.no; 
-        document.getElementById('optPpkYes').innerText = d.yes; document.getElementById('optPpkNo').innerText = d.no; 
-        document.getElementById('optInsYes').innerText = d.yes; document.getElementById('optInsNo').innerText = d.no;
-        initMonths(); calculateSalary();
-    }
-
-    function initMonths() {
-        const select = document.getElementById('monthSelect');
-        const currentVal = select.value; 
-        select.innerHTML = '';
-        
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth(); 
-        const dNames = dict[currentLang].monthNames;
-        
-        for(let i = 1; i >= -11; i--) {
-            let d = new Date(currentYear, currentMonth + i, 1);
-            let y = d.getFullYear();
-            let m = d.getMonth();
-            let val = y + "-" + String(m + 1).padStart(2, '0');
-            let opt = document.createElement('option');
-            opt.value = val; opt.text = dNames[m] + " " + y;
-            select.appendChild(opt);
-        }
-        
-        if(!currentVal) select.value = currentYear + "-" + String(currentMonth + 1).padStart(2, '0');
-        else select.value = currentVal;
-    }
-
-    async function updateL4Cache(currentMonthVal) {
-        if (!auth.currentUser) { window.cachedL4DailyRate = null; return; }
-        
-        const [yStr, mStr] = currentMonthVal.split('-');
-        let cYear = parseInt(yStr); let cMonth = parseInt(mStr);
-        let totalNetBase = 0; let monthsFound = 0;
-        
-        for (let i = 1; i <= 12; i++) {
-            let pMonth = cMonth - i; let pYear = cYear;
-            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
-            const pastStr = pYear + "-" + String(pMonth).padStart(2, '0');
-            
-            try {
-                const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastStr));
-                if (snap.exists()) {
-                    const data = snap.data();
-                    const pBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
-                    let pPct = parseFloat(data.bonusPctSelect);
-                    if (isNaN(pPct)) pPct = 15;
-                    
-                    const mS = Math.max(0, parseInt(data.morningShifts) || 0);
-                    const aS = Math.max(0, parseInt(data.afternoonShifts) || 0);
-                    const nS = Math.max(0, parseInt(data.nightShifts) || 0);
-                    const over = Math.max(0, parseFloat(data.overtimeDays) || 0);
-                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
-                    const vac = Math.max(0, parseInt(data.vacationDays) || 0);
-                    const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
-                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
-                    
-                    let regWorked = mS + aS + nS;
-                    const pSched = parseInt(data.scheduleDays) || 21;
-                    
-                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
-                        regWorked = Math.max(0, pSched - vac - blood - l4m);
-                    }
-                    
-                    const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * regWorked : 0;
-                    const nTariff = ((RATES.NIGHT_BASE_SALARY / (21 * 8)) * 0.20); 
-                    const nightAm = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
-                    const wkndAm = wknd * 100;
-                    const overAm = over * ((pBase / 21) * 2);
-                    
-                    let grossBase = pBase + bonusAm + nightAm + wkndAm + overAm;
-                    let netZus = grossBase * (1 - RATES.ZUS); 
-                    
-                    totalNetBase += netZus; monthsFound++;
-                }
-            } catch(e) {}
-        }
-        
-        if (monthsFound > 0) window.cachedL4DailyRate = (totalNetBase / monthsFound) / 30; 
-        else window.cachedL4DailyRate = null;
-    }
-
-    // Виправлена функція розрахунку відпустки з урахуванням надгодин у знаменнику
-    async function getAutoDailyUrlopBonus(currentYear, monthIdx) {
-        if (!auth.currentUser) return 0;
-        let totalExtras = 0; let totalWorkedDays = 0;
-        
-        for (let i = 1; i <= 3; i++) {
-            let pMonth = monthIdx + 1 - i; let pYear = currentYear;
-            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
-            const pastMonthStr = pYear + "-" + String(pMonth).padStart(2, '0');
-            const stDays = stateWorkDays[pMonth - 1] || 21;
-            
-            try {
-                const docSnap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastMonthStr));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
-                    let pastPct = parseFloat(data.bonusPctSelect);
-                    if (isNaN(pastPct)) pastPct = 15;
-                    
-                    const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
-                    const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
-                    const nShifts = Math.max(0, parseInt(data.nightShifts) || 0);
-                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
-                    const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
-                    
-                    let regWorked = mShifts + aShifts + nShifts;
-                    const pastSched = parseInt(data.scheduleDays) || stDays;
-                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
-                    const vac = Math.max(0, parseInt(data.vacationDays) || 0);
-                    const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
-                    
-                    if (regWorked === 0) {
-                        regWorked = Math.max(0, pastSched - vac - blood - l4m);
-                    }
-                    
-                    // БЕРЕМО ДО УВАГИ НАДГОДИНИ ТАКОЖ У ЗНАМЕННИКУ (ДНІ)
-                    let pActual = regWorked + rawOver;
-                    
-                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
-                    const nTariff = ((RATES.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
-                    const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
-                    const pastWknd = wknd * 100;
-                    const pastOver = rawOver * ((pastBase / stDays) * 2);
-
-                    totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
-                    totalWorkedDays += pActual;
-                }
-            } catch (e) {}
-        }
-        
-        if (totalWorkedDays === 0) return 0;
-        return (totalExtras / totalWorkedDays);
-    }
-
-    document.getElementById('vacationDays').addEventListener('input', async function() {
-        const vacDays = Math.max(0, parseInt(this.value) || 0);
-        const urlopInput = document.getElementById('urlopBonus');
-        
-        if (vacDays === 0 || this.value === '') {
-            urlopInput.value = ""; 
-        } else if (isPremium) {
-            const monthVal = document.getElementById('monthSelect').value;
-            if (monthVal && (!urlopInput.value || parseFloat(urlopInput.value) === 0)) {
-                const [year, month] = monthVal.split('-');
-                const autoDaily = await getAutoDailyUrlopBonus(parseInt(year), parseInt(month) - 1);
-                if (autoDaily > 0) urlopInput.value = autoDaily.toFixed(2);
-            }
-        }
-        calculateSalary();
-    });
-
-    document.getElementById('bloodDonationDays').addEventListener('input', function() {
-        const bloodDays = Math.max(0, parseInt(this.value) || 0);
-        if (bloodDays === 0 || this.value === '') {
-            document.getElementById('bloodBonus').value = "";
-        }
-        calculateSalary();
-    });
-
-    document.getElementById('l4Days').addEventListener('input', function() {
-        if(isPremium) {
-            const l4 = Math.max(0, parseInt(this.value) || 0);
-            const bonusSelect = document.getElementById('bonusPctSelect');
-            if (l4 === 0 || this.value === '') {
-                bonusSelect.value = "15";
-                document.getElementById('l4MissedShifts').value = ""; 
-            } else if (l4 <= 2) { bonusSelect.value = "12.5"; }
-            else { bonusSelect.value = "10"; }
-            calculateSalary();
-        }
-    });
-
-    ['morningShifts', 'afternoonShifts', 'nightShifts', 'vacationDays', 'bloodDonationDays', 'l4Days', 'l4MissedShifts', 'overtimeDays'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) {
-            el.addEventListener('input', () => {
-                if(isPremium) {
-                    const mStr = document.getElementById('morningShifts').value;
-                    const aStr = document.getElementById('afternoonShifts').value;
-                    const nStr = document.getElementById('nightShifts').value;
-                    const vStr = document.getElementById('vacationDays').value;
-                    const bStr = document.getElementById('bloodDonationDays').value;
-                    const lStr = document.getElementById('l4MissedShifts').value;
-                    
-                    const m = Math.max(0, parseInt(mStr) || 0); const a = Math.max(0, parseInt(aStr) || 0); const n = Math.max(0, parseInt(nStr) || 0);
-                    const vac = Math.max(0, parseInt(vStr) || 0); const blood = Math.max(0, parseInt(bStr) || 0); const l4Missed = Math.max(0, parseInt(lStr) || 0); 
-                    
-                    if (mStr !== '' || aStr !== '' || nStr !== '' || vStr !== '' || bStr !== '' || lStr !== '') {
-                        let autoSched = m + a + n + vac + blood + l4Missed;
-                        document.getElementById('scheduleDays').value = autoSched > 0 ? autoSched : "";
-                    } else { document.getElementById('scheduleDays').value = ""; }
-                }
-                calculateSalary();
-            });
-        }
-    });
-
-    window.calculateSalary = function() {
-        const monthVal = document.getElementById('monthSelect').value;
-        if (!monthVal) return updateUI(0, 0);
-        
-        const monthIdx = parseInt(monthVal.split('-')[1]) - 1;
-        const stateDays = stateWorkDays[monthIdx];
-        
-        const autoBase = monthIdx >= 9 ? 5950 : 5750;
-        let baseInput = document.getElementById('baseSalary');
-        if (!baseInput.value) baseInput.value = autoBase;
-        const baseSalary = Math.max(0, parseFloat(baseInput.value));
-
-        const vacDays = isPremium ? Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0) : 0;
-        const bloodDonationDays = isPremium ? Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0) : 0;
-        const l4Days = isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0;
-        
-        document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays === 0);
-        document.getElementById('bloodBonusGroup').classList.toggle('hidden', bloodDonationDays === 0);
-        document.getElementById('l4MissedGroup').classList.toggle('hidden', l4Days === 0);
-
-        const mStr = document.getElementById('morningShifts').value;
-        const aStr = document.getElementById('afternoonShifts').value;
-        const nStr = document.getElementById('nightShifts').value;
-
-        const morningShifts = Math.max(0, parseInt(mStr) || 0);
-        const afternoonShifts = Math.max(0, parseInt(aStr) || 0);
-        const nightShifts = Math.max(0, parseInt(nStr) || 0);
-        const weekendDays = Math.max(0, parseInt(document.getElementById('weekendDays').value) || 0);
-        const l4Missed = Math.max(0, parseInt(document.getElementById('l4MissedShifts').value) || 0);
-
-        let regWorkedDays = morningShifts + afternoonShifts + nightShifts;
-        let schedDays = isPremium ? (parseInt(document.getElementById('scheduleDays').value) || stateDays) : stateDays;
-
-        let rawOvertime = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
-        const overtimeDays = Math.min(rawOvertime, regWorkedDays); 
-
-        if (mStr === '' && aStr === '' && nStr === '') {
-            regWorkedDays = Math.max(0, schedDays - vacDays - bloodDonationDays - l4Missed);
-        }
-
-        const dailyUrlopBonus = (isPremium && vacDays > 0) ? Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
-        const totalUrlopBonus = dailyUrlopBonus * vacDays;
-
-        let adjustedBase = baseSalary; let l4Pay = 0;
-        if (isPremium && l4Days > 0) {
-            adjustedBase = baseSalary - ((baseSalary / 30) * l4Days);
-            let l4DailyRate = (baseSalary * (1 - RATES.ZUS)) / 30; 
-            if (window.cachedL4DailyRate && window.cachedL4DailyRate > 0) l4DailyRate = window.cachedL4DailyRate; 
-            l4Pay = l4DailyRate * 0.80 * l4Days; 
-        }
-
-        const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
-        const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * regWorkedDays) : (baseSalary * (bonusPct / 100));
-
-        const nightTariff = ((RATES.NIGHT_BASE_SALARY / (stateDays * 8)) * 0.20);
-        const totalNightPay = (morningShifts * (10/60) * nightTariff) + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
-        
-        const overtimeTariff = (baseSalary / stateDays) * 2;
-        const totalOvertimePay = overtimeDays * overtimeTariff;
-
-        const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + totalOvertimePay;
-        const autoDailyBlood = (isPremium && schedDays > 0) ? (currentVariables / schedDays) : 0;
-        
-        const bloodBonusInput = document.getElementById('bloodBonus');
-        if (bloodDonationDays > 0 && document.activeElement !== bloodBonusInput) {
-            bloodBonusInput.value = autoDailyBlood > 0 ? autoDailyBlood.toFixed(2) : "0.00";
-        } else if (bloodDonationDays === 0 && document.activeElement !== bloodBonusInput) {
-            bloodBonusInput.value = "";
-        }
-        
-        const finalDailyBlood = parseFloat(bloodBonusInput.value) || 0;
-        const bloodDonationPay = finalDailyBlood * bloodDonationDays;
-
-        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + (weekendDays * 100) + totalOvertimePay + totalUrlopBonus + bloodDonationPay;
-
-        const isUnder26 = document.getElementById('under26Select').value === 'yes';
-        const ppkActive = document.getElementById('ppkSelect').value === 'yes';
-        
-        const zusBase = gross - l4Pay; 
-        const zus = Math.round((zusBase * RATES.ZUS) * 100) / 100; 
-        const healthBase = gross - zus; 
-        const nfz = Math.round((healthBase * RATES.NFZ) * 100) / 100;
-        
-        const ppkEmpl = ppkActive ? Math.round((zusBase * RATES.PPK_EMPLOYEE) * 100) / 100 : 0;
-        const ppkEmployer = ppkActive ? Math.round((zusBase * RATES.PPK_EMPLOYER) * 100) / 100 : 0;
-
-        let pit = 0;
-        if (!isUnder26) {
-            const isWorkingMonth = regWorkedDays > 0 || vacDays > 0 || bloodDonationDays > 0;
-            const kup = isWorkingMonth ? RATES.KUP : 0;
-            
-            let pitBaseRaw = healthBase - kup + ppkEmployer;
-            let pitBase = Math.max(0, Math.round(pitBaseRaw));
-
-            let calculatedPit = Math.round(pitBase * RATES.PIT) - RATES.KWOTA_WOLNA;
-            pit = Math.max(0, calculatedPit);
-        }
-
-        const totalBenefitCost = RATES.BENEFIT_ZUS_NFZ + RATES.BENEFIT_TAX; 
-
-        let laundryAllowance = 0;
-        if (schedDays > 0) {
-            laundryAllowance = Math.min(RATES.LAUNDRY_MAX, (regWorkedDays / schedDays) * RATES.LAUNDRY_MAX);
-        }
-        
-        const extraInsurance = document.getElementById('insuranceSelect').value === 'yes' ? 36.70 : 0;
-
-        const net = gross - zus - nfz - pit - ppkEmpl - extraInsurance - totalBenefitCost + laundryAllowance;
-
-        updateUI(gross, net);
-    }
-
-    function updateUI(g, n) {
-        document.getElementById('grossResult').innerText = g.toFixed(2) + ' zł';
-        document.getElementById('netResult').innerText = n.toFixed(2) + ' zł';
-    }
-
+    // Event listeners
     document.querySelectorAll('input, select').forEach(el => {
-        if(!['langSelect', 'themeSelect', 'email', 'password', 'vacationDays', 'bloodDonationDays', 'l4Days', 'l4MissedShifts', 'monthSelect'].includes(el.id)) {
-            el.addEventListener('input', calculateSalary); el.addEventListener('change', calculateSalary);
+        if(!['langSelect', 'themeSelect', 'email', 'password', 'monthSelect'].includes(el.id)) {
+            el.addEventListener('input', calculateSalary); 
+            el.addEventListener('change', calculateSalary);
         }
     });
     
