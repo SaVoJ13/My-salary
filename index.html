@@ -288,13 +288,12 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Оновлені Константи з податковим ядром
     const RATES = {
         ZUS: 0.1371,
         NFZ: 0.09,
         PIT: 0.12,
-        KUP: 250.00,        // Кошти отримання доходу (зменшують базу PIT)
-        KWOTA_WOLNA: 300.00, // Пільга PIT-2
+        KUP: 250.00,        
+        KWOTA_WOLNA: 300.00, 
         NIGHT_BASE_SALARY: 4806.00, 
         LAUNDRY_MAX: 16.00,
         BENEFIT_ZUS_NFZ: 30.25,
@@ -510,7 +509,10 @@
                         regWorked = Math.max(0, pSched - vac - blood - l4m);
                     }
                     
-                    const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * regWorked : 0;
+                    // БАГФІКС: Кепуємо відпрацьовані дні для розрахунку премії (не більше 100% графіка)
+                    const cappedRegWorked = Math.min(regWorked, pSched);
+                    const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * cappedRegWorked : 0;
+                    
                     const nTariff = ((RATES.NIGHT_BASE_SALARY / (21 * 8)) * 0.20); 
                     const nightAm = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
                     const wkndAm = wknd * 100;
@@ -557,18 +559,24 @@
                     const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
                     const vac = Math.max(0, parseInt(data.vacationDays) || 0);
                     const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
+                    const over = Math.min(rawOver, Math.max(0, regWorked));
                     
+                    let pActual = 0;
                     if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
                         regWorked = Math.max(0, pastSched - vac - blood - l4m);
+                        pActual = regWorked + over; 
+                    } else {
+                        // Якщо зміни введено вручну, вони ВЖЕ містять дні надгодин. Не додаємо їх вдруге до дільника.
+                        pActual = regWorked; 
                     }
-                    const over = Math.min(rawOver, regWorked);
-                    let pActual = regWorked + over;
                     
-                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
+                    // БАГФІКС: Премія не може розраховуватись на більше ніж 100% графіка
+                    const cappedRegWorked = Math.min(regWorked, pastSched);
+                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * cappedRegWorked : 0;
+                    
                     const nTariff = ((RATES.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                     const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
                     const pastWknd = wknd * 100;
-                    // Надгодини: подвійна денна ставка за цілий день
                     const pastOver = over * ((pastBase / stDays) * 2);
 
                     totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
@@ -680,7 +688,7 @@
         let schedDays = isPremium ? (parseInt(document.getElementById('scheduleDays').value) || stateDays) : stateDays;
 
         let rawOvertime = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
-        const overtimeDays = Math.min(rawOvertime, regWorkedDays); 
+        const overtimeDays = Math.min(rawOvertime, Math.max(0, regWorkedDays)); 
 
         if (mStr === '' && aStr === '' && nStr === '') {
             regWorkedDays = Math.max(0, schedDays - vacDays - bloodDonationDays - l4Missed);
@@ -698,17 +706,17 @@
         }
 
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
-        const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * regWorkedDays) : (baseSalary * (bonusPct / 100));
+        
+        // БАГФІКС: Кепуємо премію у поточному місяці
+        const cappedWorkedDays = Math.min(regWorkedDays, schedDays);
+        const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * cappedWorkedDays) : (baseSalary * (bonusPct / 100));
 
-        // Зміни з V10 щодо нічних
         const nightTariff = ((RATES.NIGHT_BASE_SALARY / (stateDays * 8)) * 0.20);
         const totalNightPay = (morningShifts * (10/60) * nightTariff) + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         
-        // Fiege Надгодини: Цілий день + 100%
         const overtimeTariff = (baseSalary / stateDays) * 2;
         const totalOvertimePay = overtimeDays * overtimeTariff;
 
-        // Донація Крові
         const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + totalOvertimePay;
         const autoDailyBlood = (isPremium && schedDays > 0) ? (currentVariables / schedDays) : 0;
         
@@ -727,7 +735,7 @@
         const isUnder26 = document.getElementById('under26Select').value === 'yes';
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
         
-        // Податкове ядро з V10
+        // Податкове ядро V10
         const zusBase = gross - l4Pay; 
         const zus = Math.round((zusBase * RATES.ZUS) * 100) / 100; 
         const healthBase = gross - zus; 
@@ -738,11 +746,9 @@
 
         let pit = 0;
         if (!isUnder26) {
-            // Застосовуємо KUP якщо працівник працював (відпрацьовані дні, відпустка або донація)
             const isWorkingMonth = regWorkedDays > 0 || vacDays > 0 || bloodDonationDays > 0;
             const kup = isWorkingMonth ? RATES.KUP : 0;
             
-            // База PIT = Брутто - ZUS - KUP + PPK роботодавця. База строго округлюється до цілого.
             let pitBaseRaw = healthBase - kup + ppkEmployer;
             let pitBase = Math.max(0, Math.round(pitBaseRaw));
 
