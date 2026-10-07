@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ua">
 <head>
@@ -132,7 +131,6 @@
         .btn-logout { background: var(--text-muted); }
         .cloud-section { background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border-color); }
 
-        /* Стилі для сторінки деталей */
         .info-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; }
         .info-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-bottom: 10px; }
         .info-row:last-child { margin-bottom: 0; }
@@ -182,10 +180,9 @@
         </div>
     </div>
 
-    <!-- ТРЕК СТОРІНОК ДЛЯ СВАЙПУ -->
     <div class="pages-track" id="pagesTrack">
         
-        <!-- СТОРІНКА 1: ОСНОВНИЙ КАЛЬКУЛЯТОР -->
+        <!-- СТОРІНКА 1: КАЛЬКУЛЯТОР -->
         <div class="calculator-page">
             <div class="header-row">
                 <button class="menu-btn" onclick="toggleMenu()">☰</button>
@@ -318,25 +315,18 @@
             <div class="info-card">
                 <div class="info-row"><span>Місяць:</span> <strong id="infoMonth">-</strong></div>
                 <div class="info-row"><span>Базова ставка:</span> <strong id="infoBase">-</strong></div>
-                <div class="info-row"><span>Дні за графіком (норма):</span> <strong id="infoSched">-</strong></div>
-                <div class="divider" style="margin: 12px 0;"></div>
-                
-                <div class="info-row"><span>Відпрацьовані дні:</span> <strong id="infoWorked">-</strong></div>
-                <div class="info-row"><span>Надгодини (днів):</span> <strong id="infoOvertime">-</strong></div>
+                <div class="info-row"><span>Дні за графіком:</span> <strong id="infoSched">-</strong></div>
+                <div class="info-row"><span>Відпрацьовані зміни:</span> <strong id="infoWorked">-</strong></div>
                 <div class="info-row"><span>Дні відпустки:</span> <strong id="infoVacation">-</strong></div>
                 <div class="info-row"><span>Дні донації крові:</span> <strong id="infoBlood">-</strong></div>
                 <div class="info-row"><span>Лікарняний L4 (днів):</span> <strong id="infoL4">-</strong></div>
-                
-                <!-- НОВЕ ПОЛЕ: Всі задіяні дні -->
-                <div class="info-row" style="background: rgba(39, 174, 96, 0.08); padding: 8px; border-radius: 6px; margin-top: 8px;">
-                    <span>Всі задіяні дні (з надгод.):</span> <strong id="infoTotalActive" style="color: var(--success);">-</strong>
-                </div>
-
-                <div class="divider" style="margin: 12px 0;"></div>
-                <div class="info-row"><span>Нічні години:</span> <strong id="infoNightHours">-</strong></div>
+                <div class="info-row"><span>Всього задіяних днів:</span> <strong id="infoTotalDays" style="color: var(--success);">-</strong></div>
+                <div class="info-row"><span>Нічний час:</span> <strong id="infoNightHours">-</strong></div>
                 <div class="info-row"><span>Нічний тариф:</span> <strong id="infoNightTariff">-</strong></div>
-                <div class="info-row" style="background: var(--premium-bg); padding: 8px; border-radius: 6px; margin-top: 8px;">
-                    <span>Сума всіх надбавок:</span> <strong id="infoTotalExtras" style="color: var(--primary);">-</strong>
+                <div class="info-row"><span>Надгодини (днів):</span> <strong id="infoOvertime">-</strong></div>
+                <div class="divider" style="margin: 12px 0;"></div>
+                <div class="info-row" style="background: var(--premium-bg); padding: 8px; border-radius: 6px;">
+                    <span>Сума надбавок:</span> <strong id="infoTotalExtras" style="color: var(--primary);">-</strong>
                 </div>
             </div>
 
@@ -385,7 +375,6 @@
     let currentActivePage = 1;
     window.cachedL4DailyRate = null;
 
-    // Керування сторінками (свайпи та кнопки)
     window.switchPage = function(page) {
         currentActivePage = page;
         const track = document.getElementById('pagesTrack');
@@ -396,7 +385,6 @@
         }
     }
 
-    // Обробка жестів свайпу
     let touchStartX = 0;
     document.addEventListener('touchstart', e => {
         touchStartX = e.changedTouches[0].screenX;
@@ -410,19 +398,19 @@
 
         if (Math.abs(diff) < 60) return;
 
-        if (diff > 0) { // Свайп вправо
+        if (diff > 0) { 
             if (isMenuOpen) {
                 sideMenu.classList.remove('open');
             } else if (currentActivePage === 2) {
                 switchPage(1);
             } else if (currentActivePage === 1) {
-                toggleMenu(); 
+                toggleMenu();
             }
-        } else { // Свайп вліво
+        } else { 
             if (isMenuOpen) {
                 sideMenu.classList.remove('open');
             } else if (currentActivePage === 1) {
-                switchPage(2); 
+                switchPage(2);
             }
         }
     });
@@ -638,10 +626,6 @@
                     let regWorked = mS + aS + nS;
                     const pSched = parseInt(data.scheduleDays) || 21;
                     
-                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
-                        regWorked = Math.max(0, pSched - vac - blood - l4m);
-                    }
-                    
                     const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * regWorked : 0;
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (21 * 8)) * 0.20); 
                     const nightAm = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
@@ -690,14 +674,6 @@
                     
                     let regWorked = mShifts + aShifts + nShifts;
                     const pastSched = parseInt(data.scheduleDays) || stDays;
-                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
-                    const vac = Math.max(0, parseInt(data.vacationDays) || 0);
-                    const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
-                    
-                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
-                        regWorked = Math.max(0, pastSched - vac - blood - l4m);
-                    }
-                    
                     const over = Math.min(rawOver, regWorked);
                     let pActual = regWorked + over;
                     
@@ -758,39 +734,6 @@
         }
     });
 
-    // Оновлена логіка графіку: ВІДНІМАЄМО надгодини, щоб вони не розмивали планові дні!
-    ['morningShifts', 'afternoonShifts', 'nightShifts', 'vacationDays', 'bloodDonationDays', 'l4Days', 'l4MissedShifts', 'overtimeDays'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) {
-            el.addEventListener('input', () => {
-                if(isPremium) {
-                    const mStr = document.getElementById('morningShifts').value;
-                    const aStr = document.getElementById('afternoonShifts').value;
-                    const nStr = document.getElementById('nightShifts').value;
-                    const overStr = document.getElementById('overtimeDays').value;
-                    
-                    const m = Math.max(0, parseInt(mStr) || 0);
-                    const a = Math.max(0, parseInt(aStr) || 0);
-                    const n = Math.max(0, parseInt(nStr) || 0);
-                    const vac = Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0);
-                    const blood = Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0);
-                    const l4Missed = Math.max(0, parseInt(document.getElementById('l4MissedShifts').value) || 0); 
-                    const over = Math.max(0, parseFloat(overStr) || 0);
-                    
-                    const schedInput = document.getElementById('scheduleDays');
-                    if (mStr !== '' || aStr !== '' || nStr !== '') {
-                        // Віднімаємо надгодини, бо вони не є частиною планового графіку!
-                        let autoSched = Math.max(0, m + a + n + vac + blood + l4Missed - over);
-                        schedInput.value = autoSched > 0 ? autoSched : "";
-                    } else if (vac === 0 && blood === 0 && l4Missed === 0) {
-                        schedInput.value = "";
-                    }
-                }
-                calculateSalary();
-            });
-        }
-    });
-
     window.calculateSalary = function() {
         const monthVal = document.getElementById('monthSelect').value;
         if (!monthVal) return updateUI(0, 0);
@@ -801,6 +744,12 @@
         setDefaultBaseSalary(monthVal);
         let baseSalary = Math.max(0, parseFloat(document.getElementById('baseSalary').value) || 5750);
 
+        // Якщо бейдж графіка порожній — виставляємо місячну норму за замовчуванням (не перезаписується автоматично від надгодин)
+        const schedInput = document.getElementById('scheduleDays');
+        if (!schedInput.value) {
+            schedInput.value = stateDays;
+        }
+
         const vacDays = isPremium ? Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0) : 0;
         const bloodDonationDays = isPremium ? Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0) : 0;
         const l4Days = isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0;
@@ -809,25 +758,15 @@
         document.getElementById('bloodBonusGroup').classList.toggle('hidden', bloodDonationDays === 0);
         document.getElementById('l4MissedGroup').classList.toggle('hidden', l4Days === 0);
 
-        const mStr = document.getElementById('morningShifts').value;
-        const aStr = document.getElementById('afternoonShifts').value;
-        const nStr = document.getElementById('nightShifts').value;
-
-        const morningShifts = Math.max(0, parseInt(mStr) || 0);
-        const afternoonShifts = Math.max(0, parseInt(aStr) || 0);
-        const nightShifts = Math.max(0, parseInt(nStr) || 0);
+        const morningShifts = Math.max(0, parseInt(document.getElementById('morningShifts').value) || 0);
+        const afternoonShifts = Math.max(0, parseInt(document.getElementById('afternoonShifts').value) || 0);
+        const nightShifts = Math.max(0, parseInt(document.getElementById('nightShifts').value) || 0);
         const weekendDays = Math.max(0, parseInt(document.getElementById('weekendDays').value) || 0);
-        const l4Missed = Math.max(0, parseInt(document.getElementById('l4MissedShifts').value) || 0);
+        const overtimeDays = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
 
+        // ВПРАВЛЕНИЙ АЛГОРИТМ: Відпрацьовані регулярні зміни
         let regWorkedDays = morningShifts + afternoonShifts + nightShifts;
-        let schedDays = isPremium ? (parseInt(document.getElementById('scheduleDays').value) || stateDays) : stateDays;
-
-        let rawOvertime = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
-        const overtimeDays = Math.min(rawOvertime, regWorkedDays); 
-
-        if (mStr === '' && aStr === '' && nStr === '') {
-            regWorkedDays = Math.max(0, schedDays - vacDays - bloodDonationDays - l4Missed);
-        }
+        let schedDays = parseInt(schedInput.value) || stateDays;
 
         const dailyUrlopBonus = (isPremium && vacDays > 0) ? Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0) : 0;
         const totalUrlopBonus = dailyUrlopBonus * vacDays;
@@ -891,29 +830,25 @@
 
         updateUI(gross, net);
 
-        // ОНОВЛЕННЯ ДАНИХ НА ДРУГІЙ СТОРІНЦІ (ДЕТАЛІ)
-        
-        // 1. Форматування нічних годин (ГГ год ХХ хв)
-        const totalNightHoursRaw = (morningShifts * (10/60)) + (nightShifts * 8);
-        const nHours = Math.floor(totalNightHoursRaw);
-        const nMins = Math.round((totalNightHoursRaw - nHours) * 60);
-        const formattedNightTime = nMins > 0 ? `${nHours} год ${nMins} хв` : `${nHours} год`;
-        
-        // 2. Всі задіяні дні
-        const totalActiveDays = regWorkedDays + vacDays + bloodDonationDays;
-        
+        // ОНОВЛЕННЯ ДАНИХ НА ДРУГІЙ СТОРІНЦІ (ДЕТАЛІ У ФОРМАТІ ГОДИН/ХВИЛИН ТА ЗАДІЯНИХ ДНІВ)
+        const totalNightMinutes = Math.round(((morningShifts * (10/60)) + (nightShifts * 8)) * 60);
+        const nHours = Math.floor(totalNightMinutes / 60);
+        const nMins = totalNightMinutes % 60;
+        const nightTimeFormatted = nHours > 0 ? `${nHours} год ${nMins} хв` : `${nMins} хв`;
+
         const totalExtrasSum = bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff) + totalUrlopBonus + bloodDonationPay;
+        const totalEngagedDays = regWorkedDays + vacDays + bloodDonationDays;
 
         const monthSelectEl = document.getElementById('monthSelect');
         document.getElementById('infoMonth').innerText = monthSelectEl.options[monthSelectEl.selectedIndex]?.text || '-';
         document.getElementById('infoBase').innerText = baseSalary.toFixed(2) + ' zł';
         document.getElementById('infoSched').innerText = schedDays;
         document.getElementById('infoWorked').innerText = regWorkedDays;
-        document.getElementById('infoTotalActive').innerText = totalActiveDays;
         document.getElementById('infoVacation').innerText = vacDays;
         document.getElementById('infoBlood').innerText = bloodDonationDays;
         document.getElementById('infoL4').innerText = l4Days;
-        document.getElementById('infoNightHours').innerText = formattedNightTime;
+        document.getElementById('infoTotalDays').innerText = totalEngagedDays + ' днів';
+        document.getElementById('infoNightHours').innerText = nightTimeFormatted;
         document.getElementById('infoNightTariff').innerText = nightTariff.toFixed(2) + ' zł/год';
         document.getElementById('infoOvertime').innerText = overtimeDays;
         document.getElementById('infoTotalExtras').innerText = totalExtrasSum.toFixed(2) + ' zł';
