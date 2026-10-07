@@ -695,6 +695,7 @@
                         const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                         const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
                         const pastWknd = wknd * 100;
+                        // Виправлено: враховуємо і надбавку, і базову виплату за надгодини (множник 2 замість 1.5 або чистої надбавки)
                         const pastOver = over * ((pastBase / stDays) * 2);
 
                         totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
@@ -839,13 +840,15 @@
         
         const totalEngagedDays = regWorkedDays + vacDays + bloodDonationDays + overtimeDays;
 
-        // Зберігаємо змінні для розрахунку НАСТУПНОЇ відпустки з урахуванням усіх задіяних днів
+        // Виправлено: для бази відпустки тепер сумуємо повну вартість надгодин (як надбавку, так і базову доплату)
+        const overtimeTotalPay = overtimeDays * overtimeTariff;
+
         window.currentMonthCalc = {
-            urlopBaseExtras: bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff),
+            urlopBaseExtras: bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay,
             urlopBaseDays: totalEngagedDays
         };
 
-        const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff);
+        const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay;
         const autoDailyBlood = (isPremium && schedDays > 0) ? (currentVariables / schedDays) : 0;
         
         const bloodBonusInput = document.getElementById('bloodBonus');
@@ -855,7 +858,7 @@
         const finalDailyBlood = parseFloat(bloodBonusInput.value) || 0;
         const bloodDonationPay = finalDailyBlood * bloodDonationDays;
 
-        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff) + totalUrlopBonus + bloodDonationPay;
+        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay + totalUrlopBonus + bloodDonationPay;
 
         const isUnder26 = document.getElementById('under26Select').value === 'yes';
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
@@ -890,7 +893,7 @@
         const nMins = totalNightMinutes % 60;
         const nightTimeFormatted = nHours > 0 ? `${nHours} год ${nMins} хв` : `${nMins} хв`;
 
-        const totalExtrasSum = bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff) + totalUrlopBonus + bloodDonationPay;
+        const totalExtrasSum = bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay + totalUrlopBonus + bloodDonationPay;
 
         const monthSelectEl = document.getElementById('monthSelect');
         document.getElementById('infoMonth').innerText = monthSelectEl.options[monthSelectEl.selectedIndex]?.text || '-';
