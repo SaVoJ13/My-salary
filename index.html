@@ -694,11 +694,11 @@
                         const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
                         const pastWknd = wknd * 100;
                         
-                        // ВИПРАВЛЕННЯ ДЛЯ НЕЗБЕРЕЖЕНИХ МІСЯЦІВ: беремо лише надбавку за надгодини у змінну базу (x1 замість x2)
-                        const pastOverUrlopAllowance = over * (pastBase / stDays);
+                        // ФІНАЛЬНЕ ВИПРАВЛЕННЯ: У чисельник йде 100% оплати надгодин (база + надбавка = x2)
+                        const pastOverUrlopAllowance = over * ((pastBase / stDays) * 2);
 
                         totalExtras += (pastBonusVal + pastNight + pastWknd + pastOverUrlopAllowance);
-                        // Дільник залишаємо суворим: лише відпрацьовані дні (без відпусток)
+                        // ФІНАЛЬНЕ ВИПРАВЛЕННЯ: У знаменник йдуть ЛИШЕ відпрацьовані зміни та надгодини
                         totalWorkedDays += (regWorked + over);
                     }
                 }
@@ -835,16 +835,13 @@
 
         const nightTariff = Math.round(((CONFIG.NIGHT_BASE_SALARY / (stateDays * 8)) * 0.20) * 100) / 100;
         
-        // Повна вартість надгодин для виплати "на руки" (звичайна ставка + надбавка)
         const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
         const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         const overtimeTotalPay = overtimeDays * overtimeTariff;
 
-        // ВИПРАВЛЕННЯ: У базу відпустки йде лише змінна надбавка (додаток), а не звичайна ставка за надгодини
-        const overtimeUrlopAllowance = overtimeDays * (baseSalary / stateDays);
-
+        // ФІНАЛЬНЕ ВИПРАВЛЕННЯ ДЛЯ ХМАРИ: Повна оплата надгодин (x2) та лише відпрацьовані дні
         window.currentMonthCalc = {
-            urlopBaseExtras: bonusAmount + totalNightPay + (weekendDays * 100) + overtimeUrlopAllowance,
+            urlopBaseExtras: bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay,
             urlopBaseDays: regWorkedDays + overtimeDays // Дільник без відпусток та донацій крові
         };
 
