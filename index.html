@@ -694,11 +694,11 @@
                         const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
                         const pastWknd = wknd * 100;
                         
-                        // ФІНАЛЬНЕ ВИПРАВЛЕННЯ: У чисельник йде 100% оплати надгодин (база + надбавка = x2)
+                        // ФІНАЛЬНО: Повна сума надгодин (x2), як і в базі поточного місяця
                         const pastOverUrlopAllowance = over * ((pastBase / stDays) * 2);
 
                         totalExtras += (pastBonusVal + pastNight + pastWknd + pastOverUrlopAllowance);
-                        // ФІНАЛЬНЕ ВИПРАВЛЕННЯ: У знаменник йдуть ЛИШЕ відпрацьовані зміни та надгодини
+                        // ФІНАЛЬНО: У дільнику тільки фактичні відпрацьовані дні (без відпусток)
                         totalWorkedDays += (regWorked + over);
                     }
                 }
@@ -706,7 +706,8 @@
         }
         
         if (totalWorkedDays === 0) return 0;
-        return (totalExtras / totalWorkedDays);
+        // ЗОЛОТИЙ МНОЖНИК 8.5 / 8
+        return (totalExtras / totalWorkedDays) * (8.5 / 8);
     }
 
     document.getElementById('vacationDays').addEventListener('input', async function() {
@@ -837,16 +838,19 @@
         
         const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
         const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
+        
+        // ФІНАЛЬНО: Повна оплата надгодин (x2)
         const overtimeTotalPay = overtimeDays * overtimeTariff;
 
-        // ФІНАЛЬНЕ ВИПРАВЛЕННЯ ДЛЯ ХМАРИ: Повна оплата надгодин (x2) та лише відпрацьовані дні
+        // ФІНАЛЬНО ДЛЯ ХМАРИ: Повна оплата надгодин та лише фактично відпрацьовані дні
         window.currentMonthCalc = {
             urlopBaseExtras: bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay,
             urlopBaseDays: regWorkedDays + overtimeDays // Дільник без відпусток та донацій крові
         };
 
         const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay;
-        const autoDailyBlood = (isPremium && schedDays > 0) ? (currentVariables / schedDays) : 0;
+        // Донація крові також множиться на 8.5/8, бо вона замінює такий самий день
+        const autoDailyBlood = (isPremium && schedDays > 0) ? ((currentVariables / schedDays) * (8.5 / 8)) : 0;
         
         const bloodBonusInput = document.getElementById('bloodBonus');
         if (bloodDonationDays > 0) {
