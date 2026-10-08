@@ -355,6 +355,7 @@
         LAUNDRY_MAX: 16.00,
         BENEFIT_ZUS_NFZ: 30.25,
         BENEFIT_TAX: 54.00,
+        DAILY_HOURS: 8 + (25 / 60), // 8 годин і 25 хвилин (8.4167 год)
         BASE_SALARIES: {
             "2025": 4666,
             "2026_early": 5750,
@@ -384,7 +385,7 @@
         currentActivePage = page;
         const track = document.getElementById('pagesTrack');
         if (page === 2) {
-            track.style.transform = 'translateX(-50% )';
+            track.style.transform = 'translateX(-50%)';
         } else {
             track.style.transform = 'translateX(0)';
         }
@@ -650,8 +651,8 @@
                     const pSched = parseInt(data.scheduleDays) || 21;
                     
                     const bonusAm = pSched > 0 ? (pBase * (pPct / 100)) / pSched * regWorked : 0;
-                    const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (21 * 8)) * 0.20); 
-                    const nightAm = (mS * (10/60) * nTariff) + (nS * 8 * nTariff) + (nS * 30);
+                    const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (21 * CONFIG.DAILY_HOURS)) * 0.20); 
+                    const nightAm = (mS * (10/60) * nTariff) + (nS * CONFIG.DAILY_HOURS * nTariff) + (nS * 30);
                     const wkndAm = wknd * 100;
                     const overAm = over * ((pBase / 21) * 2);
                     
@@ -671,7 +672,7 @@
         }
     }
 
-    // ВИПРАВЛЕНИЙ АЛГОРИТМ РОЗРАХУНКУ СЕРЕДНЬОЇ ВІДПУСТКИ ЗГІДНО З § 9 ТА КОЕФІЦІЄНТОМ 8.5/8
+    // АЛГОРИТМ РОЗРАХУНКУ СЕРЕДНЬОЇ ВІДПУСТКИ З УХОДОМ ВІДПУСТОК/ДОНАЦІЙ З ДІЛЬНИКА ТА КОЕФІЦІЄНТОМ 8.5/8
     async function getAutoDailyUrlopBonus(currentYear, monthIdx) {
         if (!auth.currentUser) return 0;
         let totalExtras = 0; let totalWorkedDays = 0;
@@ -707,12 +708,11 @@
                     }
                     
                     const over = Math.min(rawOver, regWorked);
-                    // Виключаємо дні відпустки та донації з дільника відповідно до § 9 розпорządzenia urlopowego
-                    let pActual = regWorked + over; 
+                    let pActual = regWorked + over; // ВИКЛЮЧЕНО відпустки та донації з дільника (§ 9 розпорządzenia urlopowego)
                     
                     const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
-                    const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
-                    const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
+                    const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * CONFIG.DAILY_HOURS)) * 0.20);
+                    const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * CONFIG.DAILY_HOURS * nTariff) + (nShifts * 30);
                     const pastWknd = wknd * 100;
                     const pastOver = over * ((pastBase / stDays) * 1.5);
 
@@ -723,7 +723,6 @@
         }
         
         if (totalWorkedDays === 0) return 0;
-        // Множимо на 8.5 / 8 для точного збігу з правилами розрахунку паска
         return (totalExtras / totalWorkedDays) * (8.5 / 8);
     }
 
@@ -851,10 +850,10 @@
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
         const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * regWorkedDays) : (baseSalary * (bonusPct / 100));
 
-        const nightTariff = Math.round(((CONFIG.NIGHT_BASE_SALARY / (stateDays * 8)) * 0.20) * 100) / 100;
+        const nightTariff = Math.round(((CONFIG.NIGHT_BASE_SALARY / (stateDays * CONFIG.DAILY_HOURS)) * 0.20) * 100) / 100;
         const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
 
-        const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
+        const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * CONFIG.DAILY_HOURS * nightTariff) + (nightShifts * 30);
         
         const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff);
         const autoDailyBlood = (isPremium && schedDays > 0) ? (currentVariables / schedDays) : 0;
@@ -896,7 +895,7 @@
 
         updateUI(gross, net);
 
-        const totalNightMinutes = Math.round(((morningShifts * (10/60)) + (nightShifts * 8)) * 60);
+        const totalNightMinutes = Math.round(((morningShifts * (10/60)) + (nightShifts * CONFIG.DAILY_HOURS)) * 60);
         const nHours = Math.floor(totalNightMinutes / 60);
         const nMins = totalNightMinutes % 60;
         const nightTimeFormatted = nHours > 0 ? `${nHours} год ${nMins} хв` : `${nMins} хв`;
