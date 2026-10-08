@@ -693,10 +693,12 @@
                         const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                         const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
                         const pastWknd = wknd * 100;
-                        const pastOver = over * ((pastBase / stDays) * 2);
+                        
+                        // ВИПРАВЛЕННЯ ДЛЯ НЕЗБЕРЕЖЕНИХ МІСЯЦІВ: беремо лише надбавку за надгодини у змінну базу (x1 замість x2)
+                        const pastOverUrlopAllowance = over * (pastBase / stDays);
 
-                        totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
-                        // ВИПРАВЛЕННЯ: Для старих місяців беремо тільки фактично відпрацьовані дні
+                        totalExtras += (pastBonusVal + pastNight + pastWknd + pastOverUrlopAllowance);
+                        // Дільник залишаємо суворим: лише відпрацьовані дні (без відпусток)
                         totalWorkedDays += (regWorked + over);
                     }
                 }
@@ -832,17 +834,18 @@
         const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * regWorkedDays) : (baseSalary * (bonusPct / 100));
 
         const nightTariff = Math.round(((CONFIG.NIGHT_BASE_SALARY / (stateDays * 8)) * 0.20) * 100) / 100;
-        const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
-
-        const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         
-        const totalEngagedDays = regWorkedDays + vacDays + bloodDonationDays + overtimeDays;
+        // Повна вартість надгодин для виплати "на руки" (звичайна ставка + надбавка)
+        const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
+        const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         const overtimeTotalPay = overtimeDays * overtimeTariff;
 
-        // ВИПРАВЛЕННЯ: Для дільника бази відпустки беремо ЛИШЕ відпрацьовані дні (без відпустки та донацій)
+        // ВИПРАВЛЕННЯ: У базу відпустки йде лише змінна надбавка (додаток), а не звичайна ставка за надгодини
+        const overtimeUrlopAllowance = overtimeDays * (baseSalary / stateDays);
+
         window.currentMonthCalc = {
-            urlopBaseExtras: bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay,
-            urlopBaseDays: regWorkedDays + overtimeDays 
+            urlopBaseExtras: bonusAmount + totalNightPay + (weekendDays * 100) + overtimeUrlopAllowance,
+            urlopBaseDays: regWorkedDays + overtimeDays // Дільник без відпусток та донацій крові
         };
 
         const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay;
@@ -891,6 +894,7 @@
         const nightTimeFormatted = nHours > 0 ? `${nHours} год ${nMins} хв` : `${nMins} хв`;
 
         const totalExtrasSum = bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay + totalUrlopBonus + bloodDonationPay;
+        const totalEngagedDays = regWorkedDays + vacDays + bloodDonationDays + overtimeDays;
 
         const monthSelectEl = document.getElementById('monthSelect');
         document.getElementById('infoMonth').innerText = monthSelectEl.options[monthSelectEl.selectedIndex]?.text || '-';
