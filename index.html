@@ -330,9 +330,12 @@
                 </div>
             </div>
 
-            <button id="btn-sync-page2" class="action-btn btn-sync hidden" style="margin-top: 15px; padding: 14px; font-size: 15px;">Зберегти місяць у хмару ☁️</button>
+            <!-- КНОПКА ЗБЕРЕЖЕННЯ В ХМАРУ НА ІНФОРМАЦІЙНІЙ СТОРІНЦІ -->
+            <div id="info-sync-container" class="premium-field" style="margin-top: 15px; display: none;">
+                <button id="btn-sync-up-info" class="action-btn btn-sync">Зберегти поточний місяць ☁️</button>
+            </div>
 
-            <div class="swipe-hint" style="margin-top: 30px;">Свайп вправо для повернення →</div>
+            <div class="swipe-hint" style="margin-top: 20px;">Свайп вправо для повернення →</div>
         </div>
 
     </div>
@@ -376,20 +379,22 @@
     let isPremium = false;
     let currentActivePage = 1;
     window.cachedL4DailyRate = null;
-    window.currentMonthCalc = null;
 
     window.switchPage = function(page) {
         currentActivePage = page;
         const track = document.getElementById('pagesTrack');
         if (page === 2) {
-            track.style.transform = 'translateX(-50%)';
+            track.style.transform = 'translateX(-50% )';
         } else {
             track.style.transform = 'translateX(0)';
         }
     }
 
     let touchStartX = 0;
-    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+    document.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
     document.addEventListener('touchend', e => {
         const touchEndX = e.changedTouches[0].screenX;
         const diff = touchEndX - touchStartX;
@@ -399,12 +404,19 @@
         if (Math.abs(diff) < 60) return;
 
         if (diff > 0) { 
-            if (isMenuOpen) sideMenu.classList.remove('open');
-            else if (currentActivePage === 2) switchPage(1);
-            else if (currentActivePage === 1) toggleMenu();
+            if (isMenuOpen) {
+                sideMenu.classList.remove('open');
+            } else if (currentActivePage === 2) {
+                switchPage(1);
+            } else if (currentActivePage === 1) {
+                toggleMenu();
+            }
         } else { 
-            if (isMenuOpen) sideMenu.classList.remove('open');
-            else if (currentActivePage === 1) switchPage(2);
+            if (isMenuOpen) {
+                sideMenu.classList.remove('open');
+            } else if (currentActivePage === 1) {
+                switchPage(2);
+            }
         }
     });
 
@@ -413,8 +425,10 @@
         document.getElementById('app-body').classList.toggle('is-logged-in', isPremium);
         document.getElementById('auth-container').classList.toggle('hidden', isPremium);
         document.getElementById('sync-container').classList.toggle('hidden', !isPremium);
-        document.getElementById('btn-sync-page2').classList.toggle('hidden', !isPremium);
         
+        const infoSyncContainer = document.getElementById('info-sync-container');
+        if(infoSyncContainer) infoSyncContainer.style.display = isPremium ? 'block' : 'none';
+
         if(user) {
             document.getElementById('user-email-display').innerText = "👤 " + user.email;
             await loadCloudData(); 
@@ -424,30 +438,17 @@
         calculateSalary();
     });
 
-    document.getElementById('btn-login').addEventListener('click', async () => {
-        try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
-        catch (e) { alert("Помилка входу: " + e.message); }
-    });
-    document.getElementById('btn-register').addEventListener('click', async () => {
-        try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); alert("Реєстрація успішна!"); } 
-        catch (e) { alert("Помилка: " + e.message); }
-    });
-    document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
-
-    async function saveMonthToCloud(btnElement) {
+    async function handleSyncUp() {
         if (!auth.currentUser) return;
         const monthVal = document.getElementById('monthSelect').value;
         if (!monthVal) { alert("Оберіть місяць!"); return; }
 
-        const originalText = btnElement.innerText;
-        btnElement.innerText = "Збереження... ☁️"; 
+        const btn1 = document.getElementById('btn-sync-up');
+        const btn2 = document.getElementById('btn-sync-up-info');
+        if(btn1) btn1.innerText = "Збереження... ☁️"; 
+        if(btn2) btn2.innerText = "Збереження... ☁️"; 
 
-        const data = { 
-            updatedAt: new Date().toISOString(),
-            savedUrlopExtras: window.currentMonthCalc ? window.currentMonthCalc.urlopBaseExtras : 0,
-            savedUrlopDays: window.currentMonthCalc ? window.currentMonthCalc.urlopBaseDays : 0
-        };
-        
+        const data = { updatedAt: new Date().toISOString() };
         document.querySelectorAll('input, select').forEach(el => {
             if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id)) data[el.id] = el.value;
         });
@@ -459,12 +460,24 @@
         } catch (error) { 
             alert("Помилка збереження: " + error.message); 
         } finally {
-            btnElement.innerText = originalText;
+            if(btn1) btn1.innerText = "Зберегти місяць ☁️";
+            if(btn2) btn2.innerText = "Зберегти поточний місяць ☁️";
         }
     }
 
-    document.getElementById('btn-sync-up').addEventListener('click', function() { saveMonthToCloud(this); });
-    document.getElementById('btn-sync-page2').addEventListener('click', function() { saveMonthToCloud(this); });
+    document.getElementById('btn-sync-up').addEventListener('click', handleSyncUp);
+    const btnSyncInfo = document.getElementById('btn-sync-up-info');
+    if(btnSyncInfo) btnSyncInfo.addEventListener('click', handleSyncUp);
+
+    document.getElementById('btn-login').addEventListener('click', async () => {
+        try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
+        catch (e) { alert("Помилка входу: " + e.message); }
+    });
+    document.getElementById('btn-register').addEventListener('click', async () => {
+        try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); alert("Реєстрація успішна!"); } 
+        catch (e) { alert("Помилка: " + e.message); }
+    });
+    document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
     async function loadCloudData() {
         if (!auth.currentUser) return;
@@ -658,6 +671,7 @@
         }
     }
 
+    // ВИПРАВЛЕНИЙ АЛГОРИТМ РОЗРАХУНКУ СЕРЕДНЬОЇ ВІДПУСТКИ ЗГІДНО З § 9 ТА КОЕФІЦІЄНТОМ 8.5/8
     async function getAutoDailyUrlopBonus(currentYear, monthIdx) {
         if (!auth.currentUser) return 0;
         let totalExtras = 0; let totalWorkedDays = 0;
@@ -666,47 +680,50 @@
             let pMonth = monthIdx + 1 - i; let pYear = currentYear;
             if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
             const pastMonthStr = pYear + "-" + String(pMonth).padStart(2, '0');
+            const stDays = stateWorkDays[pMonth - 1] || 21;
             
             try {
                 const docSnap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", pastMonthStr));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                    const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
+                    let pastPct = parseFloat(data.bonusPctSelect);
+                    if (isNaN(pastPct)) pastPct = 15;
                     
-                    if (data.savedUrlopExtras !== undefined && data.savedUrlopDays !== undefined) {
-                        totalExtras += parseFloat(data.savedUrlopExtras) || 0;
-                        totalWorkedDays += parseFloat(data.savedUrlopDays) || 0;
-                    } else {
-                        const stDays = stateWorkDays[pMonth - 1] || 21;
-                        const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
-                        let pastPct = parseFloat(data.bonusPctSelect);
-                        if (isNaN(pastPct)) pastPct = 15;
-                        const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
-                        const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
-                        const nShifts = Math.max(0, parseInt(data.nightShifts) || 0);
-                        const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
-                        const over = Math.max(0, parseFloat(data.overtimeDays) || 0);
-                        
-                        let regWorked = mShifts + aShifts + nShifts;
-                        const pastSched = parseInt(data.scheduleDays) || stDays;
-                        
-                        const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
-                        const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
-                        const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
-                        const pastWknd = wknd * 100;
-                        
-                        // ФІНАЛЬНО: Повна сума надгодин (x2), як і в базі поточного місяця
-                        const pastOverUrlopAllowance = over * ((pastBase / stDays) * 2);
-
-                        totalExtras += (pastBonusVal + pastNight + pastWknd + pastOverUrlopAllowance);
-                        // ФІНАЛЬНО: У дільнику тільки фактичні відпрацьовані дні (без відпусток)
-                        totalWorkedDays += (regWorked + over);
+                    const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
+                    const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
+                    const nShifts = Math.max(0, parseInt(data.nightShifts) || 0);
+                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
+                    const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
+                    
+                    let regWorked = mShifts + aShifts + nShifts;
+                    const pastSched = parseInt(data.scheduleDays) || stDays;
+                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
+                    const vac = Math.max(0, parseInt(data.vacationDays) || 0);
+                    const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
+                    
+                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
+                        regWorked = Math.max(0, pastSched - vac - blood - l4m);
                     }
+                    
+                    const over = Math.min(rawOver, regWorked);
+                    // Виключаємо дні відпустки та донації з дільника відповідно до § 9 розпорządzenia urlopowego
+                    let pActual = regWorked + over; 
+                    
+                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
+                    const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
+                    const pastNight = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff) + (nShifts * 30);
+                    const pastWknd = wknd * 100;
+                    const pastOver = over * ((pastBase / stDays) * 1.5);
+
+                    totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
+                    totalWorkedDays += pActual;
                 }
             } catch (e) {}
         }
         
         if (totalWorkedDays === 0) return 0;
-        // ЗОЛОТИЙ МНОЖНИК 8.5 / 8
+        // Множимо на 8.5 / 8 для точного збігу з правилами розрахунку паска
         return (totalExtras / totalWorkedDays) * (8.5 / 8);
     }
 
@@ -835,22 +852,12 @@
         const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * regWorkedDays) : (baseSalary * (bonusPct / 100));
 
         const nightTariff = Math.round(((CONFIG.NIGHT_BASE_SALARY / (stateDays * 8)) * 0.20) * 100) / 100;
-        
         const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
+
         const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         
-        // ФІНАЛЬНО: Повна оплата надгодин (x2)
-        const overtimeTotalPay = overtimeDays * overtimeTariff;
-
-        // ФІНАЛЬНО ДЛЯ ХМАРИ: Повна оплата надгодин та лише фактично відпрацьовані дні
-        window.currentMonthCalc = {
-            urlopBaseExtras: bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay,
-            urlopBaseDays: regWorkedDays + overtimeDays // Дільник без відпусток та донацій крові
-        };
-
-        const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay;
-        // Донація крові також множиться на 8.5/8, бо вона замінює такий самий день
-        const autoDailyBlood = (isPremium && schedDays > 0) ? ((currentVariables / schedDays) * (8.5 / 8)) : 0;
+        const currentVariables = bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff);
+        const autoDailyBlood = (isPremium && schedDays > 0) ? (currentVariables / schedDays) : 0;
         
         const bloodBonusInput = document.getElementById('bloodBonus');
         if (bloodDonationDays > 0) {
@@ -859,7 +866,7 @@
         const finalDailyBlood = parseFloat(bloodBonusInput.value) || 0;
         const bloodDonationPay = finalDailyBlood * bloodDonationDays;
 
-        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay + totalUrlopBonus + bloodDonationPay;
+        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff) + totalUrlopBonus + bloodDonationPay;
 
         const isUnder26 = document.getElementById('under26Select').value === 'yes';
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
@@ -894,8 +901,8 @@
         const nMins = totalNightMinutes % 60;
         const nightTimeFormatted = nHours > 0 ? `${nHours} год ${nMins} хв` : `${nMins} хв`;
 
-        const totalExtrasSum = bonusAmount + totalNightPay + (weekendDays * 100) + overtimeTotalPay + totalUrlopBonus + bloodDonationPay;
-        const totalEngagedDays = regWorkedDays + vacDays + bloodDonationDays + overtimeDays;
+        const totalExtrasSum = bonusAmount + totalNightPay + (weekendDays * 100) + (overtimeDays * overtimeTariff) + totalUrlopBonus + bloodDonationPay;
+        const totalEngagedDays = regWorkedDays + vacDays + bloodDonationDays;
 
         const monthSelectEl = document.getElementById('monthSelect');
         document.getElementById('infoMonth').innerText = monthSelectEl.options[monthSelectEl.selectedIndex]?.text || '-';
