@@ -184,7 +184,7 @@
 
     <div class="pages-track" id="pagesTrack">
         
-        <!-- СТОРІНКА 1: ГОЛОВНИЙ КАЛЬКУЛЯТОР (ВСІ ДАНІ ДЛЯ ВВОДУ) -->
+        <!-- СТОРІНКА 1: ГОЛОВНИЙ КАЛЬКУЛЯТОР (ВЕСЬ ВВІД ДАНИХ) -->
         <div class="calculator-page">
             <div class="header-row">
                 <button class="menu-btn" onclick="toggleMenu()">☰</button>
@@ -207,13 +207,11 @@
             </div>
 
             <div class="form-group">
-                <label id="lblBonus">Премія</label>
+                <label id="lblBonus">Премія за якість</label>
                 <select id="bonusPctSelect">
-                    <option value="0">0%</option>
+                    <option value="10" selected>10%</option>
                     <option value="5">5%</option>
-                    <option value="10">10%</option>
-                    <option value="12.5">12.5%</option>
-                    <option value="15" selected>15%</option>
+                    <option value="0">0%</option>
                 </select>
             </div>
 
@@ -262,7 +260,7 @@
 
             <div class="form-group premium-field">
                 <label id="lblL4Days">Лікарняний L4 (календ.)</label>
-                <input type="number" id="l4Days" placeholder="0" min="0" onfocus="this.value=''" onblur="calculateSalary()">
+                <input type="number" id="l4Days" placeholder="0" min="0" onfocus="this.value=''">
             </div>
             <div class="form-group sub-group hidden" id="l4MissedGroup">
                 <label id="lblL4Missed">Пропущено змін (шт) ℹ️</label>
@@ -306,7 +304,7 @@
                 </div>
             </div>
 
-            <div class="swipe-hint">← Свайп вліво для деталей та додаткових нарахувань</div>
+            <div class="swipe-hint">← Свайп вліво для деталей та розрахунку</div>
         </div>
 
         <!-- СТОРІНКА 2: ІНФОРМАЦІЙНА СТОРІНКА (ТІЛЬКИ ДЛЯ ПЕРЕГЛЯДУ) -->
@@ -316,13 +314,15 @@
                 <h2 style="margin-right: auto; margin-left: 15px;">Деталі та розрахунок 📊</h2>
             </div>
             
-            <!-- ПОВНА РОЗБИВКА СКЛАДОВИХ БРУТТО -->
+            <!-- ПОВНА РОЗБИВКА СКЛАДОВИХ БРУТТО І НЕТТО -->
             <div class="info-card">
-                <div style="font-weight: bold; margin-bottom: 12px; color: var(--text-main); font-size: 14px; text-transform: uppercase;">Структура нарахування Brutto</div>
+                <div style="font-weight: bold; margin-bottom: 12px; color: var(--text-main); font-size: 14px; text-transform: uppercase;">Деталізація нарахувань</div>
                 
                 <div class="info-row"><span>Базова ставка (з урахув. L4):</span> <strong id="infoBasePay">0.00 zł</strong></div>
-                <div class="info-row"><span>Нарахована премія:</span> <strong id="infoBonusSum" style="color: var(--success);">0.00 zł</strong></div>
-                <div class="info-row"><span>Нічний час (<span id="infoNightHours">0 год 0 хв</span>):</span> <strong id="infoNightSum">0.00 zł</strong></div>
+                <div class="info-row"><span>Премія за присутність (<span id="infoPresencePct">5%</span>):</span> <strong id="infoPresenceBonusSum" style="color: var(--success);">0.00 zł</strong></div>
+                <div class="info-row"><span>Премія за якість (<span id="infoQualityPct">10%</span>):</span> <strong id="infoQualityBonusSum" style="color: var(--success);">0.00 zł</strong></div>
+                <div class="info-row"><span>Доплата за нічний час (<span id="infoNightHours">0 год 0 хв</span>):</span> <strong id="infoNightTimeSum">0.00 zł</strong></div>
+                <div class="info-row"><span>Доплата за нічну зміну (<span id="infoNightShiftsCount">0</span> змін):</span> <strong id="infoNightShiftSum">0.00 zł</strong></div>
                 <div class="info-row"><span>Робота у вікенди:</span> <strong id="infoWeekendSum">0.00 zł</strong></div>
                 <div class="info-row"><span>Надгодини:</span> <strong id="infoOvertimeSum">0.00 zł</strong></div>
                 <div class="info-row"><span>Оплата відпустки:</span> <strong id="infoVacationSum">0.00 zł</strong></div>
@@ -331,6 +331,9 @@
                 
                 <div class="info-row total-row">
                     <span>РАЗОМ BRUTTO:</span> <strong id="infoTotalBrutto" style="color: var(--primary);">0.00 zł</strong>
+                </div>
+                <div class="info-row total-row" style="margin-top: 4px; border-top: none; padding-top: 0;">
+                    <span>РАЗОМ NETTO:</span> <strong id="infoTotalNetto" style="color: var(--success);">0.00 zł</strong>
                 </div>
             </div>
             
@@ -527,7 +530,7 @@
         document.querySelectorAll('input[type=number]').forEach(el => {
             if(el.id !== 'scheduleDays') el.value = '';
         });
-        document.getElementById('bonusPctSelect').value = "15";
+        document.getElementById('bonusPctSelect').value = "10";
         const monthVal = document.getElementById('monthSelect').value;
         if(monthVal) {
             setDefaultBaseSalary(monthVal);
@@ -552,7 +555,7 @@
     const dict = {
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
-            schedDays: "Графік", bonus: "Премія", morning: "Ранкові зміни (шт)", 
+            schedDays: "Графік", bonus: "Премія за якість", morning: "Ранкові зміни (шт)", 
             afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
             overtime: "Надгодини (днів)", vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 дн. відп. (zł) ℹ️",
             bloodDonation: "Донація крові (днів)", bloodBonus: "Сер. за 1 дн. донації (zł) ℹ️",
@@ -564,7 +567,7 @@
         },
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
-            schedDays: "Grafik", bonus: "Premia", morning: "Poranne zmiany (szt)", 
+            schedDays: "Grafik", bonus: "Premia za jakość", morning: "Poranne zmiany (szt)", 
             afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
             overtime: "Nadgodziny (dni)", vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa ℹ️",
             bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia z oddania krwi ℹ️",
@@ -653,7 +656,7 @@
                     const data = snap.data();
                     const pBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
                     let pPct = parseFloat(data.bonusPctSelect);
-                    if (isNaN(pPct)) pPct = 15;
+                    if (isNaN(pPct)) pPct = 10;
                     
                     const mS = Math.max(0, parseInt(data.morningShifts) || 0);
                     const aS = Math.max(0, parseInt(data.afternoonShifts) || 0);
@@ -702,7 +705,7 @@
                     const data = docSnap.data();
                     const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
                     let pastPct = parseFloat(data.bonusPctSelect);
-                    if (isNaN(pastPct)) pastPct = 15;
+                    if (isNaN(pastPct)) pastPct = 10;
                     
                     const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
                     const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
@@ -776,18 +779,13 @@
     document.getElementById('l4Days').addEventListener('input', function() {
         if(isPremium) {
             const l4 = Math.max(0, parseInt(this.value) || 0);
-            const bonusSelect = document.getElementById('bonusPctSelect');
             const missedGroup = document.getElementById('l4MissedGroup');
             
             if (l4 === 0) {
-                bonusSelect.value = "15";
                 missedGroup.classList.add('hidden');
                 document.getElementById('l4MissedShifts').value = ""; 
-            }
-            else {
+            } else {
                 missedGroup.classList.remove('hidden');
-                if (l4 <= 2) bonusSelect.value = "12.5";
-                else bonusSelect.value = "10";
             }
             calculateSalary();
         }
@@ -881,13 +879,22 @@
             l4Pay = l4DailyRate * 0.80 * l4Days; 
         }
 
-        const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
-        const bonusAmount = (isPremium && schedDays > 0) ? ((baseSalary * (bonusPct / 100)) / schedDays * regWorkedDays) : (baseSalary * (bonusPct / 100));
+        // РОЗРАХУНОК ДВОХ ТИПІВ ПРЕМІЙ
+        const presenceBonusPct = (isPremium && l4Days > 0) ? (l4Days <= 2 ? 2.5 : 0) : 5;
+        const qualityBonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
+
+        const presenceBonusAmount = (schedDays > 0) ? ((baseSalary * (presenceBonusPct / 100)) / schedDays * regWorkedDays) : 0;
+        const qualityBonusAmount = (schedDays > 0) ? ((baseSalary * (qualityBonusPct / 100)) / schedDays * regWorkedDays) : 0;
+        const bonusAmount = presenceBonusAmount + qualityBonusAmount;
 
         const nightTariff = Math.round(((CONFIG.NIGHT_BASE_SALARY / (stateDays * CONFIG.DAILY_HOURS)) * 0.20) * 100) / 100;
         const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
 
-        const totalNightPay = Math.round((morningShifts * (10/60) * nightTariff) * 100)/100 + (nightShifts * CONFIG.DAILY_HOURS * nightTariff) + (nightShifts * 30);
+        // ВІДОКРЕМЛЕННЯ НІЧНИХ ГОДИН ТА НІЧНИХ ЗМІН
+        const totalNightTimePay = Math.round(((morningShifts * (10/60) * nightTariff) + (nightShifts * CONFIG.DAILY_HOURS * nightTariff)) * 100) / 100;
+        const totalNightShiftPay = nightShifts * 30;
+        const totalNightPay = totalNightTimePay + totalNightShiftPay;
+
         const totalWeekendPay = weekendDays * 100;
         const totalOvertimePay = overtimeDays * overtimeTariff;
 
@@ -931,7 +938,7 @@
 
         updateUI(gross, net);
 
-        // ОНОВЛЕННЯ ДЕТАЛЬНОЇ ІНФОРМАЦІЇ (BRUTTO) НА ДРУГІЙ СТОРІНЦІ
+        // ОНОВЛЕННЯ ДЕТАЛЬНОЇ ІНФОРМАЦІЇ НА ДРУГІЙ СТОРІНЦІ
         const totalNightMinutes = Math.round(((morningShifts * (10/60)) + (nightShifts * CONFIG.DAILY_HOURS)) * 60);
         const nHours = Math.floor(totalNightMinutes / 60);
         const nMins = totalNightMinutes % 60;
@@ -939,10 +946,15 @@
 
         const totalEngagedDays = regWorkedDays + vacDays + bloodDonationDays;
 
-        // Встановлення значень та кольорів для структури Брутто
+        document.getElementById('infoPresencePct').innerText = presenceBonusPct + '%';
+        document.getElementById('infoQualityPct').innerText = qualityBonusPct + '%';
+        document.getElementById('infoNightShiftsCount').innerText = nightShifts;
+
         setFormatSum('infoBasePay', adjustedBase);
-        setFormatSum('infoBonusSum', bonusAmount, true); // Зелений якщо > 0
-        setFormatSum('infoNightSum', totalNightPay);
+        setFormatSum('infoPresenceBonusSum', presenceBonusAmount, true);
+        setFormatSum('infoQualityBonusSum', qualityBonusAmount, true);
+        setFormatSum('infoNightTimeSum', totalNightTimePay);
+        setFormatSum('infoNightShiftSum', totalNightShiftPay);
         setFormatSum('infoWeekendSum', totalWeekendPay);
         setFormatSum('infoOvertimeSum', totalOvertimePay);
         setFormatSum('infoVacationSum', totalUrlopBonus);
@@ -950,6 +962,7 @@
         setFormatSum('infoL4Sum', l4Pay);
         
         document.getElementById('infoTotalBrutto').innerText = gross.toFixed(2) + ' zł';
+        document.getElementById('infoTotalNetto').innerText = net.toFixed(2) + ' zł';
 
         document.getElementById('infoTotalDays').innerText = totalEngagedDays;
         document.getElementById('infoSched').innerText = schedDays;
