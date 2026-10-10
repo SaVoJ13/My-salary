@@ -90,11 +90,13 @@
 
         .form-group { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
         
-        .pro-card { display: none; background: var(--premium-bg); border: 1px solid var(--premium-border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        .is-logged-in .pro-card { display: block; }
+        .premium-field { display: none; }
+        .is-logged-in .premium-field { display: flex; }
         .is-logged-in .premium-badge { display: inline-block; }
         
+        .sub-group { margin-top: -6px; margin-bottom: 14px; padding-left: 15px; border-left: 2px solid var(--premium-border); }
         label { font-size: 14px; font-weight: 500; color: var(--text-main); width: 60%; }
+        .sub-group label { font-size: 13px; font-weight: 600; color: var(--primary); }
 
         input, select { 
             width: 38%; padding: 10px; border: 1px solid var(--border-color); 
@@ -103,9 +105,6 @@
             font-weight: 600; box-sizing: border-box; appearance: none;
         }
         
-        .pro-card input { background: #ffffff; border-color: var(--premium-border); }
-        [data-theme="dark"] .pro-card input { background: #1e1e1e; }
-
         select {
             text-align-last: center; padding-right: 20px;
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237f8c8d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
@@ -185,7 +184,7 @@
 
     <div class="pages-track" id="pagesTrack">
         
-        <!-- СТОРІНКА 1: ГОЛОВНИЙ КАЛЬКУЛЯТОР (ЧИСТИЙ) -->
+        <!-- СТОРІНКА 1: ГОЛОВНИЙ КАЛЬКУЛЯТОР (ВСІ ДАНІ ДЛЯ ВВОДУ) -->
         <div class="calculator-page">
             <div class="header-row">
                 <button class="menu-btn" onclick="toggleMenu()">☰</button>
@@ -242,6 +241,34 @@
                 <input type="number" id="overtimeDays" placeholder="-" min="0" step="0.5" onfocus="this.value=''" onblur="calculateSalary()">
             </div>
 
+            <!-- БЛОК PRO (ВІДПУСТКИ, ДОНАЦІЇ, L4) НА ГОЛОВНІЙ СТОРІНЦІ -->
+            <div class="form-group premium-field" style="margin-top: 15px;">
+                <label id="lblVacationDays">Відпустка (днів)</label>
+                <input type="number" id="vacationDays" placeholder="0" min="0" onfocus="this.value=''">
+            </div>
+            <div class="form-group sub-group hidden" id="urlopBonusGroup">
+                <label id="lblUrlopBonus">Сер. за 1 дн. відп. (zł) ℹ️</label>
+                <input type="number" id="urlopBonus" placeholder="0.00" min="0" onfocus="this.value=''" style="color:var(--primary);">
+            </div>
+
+            <div class="form-group premium-field">
+                <label id="lblBloodDonation">Донація крові (днів)</label>
+                <input type="number" id="bloodDonationDays" placeholder="0" min="0" onfocus="this.value=''">
+            </div>
+            <div class="form-group sub-group hidden" id="bloodBonusGroup">
+                <label id="lblBloodBonus">Сер. за 1 дн. донації (zł) ℹ️</label>
+                <input type="number" id="bloodBonus" placeholder="0.00" min="0" onfocus="this.value=''" style="color:var(--primary);">
+            </div>
+
+            <div class="form-group premium-field">
+                <label id="lblL4Days">Лікарняний L4 (календ.)</label>
+                <input type="number" id="l4Days" placeholder="0" min="0" onfocus="this.value=''" onblur="calculateSalary()">
+            </div>
+            <div class="form-group sub-group hidden" id="l4MissedGroup">
+                <label id="lblL4Missed">Пропущено змін (шт) ℹ️</label>
+                <input type="number" id="l4MissedShifts" placeholder="0" min="0" onfocus="this.value=''" style="color:var(--primary);">
+            </div>
+
             <div class="divider"></div>
 
             <div class="form-group">
@@ -282,45 +309,13 @@
             <div class="swipe-hint">← Свайп вліво для деталей та додаткових нарахувань</div>
         </div>
 
-        <!-- СТОРІНКА 2: ІНФОРМАЦІЙНА СТОРІНКА (ДЕТАЛІ ТА ВІДПУСТКА/ДОНАЦІЯ/ПРЕМІЯ) -->
+        <!-- СТОРІНКА 2: ІНФОРМАЦІЙНА СТОРІНКА (ТІЛЬКИ ДЛЯ ПЕРЕГЛЯДУ) -->
         <div class="calculator-page">
             <div class="header-row">
                 <button class="menu-btn" onclick="switchPage(1)">➔</button>
                 <h2 style="margin-right: auto; margin-left: 15px;">Деталі та розрахунок 📊</h2>
             </div>
             
-            <!-- ПЕРЕНЕСЕНІ ПОЛЯ ВІДПУСТКИ ТА ДОНАЦІЙ (АКТИВНІ ДЛЯ PRO) -->
-            <div class="pro-card">
-                <div style="font-weight: bold; margin-bottom: 12px; color: var(--text-main); font-size: 14px;">Додаткові дні (PRO-модуль):</div>
-                
-                <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 13px; width: 65%;">Відпустка (днів)</label>
-                    <input type="number" id="vacationDays" placeholder="0" min="0" onfocus="this.value=''" style="width: 32%;">
-                </div>
-                <div class="form-group hidden" id="urlopBonusGroup" style="margin-bottom: 12px;">
-                    <label style="font-size: 12px; width: 65%; color: var(--primary);">Сер. за 1 дн. відп. (zł) ℹ️</label>
-                    <input type="number" id="urlopBonus" placeholder="0.00" min="0" onfocus="this.value=''" style="width: 32%; color:var(--primary);">
-                </div>
-
-                <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 13px; width: 65%;">Донація крові (днів)</label>
-                    <input type="number" id="bloodDonationDays" placeholder="0" min="0" onfocus="this.value=''" style="width: 32%;">
-                </div>
-                <div class="form-group hidden" id="bloodBonusGroup" style="margin-bottom: 12px;">
-                    <label style="font-size: 12px; width: 65%; color: var(--primary);">Сер. за 1 дн. донації (zł) ℹ️</label>
-                    <input type="number" id="bloodBonus" placeholder="0.00" min="0" onfocus="this.value=''" style="width: 32%; color:var(--primary);">
-                </div>
-
-                <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 13px; width: 65%;">Лікарняний L4 (календ.)</label>
-                    <input type="number" id="l4Days" placeholder="0" min="0" onfocus="this.value=''" style="width: 32%;">
-                </div>
-                <div class="form-group hidden" id="l4MissedGroup" style="margin-bottom: 0;">
-                    <label style="font-size: 12px; width: 65%; color: var(--primary);">Пропущено змін (шт) ℹ️</label>
-                    <input type="number" id="l4MissedShifts" placeholder="0" min="0" onfocus="this.value=''" style="width: 32%; color:var(--primary);">
-                </div>
-            </div>
-
             <!-- ПОВНА РОЗБИВКА СКЛАДОВИХ БРУТТО -->
             <div class="info-card">
                 <div style="font-weight: bold; margin-bottom: 12px; color: var(--text-main); font-size: 14px; text-transform: uppercase;">Структура нарахування Brutto</div>
@@ -346,7 +341,7 @@
             </div>
 
             <!-- КНОПКА ЗБЕРЕЖЕННЯ В ХМАРУ НА ІНФОРМАЦІЙНІЙ СТОРІНЦІ -->
-            <div id="info-sync-container" class="pro-card" style="margin-top: 15px; padding: 10px; display: none;">
+            <div id="info-sync-container" class="premium-field" style="margin-top: 15px; display: none;">
                 <button id="btn-sync-up-info" class="action-btn btn-sync">Зберегти місяць в хмару ☁️</button>
             </div>
 
@@ -370,7 +365,7 @@
         LAUNDRY_MAX: 16.00,
         BENEFIT_ZUS_NFZ: 30.25,
         BENEFIT_TAX: 54.00,
-        DAILY_HOURS: 8 + (10 / 60), // 8 годин 10 хвилин (8.1667 год) - Залишено з попереднього запиту
+        DAILY_HOURS: 8 + (10 / 60), // 8 годин 10 хвилин (8.1667 год)
         BASE_SALARIES: {
             "2025": 4666,
             "2026_early": 5750,
@@ -559,7 +554,10 @@
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
             schedDays: "Графік", bonus: "Премія", morning: "Ранкові зміни (шт)", 
             afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
-            overtime: "Надгодини (днів)", under26: "Вік до 26 років", ppk: "Участь у PPK", 
+            overtime: "Надгодини (днів)", vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 дн. відп. (zł) ℹ️",
+            bloodDonation: "Донація крові (днів)", bloodBonus: "Сер. за 1 дн. донації (zł) ℹ️",
+            l4Days: "Лікарняний L4 (календ.)", l4Missed: "Пропущено змін (шт) ℹ️",
+            under26: "Вік до 26 років", ppk: "Участь у PPK", 
             insurance: "Дод. страхування", yes: "Так", no: "Ні",
             menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", 
             monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
@@ -568,7 +566,10 @@
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
             schedDays: "Grafik", bonus: "Premia", morning: "Poranne zmiany (szt)", 
             afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
-            overtime: "Nadgodziny (dni)", under26: "Wiek < 26 lat", ppk: "PPK", 
+            overtime: "Nadgodziny (dni)", vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa ℹ️",
+            bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia z oddania krwi ℹ️",
+            l4Days: "L4 (dni kalendarzowe)", l4Missed: "Opuszczone zmiany ℹ️",
+            under26: "Wiek < 26 lat", ppk: "PPK", 
             insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
             menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
             monthNames: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
@@ -587,6 +588,11 @@
         document.getElementById('lblBonus').innerText = d.bonus; document.getElementById('lblMorning').innerText = d.morning;
         document.getElementById('lblAfternoon').innerText = d.afternoon; document.getElementById('lblNight').innerText = d.night; 
         document.getElementById('lblWeekend').innerText = d.weekend; document.getElementById('lblOvertime').innerText = d.overtime; 
+        
+        document.getElementById('lblVacationDays').innerText = d.vacationDays; document.getElementById('lblUrlopBonus').innerText = d.urlopBonus;
+        document.getElementById('lblBloodDonation').innerText = d.bloodDonation; document.getElementById('lblBloodBonus').innerText = d.bloodBonus;
+        document.getElementById('lblL4Days').innerText = d.l4Days; document.getElementById('lblL4Missed').innerText = d.l4Missed;
+        
         document.getElementById('lblUnder26').innerText = d.under26; document.getElementById('lblPPK').innerText = d.ppk; 
         document.getElementById('lblInsurance').innerText = d.insurance; document.getElementById('menuTitle').innerText = d.menuTitle; 
         document.getElementById('lblMenuLang').innerText = d.menuLang; document.getElementById('lblMenuTheme').innerText = d.menuTheme; 
