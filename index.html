@@ -336,7 +336,16 @@
                 <div class="info-row"><span>Доплата за нічний час (<span id="infoNightHours">0 год 0 хв</span>):</span> <strong id="infoNightTimeSum">0.00 zł</strong></div>
                 <div class="info-row"><span>Доплата за нічну зміну (<span id="infoNightShiftsCount">0</span> змін):</span> <strong id="infoNightShiftSum">0.00 zł</strong></div>
                 <div class="info-row"><span>Робота у вікенди:</span> <strong id="infoWeekendSum">0.00 zł</strong></div>
-                <div class="info-row"><span>Надгодини:</span> <strong id="infoOvertimeSum">0.00 zł</strong></div>
+                
+                <!-- ОНОВЛЕНИЙ РЯДОК НАДГОДИН З ВІДОБРАЖЕННЯМ НЕТТО -->
+                <div class="info-row">
+                    <span>Надгодини:</span> 
+                    <span style="text-align: right;">
+                        <strong id="infoOvertimeSum">0.00 zł</strong>
+                        <span style="font-size: 11px; color: var(--text-muted); font-weight: normal; margin-left: 4px;">(нетто: <strong id="infoOvertimeNetSum">0.00 zł</strong>)</span>
+                    </span>
+                </div>
+
                 <div class="info-row"><span>Оплата відпустки:</span> <strong id="infoVacationSum">0.00 zł</strong></div>
                 <div class="info-row"><span>Оплата донації крові:</span> <strong id="infoBloodSum">0.00 zł</strong></div>
                 <div class="info-row"><span>Лікарняний L4 (компенс.):</span> <strong id="infoL4Sum">0.00 zł</strong></div>
@@ -951,6 +960,14 @@
         const totalWeekendPay = weekendDays * 100;
         const totalOvertimePay = overtimeDays * overtimeTariff;
 
+        // ТОЧНИЙ РОЗРАХУНОК НЕТТО ДЛЯ НАДГОДИН
+        const isUnder26 = document.getElementById('under26Select').value === 'yes';
+        const zusOvertime = totalOvertimePay * CONFIG.ZUS;
+        const healthBaseOvertime = totalOvertimePay - zusOvertime;
+        const nfzOvertime = healthBaseOvertime * CONFIG.NFZ;
+        const pitOvertime = isUnder26 ? 0 : (healthBaseOvertime * CONFIG.PIT);
+        const totalOvertimeNet = Math.max(0, totalOvertimePay - zusOvertime - nfzOvertime - pitOvertime);
+
         const currentVariables = bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay;
         const autoDailyBlood = (isPremium && schedDays > 0) ? (currentVariables / schedDays) : 0;
         
@@ -963,7 +980,6 @@
 
         const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay + totalUrlopBonus + bloodDonationPay;
 
-        const isUnder26 = document.getElementById('under26Select').value === 'yes';
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
         
         const zusBase = gross - l4Pay; 
@@ -1009,7 +1025,11 @@
         setFormatSum('infoNightTimeSum', totalNightTimePay);
         setFormatSum('infoNightShiftSum', totalNightShiftPay);
         setFormatSum('infoWeekendSum', totalWeekendPay);
+        
+        // Встановлення Брутто і Нетто для надгодин
         setFormatSum('infoOvertimeSum', totalOvertimePay);
+        setFormatSum('infoOvertimeNetSum', totalOvertimeNet, true);
+
         setFormatSum('infoVacationSum', totalUrlopBonus);
         setFormatSum('infoBloodSum', bloodDonationPay);
         setFormatSum('infoL4Sum', l4Pay);
