@@ -262,7 +262,7 @@
                 <input type="number" inputmode="decimal" id="vacationDays" placeholder="0" min="0">
             </div>
             <div class="form-group sub-group hidden" id="urlopBonusGroup">
-                <label data-i18n="urlopBonus">Сер. за 1 год. відп. (zł) ℹ️</label>
+                <label data-i18n="urlopBonus">Сер. за 1 дн. відп. (zł) ℹ️</label>
                 <input type="number" inputmode="decimal" id="urlopBonus" placeholder="0.00" min="0" style="color:var(--primary);">
             </div>
 
@@ -424,7 +424,7 @@
         const {
             baseSalary, stateDays, schedDays, regWorkedDays,
             morningShifts, nightShifts, overtimeMorningShifts, overtimeNightShifts,
-            weekendDays, overtimeDays, vacDays, hourlyUrlopBonus,
+            weekendDays, overtimeDays, vacDays, dailyUrlopBonus,
             bloodDonationDays, l4Days, isPremium,
             isUnder26, ppkActive, insuranceActive, l4DailyRateCached,
             presenceBonusPctOverride
@@ -472,8 +472,7 @@
         const autoDailyBlood = (isPremium && schedDays > 0) ? Math.round((currentVariables / schedDays) * 100) / 100 : 0;
         const bloodDonationPay = autoDailyBlood * bloodDonationDays;
 
-        // Кожна відпустка складається з 8 годин на день
-        const totalUrlopBonus = hourlyUrlopBonus * (vacDays * 8);
+        const totalUrlopBonus = dailyUrlopBonus * vacDays;
         const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay + totalUrlopBonus + bloodDonationPay;
 
         const zusBase = gross - l4Pay; 
@@ -533,7 +532,7 @@
             schedDays: "Графік", bonus: "Премія за якість (макс 10%)", morning: "Ранкові зміни (шт)", 
             afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
             overtime: "Надгодини (днів)", overtimeMorning: "З них ранкових (змін) ☀️", overtimeNight: "З них нічних (змін) 🌙", 
-            vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 год. відп. (zł) ℹ️",
+            vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 дн. відп. (zł) ℹ️",
             bloodDonation: "Донація крові (днів)", bloodBonus: "Сер. за 1 дн. донації (zł) ℹ️",
             l4Days: "Лікарняний L4 (календ.)", l4Missed: "Пропущено змін (шт) ℹ️",
             under26: "Вік до 26 років", ppk: "Участь у PPK", insurance: "Дод. страхування", 
@@ -562,7 +561,7 @@
             schedDays: "Grafik", bonus: "Premia za jakość (max 10%)", morning: "Poranne zmiany (szt)", 
             afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
             overtime: "Nadgodziny (dni)", overtimeMorning: "W tym porannych (zmian) ☀️", overtimeNight: "W tym nocnych (zmian) 🌙", 
-            vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa (godz.) ℹ️",
+            vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa ℹ️",
             bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia z oddania krwi ℹ️",
             l4Days: "L4 (dni kalendarzowe)", l4Missed: "Opuszczone zmiany ℹ️",
             under26: "Wiek < 26 lat", ppk: "PPK", insurance: "Dod. ubezpieczenie", 
@@ -723,6 +722,7 @@
 
     window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); };
 
+    // Закриття меню при кліку (тапі) поза ним
     document.addEventListener('click', e => {
         const sideMenu = document.getElementById('sideMenu');
         const menuBtn = document.getElementById('btn-open-menu');
@@ -935,8 +935,8 @@
         select.value = currentVal || (currentYear + "-" + String(currentMonth + 1).padStart(2, '0'));
     }
 
-    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ФАКТИЧНІ ГОДИНИ ТА ЗМІННІ ВИПЛАТИ) */
-    async function getAutoHourlyUrlopBonus(currentMonthVal) {
+    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ТА L4 */
+    async function getAutoDailyUrlopBonus(currentMonthVal) {
         if (!auth.currentUser) return 0;
         const [yStr, mStr] = currentMonthVal.split('-');
         let cYear = parseInt(yStr);
@@ -950,8 +950,7 @@
             targetMonths.push(pYear + "-" + String(pMonth).padStart(2, '0'));
         }
 
-        let totalVariableIncome = 0; 
-        let totalActualWorkedHours = 0;
+        let totalExtras = 0; let totalWorkedDays = 0;
 
         try {
             const docs = await getCachedMonths();
@@ -959,7 +958,11 @@
                 if (targetMonths.includes(docObj.id)) {
                     const data = docObj.data;
                     const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
-                    let pastPct = parseFloat(data.bonusPctSelect); if (isNaN(pastPct)) pastPct = 10;
+                    
+                    let qualityPct = parseFloat(data.bonusPctSelect); if (isNaN(qualityPct)) qualityPct = 10;
+                    let l4DaysPast = Math.max(0, parseInt(data.l4Days) || 0);
+                    let presencePct = (l4DaysPast > 0) ? (l4DaysPast <= 2 ? 2.5 : 0) : 5;
+                    let totalBonusPct = qualityPct + presencePct;
 
                     const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
                     const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
@@ -969,52 +972,56 @@
                     const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
                     const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
 
-                    // Фактично відпрацьовані планові зміни (змінні за 8 годин) + надгодини в днях
-                    let regWorkedShifts = mShifts + aShifts + nShifts;
                     const pYear = parseInt(docObj.id.split('-')[0]);
                     const pMonthIdx = parseInt(docObj.id.split('-')[1]) - 1;
                     const stDays = getStateDays(pYear, pMonthIdx);
+                    
+                    // ВИПРАВЛЕННЯ 1: Беремо графік для розрахунку премій та вартості надгодин
                     const pastSched = parseInt(data.scheduleDays) || stDays;
+                    
                     const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
                     const vac = Math.max(0, parseInt(data.vacationDays) || 0);
                     const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
 
+                    let regWorked = mShifts + aShifts + nShifts;
                     if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
-                        regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
+                        regWorked = Math.max(0, pastSched - vac - blood - l4m);
                     }
 
-                    const overDays = Math.min(rawOver, regWorkedShifts);
-                    // Сума фактично відпрацьованих годин за місяць (зміни по 8 год + надгодини по 8 год)
-                    const actualHoursThisMonth = (regWorkedShifts + overDays) * 8;
-                    totalActualWorkedHours += actualHoursThisMonth;
+                    const over = Math.min(rawOver, regWorked);
+                    let pActual = regWorked + over;
 
-                    // Змінні складові доходу за місяць
-                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorkedShifts : 0;
+                    const pastBonusVal = pastSched > 0 ? (pastBase * (totalBonusPct / 100)) / pastSched * regWorked : 0;
+                    
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * CONFIG.DAILY_HOURS)) * 0.20);
                     const totalM = mShifts + overMShifts;
                     const totalN = nShifts + overNShifts;
-                    const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff) + (totalN * CONFIG.NIGHT_SHIFT_BONUS);
+                    
+                    // ВИПРАВЛЕННЯ 2: Прибрано 30zł (CONFIG.NIGHT_SHIFT_BONUS) з бази відпускних
+                    const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff);
                     const pastWknd = wknd * CONFIG.WEEKEND_DAY_RATE;
-                    const pastOver = overDays * ((pastBase / stDays) * 2); // Оплата понаднормових (ставка за день * 2)
+                    
+                    // ВИПРАВЛЕННЯ 3: Вартість надгодин рахується від вашого графіка (pastSched), а не державного (stDays)
+                    const pastOver = over * ((pastBase / pastSched) * 2);
 
-                    totalVariableIncome += (pastBonusVal + pastNight + pastWknd + pastOver);
+                    totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
+                    totalWorkedDays += pActual;
                 }
             });
         } catch (e) {
             console.warn("Помилка авторозрахунку відпустки:", e);
         }
 
-        if (totalActualWorkedHours === 0) return 0;
-        // Середня годинна ставка відпускних = загальні змінні виплати / сума фактично відпрацьованих годин
-        return totalVariableIncome / totalActualWorkedHours;
+        if (totalWorkedDays === 0) return 0;
+        return (totalExtras / totalWorkedDays);
     }
-
+    
     async function autoFillUrlopBonus(monthVal) {
         const vacDays = Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0);
         const urlopInput = document.getElementById('urlopBonus');
         if (isPremium && vacDays > 0 && (!urlopInput.value || parseFloat(urlopInput.value) === 0)) {
-            const autoHourly = await getAutoHourlyUrlopBonus(monthVal);
-            if (autoHourly > 0) urlopInput.value = autoHourly.toFixed(2);
+            const autoDaily = await getAutoDailyUrlopBonus(monthVal);
+            if (autoDaily > 0) urlopInput.value = autoDaily.toFixed(2);
         }
     }
 
@@ -1055,7 +1062,7 @@
                     const res = compute({
                         baseSalary: pBase, stateDays: 21, schedDays: pSched, regWorkedDays: mS + aS + nS,
                         morningShifts: mS, nightShifts: nS, overtimeMorningShifts: overM, overtimeNightShifts: overN,
-                        weekendDays: wknd, overtimeDays: over, vacDays: 0, hourlyUrlopBonus: 0,
+                        weekendDays: wknd, overtimeDays: over, vacDays: 0, dailyUrlopBonus: 0,
                         bloodDonationDays: 0, l4Days: 0, isPremium: false,
                         isUnder26: false, ppkActive: false, insuranceActive: false, qualityBonusPct: pPct,
                         presenceBonusPctOverride: 0 
@@ -1098,7 +1105,7 @@
             overtimeNightShifts: Math.max(0, parseInt(document.getElementById('overtimeNightShifts').value) || 0),
             weekendDays: Math.max(0, parseInt(document.getElementById('weekendDays').value) || 0),
             vacDays: isPremium ? Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0) : 0,
-            hourlyUrlopBonus: isPremium ? Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0) : 0,
+            dailyUrlopBonus: isPremium ? Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0) : 0,
             bloodDonationDays: isPremium ? Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0) : 0,
             l4Days: isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0,
             qualityBonusPct: parseFloat(document.getElementById('bonusPctSelect').value) || 0,
@@ -1119,6 +1126,7 @@
 
         updateUI(res.gross, res.net);
 
+        // ВИПРАВЛЕНО: Рівно 8 годин за кожну нічну зміну для відображення в деталях
         const totalNightMinutes = Math.round(((res.totalMorningShifts * (10/60)) + (res.totalNightShifts * 8)) * 60);
         const nHours = Math.floor(totalNightMinutes / 60);
         const nMins = totalNightMinutes % 60;
@@ -1167,17 +1175,19 @@
     /* ДЕЛЕГУВАННЯ ПОДІЙ ТА ОБРОБНИКИ */
     const appBody = document.getElementById('app-body');
 
+    // Очищення поля при тапі (виборі)
     appBody.addEventListener('focusin', e => {
         if (e.target.tagName === 'INPUT' && e.target.type === 'number' && !e.target.readOnly) {
-            e.target.dataset.prevVal = e.target.value; 
-            e.target.value = ''; 
+            e.target.dataset.prevVal = e.target.value; // Зберігаємо старе значення як страховку
+            e.target.value = ''; // Робимо поле пустим
         }
     });
 
+    // Повернення значення, якщо тапнули і залишили пустим
     appBody.addEventListener('focusout', e => {
         if (e.target.tagName === 'INPUT' && e.target.type === 'number' && !e.target.readOnly) {
             if (e.target.value === '' && e.target.dataset.prevVal !== undefined) {
-                e.target.value = e.target.dataset.prevVal; 
+                e.target.value = e.target.dataset.prevVal; // Відновлюємо дані, якщо нічого не ввели
             }
             
             if (e.target.id === 'scheduleDays' && !e.target.value) {
