@@ -169,6 +169,13 @@
             </select>
         </div>
 
+        <div class="menu-item">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text-main);">
+                <input type="checkbox" id="includeOvertimeCheck" onchange="calculateSalary()" style="width: auto;">
+                <span data-i18n="menuOvertimeVac">Враховувати надгодини у відпускні</span>
+            </label>
+        </div>
+
         <div class="divider" style="margin: 10px 0;"></div>
 
         <div class="cloud-section">
@@ -483,7 +490,6 @@
 
         const totalUrlopBonus = dailyUrlopBonus * vacDays;
         
-        // Додаємо додаткову премію до загального брутто
         const gross = adjustedBase + l4Pay + bonusAmount + extraBonus + totalNightPay + totalWeekendPay + totalOvertimePay + totalUrlopBonus + bloodDonationPay;
 
         const zusBase = gross - l4Pay; 
@@ -549,6 +555,7 @@
             under26: "Вік до 26 років", ppk: "Участь у PPK", insurance: "Дод. страхування", 
             yes: "Так", no: "Ні", menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема",
             optThemeLight: "Світла", optThemeDark: "Темна", cloudHeader: "Акаунт & Хмара",
+            menuOvertimeVac: "Враховувати надгодини у відпускні",
             btnLogin: "Увійти (PRO)", btnRegister: "Реєстрація", btnSaveCloud: "Зберегти місяць ☁️",
             btnLoadCloud: "Завантажити місяць 📥", btnLogout: "Вийти (Гостьовий режим)",
             swipeHintLeft: "← Свайп вліво для деталей та розрахунку", swipeHintRight: "Свайп вправо для повернення →", 
@@ -578,6 +585,7 @@
             under26: "Wiek < 26 lat", ppk: "PPK", insurance: "Dod. ubezpieczenie", 
             yes: "Tak", no: "Nie", menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
             optThemeLight: "Jasny", optThemeDark: "Ciemny", cloudHeader: "Konto & Chmura",
+            menuOvertimeVac: "Uwzględniać nadgodziny w urlopie",
             btnLogin: "Zaloguj (PRO)", btnRegister: "Rejestracja", btnSaveCloud: "Zapisz miesiąc ☁️",
             btnLoadCloud: "Pobierz miesiąc 📥", btnLogout: "Wyloguj (Tryb gościa)",
             swipeHintLeft: "← Przesuń w lewo po szczegóły", swipeHintRight: "Przesuń w prawo aby wrócić →", 
@@ -635,7 +643,6 @@
         document.getElementById('themeSelect').value = theme;
     };
 
-    /* СТРУКТУРА ТА UI */
     window.switchPage = function(page) {
         currentActivePage = page;
         const track = document.getElementById('pagesTrack');
@@ -703,7 +710,6 @@
         }
     }
 
-    /* СВАЙПИ ТА МЕНЮ */
     let touchStartX = 0, touchStartY = 0;
     document.addEventListener('touchstart', e => {
         if (e.target.closest('input, select, button')) return;
@@ -744,7 +750,6 @@
         }
     });
 
-    /* FIRESTORE ТА КЕШУВАННЯ */
     async function getCachedMonths() {
         if (monthsCollectionCache) return monthsCollectionCache;
         if (!auth.currentUser) return [];
@@ -782,10 +787,13 @@
 
     function fillFrom(d) {
         document.querySelectorAll('input, select').forEach(el => {
-            if (!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id) && d[el.id] !== undefined) {
+            if (!['langSelect', 'themeSelect', 'email', 'password', 'includeOvertimeCheck'].includes(el.id) && d[el.id] !== undefined) {
                 el.value = d[el.id];
             }
         });
+        if (d.includeOvertimeCheck !== undefined && document.getElementById('includeOvertimeCheck')) {
+            document.getElementById('includeOvertimeCheck').checked = !!d.includeOvertimeCheck;
+        }
         baseTouched = (d.baseSalary !== undefined && d.baseSalary !== null && d.baseSalary !== "");
     }
 
@@ -798,7 +806,10 @@
         const btn2 = document.getElementById('btn-sync-up-info');
         if(btn1) btn1.disabled = true; if(btn2) btn2.disabled = true;
 
-        const data = { updatedAt: new Date().toISOString() };
+        const data = { 
+            updatedAt: new Date().toISOString(),
+            includeOvertimeCheck: document.getElementById('includeOvertimeCheck')?.checked || false
+        };
         document.querySelectorAll('input, select').forEach(el => {
             if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id)) data[el.id] = el.value;
         });
@@ -868,13 +879,14 @@
         showToast(dict[currentLang].toastLoadCloud);
     });
 
-    /* ЛОКАЛЬНИЙ (ГОСТЬОВИЙ) РЕЖИМ */
     function saveLocalGuestData() {
         if (auth.currentUser) return;
         const monthVal = document.getElementById('monthSelect').value;
         if (!monthVal) return;
         
-        const data = {};
+        const data = {
+            includeOvertimeCheck: document.getElementById('includeOvertimeCheck')?.checked || false
+        };
         document.querySelectorAll('input, select').forEach(el => {
             if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id)) data[el.id] = el.value;
         });
@@ -945,17 +957,15 @@
         select.value = currentVal || (currentYear + "-" + String(currentMonth + 1).padStart(2, '0'));
     }
 
-        /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ГІБРИДНА МОДЕЛЬ / СТРАТЕГІЯ) */
+    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (DYNAMICS STRATEGY ENGINE) */
     async function getAutoDailyUrlopBonus(currentMonthVal) {
         if (!auth.currentUser) return 0;
         const [yStr, mStr] = currentMonthVal.split('-');
         let cYear = parseInt(yStr);
         let cMonth = parseInt(mStr);
 
-        // TODO: Додати в UI чекбокс або налаштування профілю для перемикання стратегії
-        // false = Строга модель (без понаднормових)
-        // true = Динамічна модель (з понаднормовими та надбавками)
-        const includeOvertimeStrategy = document.getElementById('includeOvertimeCheck')?.checked || false; 
+        // Стратегія: чи включені надгодини та дрібні надбавки до бази відпускних
+        const includeOvertimeStrategy = document.getElementById('includeOvertimeCheck')?.checked || false;
 
         let targetMonths = [];
         for (let i = 1; i <= 3; i++) {
@@ -980,12 +990,10 @@
                     const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
                     const nShifts = Math.max(0, parseInt(data.nightShifts) || 0);
                     const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
-                    
                     const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
                     const actualOverDays = rawOver > 15 ? rawOver / 8 : rawOver;
 
                     let regWorkedShifts = mShifts + aShifts + nShifts;
-                    
                     const pYear = parseInt(docObj.id.split('-')[0]);
                     const pMonthIdx = parseInt(docObj.id.split('-')[1]) - 1;
                     const stDays = getStateDays(pYear, pMonthIdx);
@@ -998,63 +1006,11 @@
                         regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
                     }
 
-    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ГІБРИДНА МОДЕЛЬ / СТРАТЕГІЯ) */
-    async function getAutoDailyUrlopBonus(currentMonthVal) {
-        if (!auth.currentUser) return 0;
-        const [yStr, mStr] = currentMonthVal.split('-');
-        let cYear = parseInt(yStr);
-        let cMonth = parseInt(mStr);
-
-        // TODO: Додати в UI чекбокс або налаштування профілю для перемикання стратегії
-        // false = Строга модель (без понаднормових)
-        // true = Динамічна модель (з понаднормовими та надбавками)
-        const includeOvertimeStrategy = document.getElementById('includeOvertimeCheck')?.checked || false; 
-
-        let targetMonths = [];
-        for (let i = 1; i <= 3; i++) {
-            let pMonth = cMonth - i;
-            let pYear = cYear;
-            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
-            targetMonths.push(pYear + "-" + String(pMonth).padStart(2, '0'));
-        }
-
-        let totalVariableIncome = 0; 
-        let totalActualWorkedHours = 0;
-
-        try {
-            const docs = await getCachedMonths();
-            docs.forEach(docObj => {
-                if (targetMonths.includes(docObj.id)) {
-                    const data = docObj.data;
-                    const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
-                    let pastPct = parseFloat(data.bonusPctSelect); if (isNaN(pastPct)) pastPct = 10;
-
-                    const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
-                    const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
-                    const nShifts = Math.max(0, parseInt(data.nightShifts) || 0);
-                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
-                    
-                    const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
-                    const actualOverDays = rawOver > 15 ? rawOver / 8 : rawOver;
-
-                    let regWorkedShifts = mShifts + aShifts + nShifts;
-                    
-                    const pYear = parseInt(docObj.id.split('-')[0]);
-                    const pMonthIdx = parseInt(docObj.id.split('-')[1]) - 1;
-                    const stDays = getStateDays(pYear, pMonthIdx);
-                    const pastSched = parseInt(data.scheduleDays) || stDays;
-                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
-                    const vac = Math.max(0, parseInt(data.vacationDays) || 0);
-                    const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
-
-                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
-                        regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
-                    }
-
-                    // База годин завжди базується лише на планових відпрацьованих змінах
+                    // ЗНАМЕННИК: строго фактично відпрацьовані години
                     const actualHoursThisMonth = regWorkedShifts * 8;
                     totalActualWorkedHours += actualHoursThisMonth;
 
+                    // ЧИСЕЛЬНИК: стандартні змінні виплати
                     const pastBonusVal = pastSched > 0 ? (pastBase * ((pastPct + 5) / 100)) / pastSched * regWorkedShifts : 0;
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                     const pastNightTime = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff);
@@ -1063,6 +1019,7 @@
 
                     let monthlyVariables = pastBonusVal + pastNightTime + pastNightShiftBonus + pastWknd;
 
+                    // Стратегія Include Overtime (як у профілі Володимира)
                     if (includeOvertimeStrategy) {
                         const pastOver = actualOverDays * ((pastBase / stDays) * 2);
                         const pastLaundry = (pastSched > 0) ? Math.min(CONFIG.LAUNDRY_MAX, (regWorkedShifts / pastSched) * CONFIG.LAUNDRY_MAX) : 0;
@@ -1078,15 +1035,6 @@
 
         if (totalActualWorkedHours === 0) return 0;
         return (totalVariableIncome / totalActualWorkedHours) * 8;
-    }
-
-    async function autoFillUrlopBonus(monthVal) {
-        const vacDays = Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0);
-        const urlopInput = document.getElementById('urlopBonus');
-        if (isPremium && vacDays > 0 && (!urlopInput.value || parseFloat(urlopInput.value) === 0)) {
-            const autoDaily = await getAutoDailyUrlopBonus(monthVal);
-            if (autoDaily > 0) urlopInput.value = autoDaily.toFixed(2);
-        }
     }
 
     async function updateL4Cache(currentMonthVal) {
@@ -1143,7 +1091,6 @@
         }
     }
 
-    /* ФІНАЛЬНИЙ РОЗРАХУНОК ТА РЕНДЕР */
     function calculateSalary() {
         updateVisibility();
 
@@ -1238,7 +1185,6 @@
         document.getElementById('netResult').innerText = formatPLN(n);
     }
 
-    /* ДЕЛЕГУВАННЯ ПОДІЙ ТА ОБРОБНИКИ */
     const appBody = document.getElementById('app-body');
 
     appBody.addEventListener('focusin', e => {
@@ -1266,7 +1212,7 @@
 
     appBody.addEventListener('input', e => {
         const id = e.target.id;
-        if (id === 'monthSelect' || ['langSelect', 'themeSelect', 'email', 'password'].includes(id)) return;
+        if (id === 'monthSelect' || ['langSelect', 'themeSelect', 'email', 'password', 'includeOvertimeCheck'].includes(id)) return;
         
         if (id === 'baseSalary') baseTouched = true;
         if (SCHED_IDS.includes(id)) syncSchedule();
@@ -1291,7 +1237,11 @@
             document.getElementById('scheduleDays').value = getStateDays(parseInt(yStr), parseInt(mStr) - 1);
             if (auth.currentUser) loadCloudData();
             else loadLocalGuestData();
-        } else if (['langSelect', 'themeSelect', 'email', 'password'].includes(id)) {
+        } else if (['langSelect', 'themeSelect', 'email', 'password', 'includeOvertimeCheck'].includes(id)) {
+            if (id === 'includeOvertimeCheck') {
+                calculateSalary();
+                saveLocalGuestData();
+            }
             return;
         } else {
             calculateSalary();
