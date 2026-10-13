@@ -945,7 +945,7 @@
         select.value = currentVal || (currentYear + "-" + String(currentMonth + 1).padStart(2, '0'));
     }
 
-    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ФАКТИЧНІ ГОДИНИ ТА ЗМІННІ ВИПЛАТИ) */
+    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ФАКТИЧНІ ГОДИНИ + ПОНАДНОРМОВІ) */
     async function getAutoDailyUrlopBonus(currentMonthVal) {
         if (!auth.currentUser) return 0;
         const [yStr, mStr] = currentMonthVal.split('-');
@@ -979,7 +979,7 @@
                     const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
                     const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
 
-                    // Фактично відпрацьовані планові зміни (змінні за 8 годин) + надгодини в днях
+                    // Фактично відпрацьовані планові зміни (без надгодин)
                     let regWorkedShifts = mShifts + aShifts + nShifts;
                     const pYear = parseInt(docObj.id.split('-')[0]);
                     const pMonthIdx = parseInt(docObj.id.split('-')[1]) - 1;
@@ -993,20 +993,19 @@
                         regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
                     }
 
-                    const overDays = Math.min(rawOver, regWorkedShifts);
-                    // Сума фактично відпрацьованих годин за місяць (зміни по 8 год + надгодини по 8 год)
-                    const actualHoursThisMonth = (regWorkedShifts + overDays) * 8;
+                    // ЗНАМЕННИК = Відпрацьовані + Понаднормові (сумарно в годинах)
+                    const actualHoursThisMonth = (regWorkedShifts + rawOver) * 8;
                     totalActualWorkedHours += actualHoursThisMonth;
 
                     // Змінні складові доходу за місяць
-                    // УВАГА: Додаткова премія (extraBonus) свідомо не додається до цього розрахунку
+                    // УВАГА: Додаткова премія та відпускна премія НЕ додаються
                     const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorkedShifts : 0;
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                     const totalM = mShifts + overMShifts;
                     const totalN = nShifts + overNShifts;
                     const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff) + (totalN * CONFIG.NIGHT_SHIFT_BONUS);
                     const pastWknd = wknd * CONFIG.WEEKEND_DAY_RATE;
-                    const pastOver = overDays * ((pastBase / stDays) * 2);
+                    const pastOver = rawOver * ((pastBase / stDays) * 2);
 
                     totalVariableIncome += (pastBonusVal + pastNight + pastWknd + pastOver);
                 }
