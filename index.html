@@ -220,6 +220,11 @@
                     <option value="0">0%</option>
                 </select>
             </div>
+            
+            <div class="form-group">
+                <label data-i18n="extraBonus">Додаткова премія (zł)</label>
+                <input type="number" inputmode="decimal" id="extraBonus" placeholder="0" min="0">
+            </div>
 
             <div class="divider"></div>
 
@@ -262,7 +267,7 @@
                 <input type="number" inputmode="decimal" id="vacationDays" placeholder="0" min="0">
             </div>
             <div class="form-group sub-group hidden" id="urlopBonusGroup">
-                <label data-i18n="urlopBonus">Сер. за 1 год. відп. (zł) ℹ️</label>
+                <label data-i18n="urlopBonus">Сер. за 1 дн. відп. (zł) ℹ️</label>
                 <input type="number" inputmode="decimal" id="urlopBonus" placeholder="0.00" min="0" style="color:var(--primary);">
             </div>
 
@@ -338,6 +343,7 @@
                 
                 <div class="info-row"><span><span data-i18n="infoPresenceBonus">Премія за присутність</span> (<span id="infoPresencePct">5%</span>):</span> <strong id="infoPresenceBonusSum" style="color: var(--success);">0,00 zł</strong></div>
                 <div class="info-row"><span><span data-i18n="infoQualityBonus">Премія за якість</span> (<span id="infoQualityPct">10%</span>):</span> <strong id="infoQualityBonusSum" style="color: var(--success);">0,00 zł</strong></div>
+                <div class="info-row"><span><span data-i18n="infoExtraBonus">Додаткова премія</span>:</span> <strong id="infoExtraBonusSum" style="color: var(--success);">0,00 zł</strong></div>
                 <div class="info-row"><span><span data-i18n="infoNightTime">Доплата за нічний час</span> (<span id="infoNightHours">0 год 0 хв</span>):</span> <strong id="infoNightTimeSum">0,00 zł</strong></div>
                 <div class="info-row"><span><span data-i18n="infoNightShift">Доплата за нічну зміну</span> (<span id="infoNightShiftsCount">0</span> змін):</span> <strong id="infoNightShiftSum">0,00 zł</strong></div>
                 
@@ -357,6 +363,9 @@
                 
                 <div class="info-row total-row">
                     <span data-i18n="totalBrutto">РАЗОМ BRUTTO:</span> <strong id="infoTotalBrutto" style="color: var(--primary);">0,00 zł</strong>
+                </div>
+                <div class="info-row" style="margin-top: 4px; padding-top: 4px;">
+                    <span data-i18n="infoLaundry">Доплата за прання:</span> <strong id="infoLaundrySum">0,00 zł</strong>
                 </div>
                 <div class="info-row total-row" style="margin-top: 4px; border-top: none; padding-top: 0;">
                     <span data-i18n="totalNetto">РАЗОМ NETTO:</span> <strong id="infoTotalNetto" style="color: var(--success);">0,00 zł</strong>
@@ -398,7 +407,7 @@
         EXTRA_INSURANCE_RATE: 36.70,
         NIGHT_SHIFT_BONUS: 30.00,
         WEEKEND_DAY_RATE: 100.00,
-        DAILY_HOURS: 8, // Строго 8 годин для всіх розрахунків
+        DAILY_HOURS: 8, 
         BASE_SALARIES: {
             "2025": 4666,
             "2026_early": 5750,
@@ -424,7 +433,7 @@
         const {
             baseSalary, stateDays, schedDays, regWorkedDays,
             morningShifts, nightShifts, overtimeMorningShifts, overtimeNightShifts,
-            weekendDays, overtimeDays, vacDays, hourlyUrlopBonus,
+            weekendDays, overtimeDays, vacDays, dailyUrlopBonus, extraBonus,
             bloodDonationDays, l4Days, isPremium,
             isUnder26, ppkActive, insuranceActive, l4DailyRateCached,
             presenceBonusPctOverride
@@ -449,14 +458,12 @@
         const qualityBonusAmount = (schedDays > 0) ? ((baseSalary * (qualityBonusPct / 100)) / schedDays * regWorkedDays) : 0;
         const bonusAmount = presenceBonusAmount + qualityBonusAmount;
 
-        // Нічний тариф базується строго на 8 годинах
         const nightTariff = Math.round(((CONFIG.NIGHT_BASE_SALARY / (stateDays * 8)) * 0.20) * 100) / 100;
         const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
 
         const totalMorningShifts = morningShifts + overtimeMorningShifts;
         const totalNightShifts = nightShifts + overtimeNightShifts;
 
-        // Ранкова зміна: 10 хвилин нічних; Нічна зміна: 8 годин нічних
         const totalNightTimePay = Math.round(((totalMorningShifts * (10/60) * nightTariff) + (totalNightShifts * 8 * nightTariff)) * 100) / 100;
         const totalNightShiftPay = totalNightShifts * CONFIG.NIGHT_SHIFT_BONUS;
         const totalNightPay = totalNightTimePay + totalNightShiftPay;
@@ -474,9 +481,10 @@
         const autoDailyBlood = (isPremium && schedDays > 0) ? Math.round((currentVariables / schedDays) * 100) / 100 : 0;
         const bloodDonationPay = autoDailyBlood * bloodDonationDays;
 
-        // Кожна відпустка складається з 8 годин на день
-        const totalUrlopBonus = hourlyUrlopBonus * (vacDays * 8);
-        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay + totalUrlopBonus + bloodDonationPay;
+        const totalUrlopBonus = dailyUrlopBonus * vacDays;
+        
+        // Додаємо додаткову премію до загального брутто
+        const gross = adjustedBase + l4Pay + bonusAmount + extraBonus + totalNightPay + totalWeekendPay + totalOvertimePay + totalUrlopBonus + bloodDonationPay;
 
         const zusBase = gross - l4Pay; 
         const zus = zusBase * CONFIG.ZUS; 
@@ -498,8 +506,8 @@
         const net = gross - zus - nfz - pit - ppkCost - extraInsurance - totalBenefitCost + laundryAllowance;
 
         return {
-            gross, net, adjustedBase, l4Pay, presenceBonusPct, qualityBonusPct,
-            presenceBonusAmount, qualityBonusAmount, bonusAmount, nightTariff,
+            gross, net, adjustedBase, l4Pay, presenceBonusPct, qualityBonusPct, extraBonus,
+            presenceBonusAmount, qualityBonusAmount, bonusAmount, nightTariff, laundryAllowance,
             totalMorningShifts, totalNightShifts, totalNightTimePay, totalNightShiftPay,
             totalNightPay, totalWeekendPay, totalOvertimePay, totalOvertimeNet,
             bloodDonationPay, autoDailyBlood, totalUrlopBonus, regWorkedDays,
@@ -532,10 +540,10 @@
     const dict = {
         uk: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
-            schedDays: "Графік", bonus: "Премія за якість (макс 10%)", morning: "Ранкові зміни (шт)", 
-            afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
+            schedDays: "Графік", bonus: "Премія за якість (макс 10%)", extraBonus: "Додаткова премія (zł)",
+            morning: "Ранкові зміни (шт)", afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
             overtime: "Надгодини (днів)", overtimeMorning: "З них ранкових (змін) ☀️", overtimeNight: "З них нічних (змін) 🌙", 
-            vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 год. відп. (zł) ℹ️",
+            vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 дн. відп. (zł) ℹ️",
             bloodDonation: "Донація крові (днів)", bloodBonus: "Сер. за 1 дн. донації (zł) ℹ️",
             l4Days: "Лікарняний L4 (календ.)", l4Missed: "Пропущено змін (шт) ℹ️",
             under26: "Вік до 26 років", ppk: "Участь у PPK", insurance: "Дод. страхування", 
@@ -546,10 +554,10 @@
             swipeHintLeft: "← Свайп вліво для деталей та розрахунку", swipeHintRight: "Свайп вправо для повернення →", 
             detailsTitle: "Деталі та розрахунок 📊", breakdownHeader: "Деталізація нарахувань", 
             infoBasePay: "Базова ставка (з урахув. L4):", infoPresenceBonus: "Премія за присутність", 
-            infoQualityBonus: "Премія за якість", infoNightTime: "Доплата за нічний час", 
+            infoQualityBonus: "Премія за якість", infoExtraBonus: "Додаткова премія", infoNightTime: "Доплата за нічний час", 
             infoNightShift: "Доплата за нічну зміну", infoWeekend: "Робота у вікенди:", 
             infoOvertime: "Надгодини:", infoVacation: "Оплата відпустки:", infoBlood: "Оплата донації крові:", 
-            infoL4: "Лікарняний L4 (компенс.):", infoWorkedDays: "Відпрацьовано планових змін:", 
+            infoL4: "Лікарняний L4 (компенс.):", infoLaundry: "Доплата за прання:", infoWorkedDays: "Відпрацьовано планових змін:", 
             infoTotalDays: "Всього задіяних днів:", infoSched: "Дні за графіком (норма):", 
             infoNightTariff: "Нічний тариф:", lblNettoShort: "нетто", totalBrutto: "РАЗОМ BRUTTO:", 
             totalNetto: "РАЗОМ NETTO:", perHour: "/год", pwdPlaceholder: "Пароль",
@@ -561,10 +569,10 @@
         },
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
-            schedDays: "Grafik", bonus: "Premia za jakość (max 10%)", morning: "Poranne zmiany (szt)", 
-            afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
+            schedDays: "Grafik", bonus: "Premia za jakość (max 10%)", extraBonus: "Dodatkowa premia (zł)",
+            morning: "Poranne zmiany (szt)", afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
             overtime: "Nadgodziny (dni)", overtimeMorning: "W tym porannych (zmian) ☀️", overtimeNight: "W tym nocnych (zmian) 🌙", 
-            vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa (godz.) ℹ️",
+            vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa (dzień) ℹ️",
             bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia z oddania krwi ℹ️",
             l4Days: "L4 (dni kalendarzowe)", l4Missed: "Opuszczone zmiany ℹ️",
             under26: "Wiek < 26 lat", ppk: "PPK", insurance: "Dod. ubezpieczenie", 
@@ -575,10 +583,10 @@
             swipeHintLeft: "← Przesuń w lewo po szczegóły", swipeHintRight: "Przesuń w prawo aby wrócić →", 
             detailsTitle: "Szczegóły wyliczenia 📊", breakdownHeader: "Struktura naliczeń", 
             infoBasePay: "Stawka bazowa (po L4):", infoPresenceBonus: "Premia za frekwencję", 
-            infoQualityBonus: "Premia za jakość", infoNightTime: "Dodatek nocny (czas)", 
+            infoQualityBonus: "Premia za jakość", infoExtraBonus: "Dodatkowa premia", infoNightTime: "Dodatek nocny (czas)", 
             infoNightShift: "Dodatek nocny (zmiana)", infoWeekend: "Praca w weekendy:", 
             infoOvertime: "Nadgodziny:", infoVacation: "Wynagrodzenie urlopowe:", infoBlood: "Wynagrodzenie za krew:", 
-            infoL4: "Chorobowe L4:", infoWorkedDays: "Przepracowane zmiany:", 
+            infoL4: "Chorobowe L4:", infoLaundry: "Ekwiwalent za pranie:", infoWorkedDays: "Przepracowane zmiany:", 
             infoTotalDays: "Łącznie dni:", infoSched: "Grafik (norma):", 
             infoNightTariff: "Stawka nocna:", lblNettoShort: "netto", totalBrutto: "RAZEM BRUTTO:", 
             totalNetto: "RAZEM NETTO:", perHour: "/godz.", pwdPlaceholder: "Hasło",
@@ -938,7 +946,7 @@
     }
 
     /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ФАКТИЧНІ ГОДИНИ ТА ЗМІННІ ВИПЛАТИ) */
-    async function getAutoHourlyUrlopBonus(currentMonthVal) {
+    async function getAutoDailyUrlopBonus(currentMonthVal) {
         if (!auth.currentUser) return 0;
         const [yStr, mStr] = currentMonthVal.split('-');
         let cYear = parseInt(yStr);
@@ -991,14 +999,14 @@
                     totalActualWorkedHours += actualHoursThisMonth;
 
                     // Змінні складові доходу за місяць
+                    // УВАГА: Додаткова премія (extraBonus) свідомо не додається до цього розрахунку
                     const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorkedShifts : 0;
-                    // Суворо 8 годин для розрахунку нічного тарифу
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                     const totalM = mShifts + overMShifts;
                     const totalN = nShifts + overNShifts;
                     const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff) + (totalN * CONFIG.NIGHT_SHIFT_BONUS);
                     const pastWknd = wknd * CONFIG.WEEKEND_DAY_RATE;
-                    const pastOver = overDays * ((pastBase / stDays) * 2); // Оплата понаднормових (ставка за день * 2)
+                    const pastOver = overDays * ((pastBase / stDays) * 2);
 
                     totalVariableIncome += (pastBonusVal + pastNight + pastWknd + pastOver);
                 }
@@ -1008,16 +1016,16 @@
         }
 
         if (totalActualWorkedHours === 0) return 0;
-        // Середня годинна ставка відпускних = загальні змінні виплати / сума фактично відпрацьованих годин
-        return totalVariableIncome / totalActualWorkedHours;
+        // Повертаємо середню ставку відразу ЗА ДЕНЬ (тобто годинна ставка * 8)
+        return (totalVariableIncome / totalActualWorkedHours) * 8;
     }
 
     async function autoFillUrlopBonus(monthVal) {
         const vacDays = Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0);
         const urlopInput = document.getElementById('urlopBonus');
         if (isPremium && vacDays > 0 && (!urlopInput.value || parseFloat(urlopInput.value) === 0)) {
-            const autoHourly = await getAutoHourlyUrlopBonus(monthVal);
-            if (autoHourly > 0) urlopInput.value = autoHourly.toFixed(2);
+            const autoDaily = await getAutoDailyUrlopBonus(monthVal);
+            if (autoDaily > 0) urlopInput.value = autoDaily.toFixed(2);
         }
     }
 
@@ -1058,7 +1066,7 @@
                     const res = compute({
                         baseSalary: pBase, stateDays: 21, schedDays: pSched, regWorkedDays: mS + aS + nS,
                         morningShifts: mS, nightShifts: nS, overtimeMorningShifts: overM, overtimeNightShifts: overN,
-                        weekendDays: wknd, overtimeDays: over, vacDays: 0, hourlyUrlopBonus: 0,
+                        weekendDays: wknd, overtimeDays: over, vacDays: 0, dailyUrlopBonus: 0, extraBonus: 0,
                         bloodDonationDays: 0, l4Days: 0, isPremium: false,
                         isUnder26: false, ppkActive: false, insuranceActive: false, qualityBonusPct: pPct,
                         presenceBonusPctOverride: 0 
@@ -1101,7 +1109,8 @@
             overtimeNightShifts: Math.max(0, parseInt(document.getElementById('overtimeNightShifts').value) || 0),
             weekendDays: Math.max(0, parseInt(document.getElementById('weekendDays').value) || 0),
             vacDays: isPremium ? Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0) : 0,
-            hourlyUrlopBonus: isPremium ? Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0) : 0,
+            dailyUrlopBonus: isPremium ? Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0) : 0,
+            extraBonus: Math.max(0, parseFloat(document.getElementById('extraBonus').value) || 0),
             bloodDonationDays: isPremium ? Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0) : 0,
             l4Days: isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0,
             qualityBonusPct: parseFloat(document.getElementById('bonusPctSelect').value) || 0,
@@ -1136,6 +1145,7 @@
         setFormatSum('infoBasePayVal', res.adjustedBase);
         setFormatSum('infoPresenceBonusSum', res.presenceBonusAmount, true);
         setFormatSum('infoQualityBonusSum', res.qualityBonusAmount, true);
+        setFormatSum('infoExtraBonusSum', res.extraBonus, true);
         setFormatSum('infoNightTimeSum', res.totalNightTimePay);
         setFormatSum('infoNightShiftSum', res.totalNightShiftPay);
         setFormatSum('infoWeekendSum', res.totalWeekendPay);
@@ -1144,6 +1154,7 @@
         setFormatSum('infoVacationSum', res.totalUrlopBonus);
         setFormatSum('infoBloodSum', res.bloodDonationPay);
         setFormatSum('infoL4Sum', res.l4Pay);
+        setFormatSum('infoLaundrySum', res.laundryAllowance, false);
         
         document.getElementById('infoTotalBrutto').innerText = formatPLN(res.gross);
         document.getElementById('infoTotalNetto').innerText = formatPLN(res.net);
