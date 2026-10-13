@@ -945,7 +945,7 @@
         select.value = currentVal || (currentYear + "-" + String(currentMonth + 1).padStart(2, '0'));
     }
 
-    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ */
+        /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ФАКТИЧНІ ГОДИНИ + ПОНАДНОРМОВІ) */
     async function getAutoDailyUrlopBonus(currentMonthVal) {
         if (!auth.currentUser) return 0;
         const [yStr, mStr] = currentMonthVal.split('-');
@@ -968,52 +968,51 @@
             docs.forEach(docObj => {
                 if (targetMonths.includes(docObj.id)) {
                     const data = docObj.data;
-                    const pBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
-                    let pPct = parseFloat(data.bonusPctSelect); if (isNaN(pPct)) pPct = 10;
+                    const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
+                    let pastPct = parseFloat(data.bonusPctSelect); if (isNaN(pastPct)) pastPct = 10;
 
-                    const mS = Math.max(0, parseInt(data.morningShifts) || 0);
-                    const aS = Math.max(0, parseInt(data.afternoonShifts) || 0);
-                    const nS = Math.max(0, parseInt(data.nightShifts) || 0);
-                    const overM = Math.max(0, parseInt(data.overtimeMorningShifts) || 0);
-                    const overN = Math.max(0, parseInt(data.overtimeNightShifts) || 0);
-                    const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
+                    const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
+                    const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
+                    const nShifts = Math.max(0, parseInt(data.nightShifts) || 0);
+                    const overMShifts = Math.max(0, parseInt(data.overtimeMorningShifts) || 0);
+                    const overNShifts = Math.max(0, parseInt(data.overtimeNightShifts) || 0);
                     const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
+                    const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
 
-                    // Якщо введено години замість днів (напр. 24 замість 3)
+                    // Конвертація надгодин (якщо введено години замість днів)
                     const actualOverDays = rawOver > 15 ? rawOver / 8 : rawOver;
 
-                    let regWorkedShifts = mS + aS + nS;
+                    let regWorkedShifts = mShifts + aShifts + nShifts;
                     const pYear = parseInt(docObj.id.split('-')[0]);
                     const pMonthIdx = parseInt(docObj.id.split('-')[1]) - 1;
                     const stDays = getStateDays(pYear, pMonthIdx);
-                    const pSched = parseInt(data.scheduleDays) || stDays;
+                    const pastSched = parseInt(data.scheduleDays) || stDays;
                     const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
                     const vac = Math.max(0, parseInt(data.vacationDays) || 0);
                     const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
 
-                    // Якщо користувач не вводив кількість ранкових/нічних змін (а лише графік),
-                    // рахуємо фактично відпрацьовані планові дні шляхом віднімання відсутностей
                     if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
-                        regWorkedShifts = Math.max(0, pSched - vac - blood - l4m);
+                        regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
                     }
 
-                    // Проганяємо через еталонну функцію розрахунку, щоб зберегти 100% математичний збіг
-                    // з усіма правильними коефіцієнтами за надгодини (х2) та нічними
-                    const pastRes = compute({
-                        baseSalary: pBase, stateDays: stDays, schedDays: pSched, regWorkedDays: regWorkedShifts,
-                        morningShifts: mS, afternoonShifts: aS, nightShifts: nS,
-                        overtimeDays: actualOverDays, overtimeMorningShifts: overM, overtimeNightShifts: overN,
-                        weekendDays: wknd, vacDays: 0, dailyUrlopBonus: 0, extraBonus: 0,
-                        bloodDonationDays: 0, l4Days: 0, isPremium: false,
-                        isUnder26: false, ppkActive: false, insuranceActive: false, qualityBonusPct: pPct,
-                        presenceBonusPctOverride: 5 // Стандартно 5% за присутність
-                    });
+                    // ЗНАМЕННИК: строго відпрацьовані + понаднормові (в годинах)
+                    const actualHoursThisMonth = (regWorkedShifts + actualOverDays) * 8;
+                    totalActualWorkedHours += actualHoursThisMonth;
 
-                    // Чисельник: усі змінні виплати за місяць
-                    totalVariableIncome += pastRes.bonusAmount + pastRes.totalNightPay + pastRes.totalWeekendPay + pastRes.totalOvertimePay;
+                    // ЧИСЕЛЬНИК: розрахунок усіх змінних компонентів (без прання та додаткових премій)
+                    const pastBonusVal = pastSched > 0 ? (pastBase * ((pastPct + 5) / 100)) / pastSched * regWorkedShifts : 0;
                     
-                    // Знаменник: Відпрацьовані години + Понаднормові години
-                    totalActualWorkedHours += (regWorkedShifts + actualOverDays) * 8;
+                    const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
+                    const totalM = mShifts + overMShifts;
+                    const totalN = nShifts + overNShifts;
+                    // Фіксована премія 30zł за нічну зміну ВИКЛЮЧЕНА з бази відпускних
+                    const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff);
+                    
+                    const pastWknd = wknd * CONFIG.WEEKEND_DAY_RATE;
+                    // Оплата понаднормових: беремо повну ставку (100% база + 100% надбавка = коефіцієнт 2)
+                    const pastOver = actualOverDays * ((pastBase / stDays) * 2);
+
+                    totalVariableIncome += (pastBonusVal + pastNight + pastWknd + pastOver);
                 }
             });
         } catch (e) {
@@ -1021,9 +1020,10 @@
         }
 
         if (totalActualWorkedHours === 0) return 0;
-        // Повертаємо середню ставку відразу ЗА ДЕНЬ (×8)
+        // Повертаємо денну ставку: сума змінних виплат / на всі години * 8
         return (totalVariableIncome / totalActualWorkedHours) * 8;
     }
+
 
     async function autoFillUrlopBonus(monthVal) {
         const vacDays = Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0);
