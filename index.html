@@ -945,7 +945,7 @@
         select.value = currentVal || (currentYear + "-" + String(currentMonth + 1).padStart(2, '0'));
     }
 
-    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ФАКТИЧНІ ГОДИНИ + ПОНАДНОРМОВІ) */
+    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ */
     async function getAutoDailyUrlopBonus(currentMonthVal) {
         if (!auth.currentUser) return 0;
         const [yStr, mStr] = currentMonthVal.split('-');
@@ -979,6 +979,9 @@
                     const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
                     const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
 
+                    // Якщо введено години замість днів (напр. 24 замість 3), автоконвертуємо:
+                    const actualOverDays = rawOver > 15 ? rawOver / 8 : rawOver;
+
                     // Фактично відпрацьовані планові зміни (без надгодин)
                     let regWorkedShifts = mShifts + aShifts + nShifts;
                     const pYear = parseInt(docObj.id.split('-')[0]);
@@ -993,19 +996,23 @@
                         regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
                     }
 
-                    // ЗНАМЕННИК = Відпрацьовані + Понаднормові (сумарно в годинах)
-                    const actualHoursThisMonth = (regWorkedShifts + rawOver) * 8;
+                    // ЗНАМЕННИК = Відпрацьовані + Понаднормові (в годинах)
+                    const actualHoursThisMonth = (regWorkedShifts + actualOverDays) * 8;
                     totalActualWorkedHours += actualHoursThisMonth;
 
                     // Змінні складові доходу за місяць
-                    // УВАГА: Додаткова премія та відпускна премія НЕ додаються
-                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorkedShifts : 0;
+                    // Додано 5% (стандартна премія за присутність) до бази 
+                    const pastBonusVal = pastSched > 0 ? (pastBase * ((pastPct + 5) / 100)) / pastSched * regWorkedShifts : 0;
+                    
+                    // Нічний тариф беремо без 30zł фіксованої доплати (виключена з бази відпускних)
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                     const totalM = mShifts + overMShifts;
                     const totalN = nShifts + overNShifts;
-                    const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff) + (totalN * CONFIG.NIGHT_SHIFT_BONUS);
+                    const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff);
+                    
                     const pastWknd = wknd * CONFIG.WEEKEND_DAY_RATE;
-                    const pastOver = rawOver * ((pastBase / stDays) * 2);
+                    // Надгодини: усереднений коефіцієнт 1.5 (що захищає від екстремальних завищень)
+                    const pastOver = actualOverDays * ((pastBase / stDays) * 1.5);
 
                     totalVariableIncome += (pastBonusVal + pastNight + pastWknd + pastOver);
                 }
@@ -1015,7 +1022,7 @@
         }
 
         if (totalActualWorkedHours === 0) return 0;
-        // Повертаємо середню ставку відразу ЗА ДЕНЬ (тобто годинна ставка * 8)
+        // Повертаємо середню ставку відразу ЗА ДЕНЬ
         return (totalVariableIncome / totalActualWorkedHours) * 8;
     }
 
