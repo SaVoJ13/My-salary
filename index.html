@@ -945,7 +945,7 @@
         select.value = currentVal || (currentYear + "-" + String(currentMonth + 1).padStart(2, '0'));
     }
 
-        /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ФАКТИЧНІ ГОДИНИ + ПОНАДНОРМОВІ) */
+    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ */
     async function getAutoDailyUrlopBonus(currentMonthVal) {
         if (!auth.currentUser) return 0;
         const [yStr, mStr] = currentMonthVal.split('-');
@@ -979,9 +979,10 @@
                     const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
                     const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
 
-                    // Конвертація надгодин (якщо введено години замість днів)
+                    // Якщо введено години замість днів (напр. 24 замість 3), автоконвертуємо:
                     const actualOverDays = rawOver > 15 ? rawOver / 8 : rawOver;
 
+                    // Фактично відпрацьовані планові зміни (без надгодин)
                     let regWorkedShifts = mShifts + aShifts + nShifts;
                     const pYear = parseInt(docObj.id.split('-')[0]);
                     const pMonthIdx = parseInt(docObj.id.split('-')[1]) - 1;
@@ -995,22 +996,23 @@
                         regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
                     }
 
-                    // ЗНАМЕННИК: строго відпрацьовані + понаднормові (в годинах)
+                    // ЗНАМЕННИК = Відпрацьовані + Понаднормові (в годинах)
                     const actualHoursThisMonth = (regWorkedShifts + actualOverDays) * 8;
                     totalActualWorkedHours += actualHoursThisMonth;
 
-                    // ЧИСЕЛЬНИК: розрахунок усіх змінних компонентів (без прання та додаткових премій)
+                    // Змінні складові доходу за місяць
+                    // Додано 5% (стандартна премія за присутність) до бази 
                     const pastBonusVal = pastSched > 0 ? (pastBase * ((pastPct + 5) / 100)) / pastSched * regWorkedShifts : 0;
                     
+                    // Нічний тариф беремо без 30zł фіксованої доплати (виключена з бази відпускних)
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                     const totalM = mShifts + overMShifts;
                     const totalN = nShifts + overNShifts;
-                    // Фіксована премія 30zł за нічну зміну ВИКЛЮЧЕНА з бази відпускних
                     const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff);
                     
                     const pastWknd = wknd * CONFIG.WEEKEND_DAY_RATE;
-                    // Оплата понаднормових: беремо повну ставку (100% база + 100% надбавка = коефіцієнт 2)
-                    const pastOver = actualOverDays * ((pastBase / stDays) * 2);
+                    // Надгодини: усереднений коефіцієнт 1.5 (що захищає від екстремальних завищень)
+                    const pastOver = actualOverDays * ((pastBase / stDays) * 1.5);
 
                     totalVariableIncome += (pastBonusVal + pastNight + pastWknd + pastOver);
                 }
@@ -1020,10 +1022,9 @@
         }
 
         if (totalActualWorkedHours === 0) return 0;
-        // Повертаємо денну ставку: сума змінних виплат / на всі години * 8
+        // Повертаємо середню ставку відразу ЗА ДЕНЬ
         return (totalVariableIncome / totalActualWorkedHours) * 8;
     }
-
 
     async function autoFillUrlopBonus(monthVal) {
         const vacDays = Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0);
@@ -1064,16 +1065,14 @@
                     const nS = Math.max(0, parseInt(data.nightShifts) || 0);
                     const overM = Math.max(0, parseInt(data.overtimeMorningShifts) || 0);
                     const overN = Math.max(0, parseInt(data.overtimeNightShifts) || 0);
-                    const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
-                    const actualOverDays = rawOver > 15 ? rawOver / 8 : rawOver;
-                    
+                    const over = Math.max(0, parseFloat(data.overtimeDays) || 0);
                     const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
                     const pSched = parseInt(data.scheduleDays) || 21;
                     
                     const res = compute({
                         baseSalary: pBase, stateDays: 21, schedDays: pSched, regWorkedDays: mS + aS + nS,
                         morningShifts: mS, nightShifts: nS, overtimeMorningShifts: overM, overtimeNightShifts: overN,
-                        weekendDays: wknd, overtimeDays: actualOverDays, vacDays: 0, dailyUrlopBonus: 0, extraBonus: 0,
+                        weekendDays: wknd, overtimeDays: over, vacDays: 0, dailyUrlopBonus: 0, extraBonus: 0,
                         bloodDonationDays: 0, l4Days: 0, isPremium: false,
                         isUnder26: false, ppkActive: false, insuranceActive: false, qualityBonusPct: pPct,
                         presenceBonusPctOverride: 0 
@@ -1104,7 +1103,6 @@
         let baseSalary = Math.max(0, parseFloat(document.getElementById('baseSalary').value) || 5750);
 
         const schedInput = document.getElementById('scheduleDays');
-        const rawOver = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
 
         const inputs = {
             baseSalary, stateDays,
@@ -1112,7 +1110,7 @@
             morningShifts: Math.max(0, parseInt(document.getElementById('morningShifts').value) || 0),
             afternoonShifts: Math.max(0, parseInt(document.getElementById('afternoonShifts').value) || 0),
             nightShifts: Math.max(0, parseInt(document.getElementById('nightShifts').value) || 0),
-            overtimeDays: rawOver > 15 ? rawOver / 8 : rawOver,
+            overtimeDays: Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0),
             overtimeMorningShifts: Math.max(0, parseInt(document.getElementById('overtimeMorningShifts').value) || 0),
             overtimeNightShifts: Math.max(0, parseInt(document.getElementById('overtimeNightShifts').value) || 0),
             weekendDays: Math.max(0, parseInt(document.getElementById('weekendDays').value) || 0),
