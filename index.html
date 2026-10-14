@@ -862,7 +862,7 @@
             }
             updateVisibility();
 
-            await window.autoFillUrlopBonus(monthVal);
+            await autoFillUrlopBonus(monthVal);
             if (currentReq !== requestCounter) return;
 
             await updateL4Cache(monthVal);
@@ -957,24 +957,12 @@
         select.value = currentVal || (currentYear + "-" + String(currentMonth + 1).padStart(2, '0'));
     }
 
-    /* ФУНКЦІЯ АВТОЗАПОВНЕННЯ (ВІДСУТНЯ У ПОПЕРЕДНІЙ ВЕРСІЇ) */
-    window.autoFillUrlopBonus = async function(monthVal) {
-        if (!auth.currentUser) return;
-        const rate = await getAutoDailyUrlopBonus(monthVal);
-        if (rate > 0) {
-            document.getElementById('urlopBonus').value = (Math.round(rate * 100) / 100).toFixed(2);
-        }
-    };
-
-    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ОНОВЛЕНО ЗА РЕЗУЛЬТАТАМИ СКРИПТА) */
+     /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ТІЛЬКИ ДЛЯ ПРОФІЛЮ "VOLODYMYR") */
     async function getAutoDailyUrlopBonus(currentMonthVal) {
         if (!auth.currentUser) return 0;
         const [yStr, mStr] = currentMonthVal.split('-');
         let cYear = parseInt(yStr);
         let cMonth = parseInt(mStr);
-
-        // Стратегія: чи включені надгодини до бази відпускних
-        const includeOvertimeStrategy = document.getElementById('includeOvertimeCheck')?.checked || false;
 
         let targetMonths = [];
         for (let i = 1; i <= 3; i++) {
@@ -1000,9 +988,12 @@
                     const nShifts = Math.max(0, parseInt(data.nightShifts) || 0);
                     const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
                     const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
+                    
                     const actualOverDays = rawOver > 15 ? rawOver / 8 : rawOver;
 
+                    // ЗНАМЕННИК: Тільки планові відпрацьовані зміни (без урахування годин надгодин)
                     let regWorkedShifts = mShifts + aShifts + nShifts;
+                    
                     const pYear = parseInt(docObj.id.split('-')[0]);
                     const pMonthIdx = parseInt(docObj.id.split('-')[1]) - 1;
                     const stDays = getStateDays(pYear, pMonthIdx);
@@ -1015,30 +1006,21 @@
                         regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
                     }
 
-                    // ЗНАМЕННИК (DA): строго фактично відпрацьовані години 
-                    let actualHoursThisMonth = regWorkedShifts * 8;
-                    if (includeOvertimeStrategy) {
-                        // Якщо ми включаємо оплату надгодин у відпускні, то години надгодин теж ідуть у знаменник
-                        actualHoursThisMonth += (actualOverDays * 8); 
-                    }
+                    const actualHoursThisMonth = regWorkedShifts * 8;
                     totalActualWorkedHours += actualHoursThisMonth;
 
-                    // ЧИСЕЛЬНИК: стандартні змінні виплати
+                    // ЧИСЕЛЬНИК: Включаємо ВСІ змінні компоненти (премії, нічні, вихідні, надгодини, прання)
                     const pastBonusVal = pastSched > 0 ? (pastBase * ((pastPct + 5) / 100)) / pastSched * regWorkedShifts : 0;
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * 8)) * 0.20);
                     const pastNightTime = (mShifts * (10/60) * nTariff) + (nShifts * 8 * nTariff);
                     const pastNightShiftBonus = nShifts * CONFIG.NIGHT_SHIFT_BONUS;
                     const pastWknd = wknd * CONFIG.WEEKEND_DAY_RATE;
+                    
+                    // Додаємо надгодини (100% оплата + 100% доплата = x2) та еквівалент за прання
+                    const pastOver = actualOverDays * ((pastBase / stDays) * 2);
+                    const pastLaundry = (pastSched > 0) ? Math.min(CONFIG.LAUNDRY_MAX, (regWorkedShifts / pastSched) * CONFIG.LAUNDRY_MAX) : 0;
 
-                    let monthlyVariables = pastBonusVal + pastNightTime + pastNightShiftBonus + pastWknd;
-
-                    if (includeOvertimeStrategy) {
-                        // Надгодини включаються (як OTH2 'otp', 'ots' у скрипті)
-                        // Еквівалент за прання (pastLaundry) ВИКЛЮЧАЄТЬСЯ, оскільки це компенсація, а не зп.
-                        const pastOver = actualOverDays * ((pastBase / stDays) * 2);
-                        monthlyVariables += pastOver;
-                    }
-
+                    const monthlyVariables = pastBonusVal + pastNightTime + pastNightShiftBonus + pastWknd + pastOver + pastLaundry;
                     totalVariableIncome += monthlyVariables;
                 }
             });
@@ -1047,8 +1029,10 @@
         }
 
         if (totalActualWorkedHours === 0) return 0;
+        // Повертаємо денну ставку (середня годинна * 8)
         return (totalVariableIncome / totalActualWorkedHours) * 8;
     }
+
 
     async function updateL4Cache(currentMonthVal) {
         if (!auth.currentUser) { window.cachedL4DailyRate = null; return; }
@@ -1235,7 +1219,7 @@
 
         if (id === 'vacationDays') {
             const monthVal = document.getElementById('monthSelect').value;
-            window.autoFillUrlopBonus(monthVal).then(() => {
+            autoFillUrlopBonus(monthVal).then(() => {
                 calculateSalary();
                 saveLocalGuestData();
             });
