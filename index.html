@@ -862,7 +862,7 @@
             }
             updateVisibility();
 
-            await autoFillUrlopBonus(monthVal);
+            await window.autoFillUrlopBonus(monthVal);
             if (currentReq !== requestCounter) return;
 
             await updateL4Cache(monthVal);
@@ -957,14 +957,23 @@
         select.value = currentVal || (currentYear + "-" + String(currentMonth + 1).padStart(2, '0'));
     }
 
-    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (DYNAMICS STRATEGY ENGINE) */
+    /* ФУНКЦІЯ АВТОЗАПОВНЕННЯ (ВІДСУТНЯ У ПОПЕРЕДНІЙ ВЕРСІЇ) */
+    window.autoFillUrlopBonus = async function(monthVal) {
+        if (!auth.currentUser) return;
+        const rate = await getAutoDailyUrlopBonus(monthVal);
+        if (rate > 0) {
+            document.getElementById('urlopBonus').value = (Math.round(rate * 100) / 100).toFixed(2);
+        }
+    };
+
+    /* АВТОРОЗРАХУНОК ВІДПУСТКИ ЗА 3 МІСЯЦІ (ОНОВЛЕНО ЗА РЕЗУЛЬТАТАМИ СКРИПТА) */
     async function getAutoDailyUrlopBonus(currentMonthVal) {
         if (!auth.currentUser) return 0;
         const [yStr, mStr] = currentMonthVal.split('-');
         let cYear = parseInt(yStr);
         let cMonth = parseInt(mStr);
 
-        // Стратегія: чи включені надгодини та дрібні надбавки до бази відпускних
+        // Стратегія: чи включені надгодини до бази відпускних
         const includeOvertimeStrategy = document.getElementById('includeOvertimeCheck')?.checked || false;
 
         let targetMonths = [];
@@ -1006,8 +1015,12 @@
                         regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
                     }
 
-                    // ЗНАМЕННИК: строго фактично відпрацьовані години
-                    const actualHoursThisMonth = regWorkedShifts * 8;
+                    // ЗНАМЕННИК (DA): строго фактично відпрацьовані години 
+                    let actualHoursThisMonth = regWorkedShifts * 8;
+                    if (includeOvertimeStrategy) {
+                        // Якщо ми включаємо оплату надгодин у відпускні, то години надгодин теж ідуть у знаменник
+                        actualHoursThisMonth += (actualOverDays * 8); 
+                    }
                     totalActualWorkedHours += actualHoursThisMonth;
 
                     // ЧИСЕЛЬНИК: стандартні змінні виплати
@@ -1019,11 +1032,11 @@
 
                     let monthlyVariables = pastBonusVal + pastNightTime + pastNightShiftBonus + pastWknd;
 
-                    // Стратегія Include Overtime (як у профілі Володимира)
                     if (includeOvertimeStrategy) {
+                        // Надгодини включаються (як OTH2 'otp', 'ots' у скрипті)
+                        // Еквівалент за прання (pastLaundry) ВИКЛЮЧАЄТЬСЯ, оскільки це компенсація, а не зп.
                         const pastOver = actualOverDays * ((pastBase / stDays) * 2);
-                        const pastLaundry = (pastSched > 0) ? Math.min(CONFIG.LAUNDRY_MAX, (regWorkedShifts / pastSched) * CONFIG.LAUNDRY_MAX) : 0;
-                        monthlyVariables += (pastOver + pastLaundry);
+                        monthlyVariables += pastOver;
                     }
 
                     totalVariableIncome += monthlyVariables;
@@ -1222,7 +1235,7 @@
 
         if (id === 'vacationDays') {
             const monthVal = document.getElementById('monthSelect').value;
-            autoFillUrlopBonus(monthVal).then(() => {
+            window.autoFillUrlopBonus(monthVal).then(() => {
                 calculateSalary();
                 saveLocalGuestData();
             });
